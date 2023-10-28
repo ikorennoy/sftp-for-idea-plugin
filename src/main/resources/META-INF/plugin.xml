@@ -1,0 +1,29 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>com.github.ikorennoy.remote-file-viewer</id>
+
+     <name>Remote File Viewer</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor email="korennoy.ilya@gmail.com">Ilya Korennoy</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <resource-bundle>messages.MyBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow factoryClass="com.github.ikorennoy.remotefileviewer.ui.FileViewerWindowsFactory" id="Remote Files" anchor="right"/>
+        <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem" key="remoteFileSysSftp" physical="true"/>
+    </extensions>
+    
+
+<!--    <applicationListeners>-->
+<!--        <listener class="org.jetbrains.plugins.template.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>-->
+<!--    </applicationListeners>-->
+
+</idea-plugin>
