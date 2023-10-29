@@ -24,12 +24,13 @@ import javax.swing.event.DocumentEvent
 
 class ConnectionConfigurationDialog(project: Project) : DialogWrapper(project) {
 
-    private val usernameField = ExtendableTextField(30)
+    private val hostField = ExtendableTextField(30)
+    private val usernameField = JBTextField(30)
     private val passwordField = JBPasswordField()
 
-    private val uiDispatcher get() = Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()
     private val loadingExtension = ExtendableTextComponent.Extension { AnimatedIcon.Default.INSTANCE }
 
+    private val uiDispatcher get() = Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()
     private val scope = CoroutineScope(SupervisorJob()).also { Disposer.register(disposable) { it.cancel() } }
 
     private var accessError: ValidationInfo? = null
@@ -39,17 +40,23 @@ class ConnectionConfigurationDialog(project: Project) : DialogWrapper(project) {
         init()
     }
 
-    val userName: String get() = usernameField.text.orEmpty().trim()
+    val host: String get() = hostField.text.orEmpty().trim()
+    val username: String get() = usernameField.text.orEmpty().trim()
     val password: CharArray get() = passwordField.password
 
 
     override fun createCenterPanel(): JComponent = panel {
+        row(FileViewerBundle.message("connection.configuration.dialog.host")) {
+            cell(hostField)
+                .align(AlignX.FILL)
+                .validationOnApply { checkHostNotBlank() ?: accessError }
+                .applyToComponent { clearUrlAccessErrorOnTextChanged() }
+                .focused()
+        }
         row(FileViewerBundle.message("connection.configuration.dialog.username")) {
             cell(usernameField)
                 .align(AlignX.FILL)
-                .validationOnApply { checkNameNotBlank() ?: accessError }
-                .applyToComponent { clearUrlAccessErrorOnTextChanged() }
-                .focused()
+                .validationOnApply { checkNameNotBlank() }
         }
         row(FileViewerBundle.message("connection.configuration.dialog.password")) {
             cell(passwordField)
@@ -68,31 +75,45 @@ class ConnectionConfigurationDialog(project: Project) : DialogWrapper(project) {
             if (accessError == null) {
                 super.doOKAction()
             } else {
-                IdeFocusManager.getGlobalInstance().requestFocus(usernameField, true)
+                IdeFocusManager.getGlobalInstance().requestFocus(hostField, true)
                 startTrackingValidation()
             }
         }
     }
 
     private fun setLoading(isLoading: Boolean) {
+        usernameField.isEnabled = !isLoading
         passwordField.isEnabled = !isLoading
 
-        usernameField.apply { if (isLoading) addExtension(loadingExtension) else removeExtension(loadingExtension) }
-        usernameField.isEnabled = !isLoading
+        hostField.apply { if (isLoading) addExtension(loadingExtension) else removeExtension(loadingExtension) }
+        hostField.isEnabled = !isLoading
 
         isOKActionEnabled = !isLoading
     }
 
+    private fun checkHostNotBlank(): ValidationInfo? =
+        if (host.isNotEmpty()) null
+        else ValidationInfo(
+            FileViewerBundle.message("connection.configuration.dialog.host.empty.validation"),
+            hostField
+        )
+
     private fun checkNameNotBlank(): ValidationInfo? =
-        if (userName.isNotEmpty()) null
-        else ValidationInfo(FileViewerBundle.message("connection.configuration.dialog.username.empty.validation"), usernameField)
+        if (username.isNotEmpty()) null
+        else ValidationInfo(
+            FileViewerBundle.message("connection.configuration.dialog.username.empty.validation"),
+            usernameField
+        )
 
     private suspend fun checkAccess(): ValidationInfo? {
         val result = test()
 
         if (result) return null
 
-        return ValidationInfo(FileViewerBundle.message("connection.configuration.dialog.cannot.connect.validation"), usernameField).withOKEnabled()
+        return ValidationInfo(
+            FileViewerBundle.message("connection.configuration.dialog.cannot.connect.validation"),
+            hostField
+        ).withOKEnabled()
     }
 
     private suspend fun test(): Boolean {
