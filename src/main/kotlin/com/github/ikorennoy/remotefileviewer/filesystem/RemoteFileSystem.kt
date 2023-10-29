@@ -3,42 +3,64 @@ package com.github.ikorennoy.remotefileviewer.filesystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.util.EditSourceOnDoubleClickHandler
-import org.apache.sshd.client.SshClient
-import org.apache.sshd.sftp.client.fs.SftpFileSystemProvider
-import java.nio.file.FileSystem
+import com.intellij.util.PathUtil
+import net.schmizz.sshj.SSHClient
+import net.schmizz.sshj.sftp.*
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-
+import javax.naming.OperationNotSupportedException
 
 private const val PROTOCOL = "remoteFileSysSftp"
 
-class RemoteFileSystem: VirtualFileSystem() {
+class RemoteFileSystem : VirtualFileSystem() {
 
-    val fs: FileSystem
     val root: RemoteVirtualFile
+    val sftp: SFTPClient
 
     init {
-        val client = SshClient.setUpDefaultClient()
-        client.start()
-        val fsProvider = SftpFileSystemProvider(client)
-        val uri = SftpFileSystemProvider.createFileSystemURI("localhost", 22, "ik", "")
-        fs = fsProvider.newFileSystem(uri, emptyMap<String, Any>())
-        root = RemoteVirtualFile(fs.rootDirectories.first(), this)
+        val client = SSHClient()
+        client.loadKnownHosts()
+        client.connect("localhost")
+        client.authPassword("ik", "")
+        sftp = client.newSFTPClient()
+
+        root = sftp.open("/").convert()
+        sftp.sftpEngine.timeoutMs = 5000
+    }
+
+    fun getChildren(file: RemoteVirtualFile): Array<VirtualFile> {
+        return sftp.ls(file.path).map {
+            RemoteVirtualFile(it, this)
+        }.toTypedArray()
+    }
+
+    fun getParent(file: RemoteVirtualFile): VirtualFile? {
+        val parent = PathUtil.getParentPath(file.path)
+        return if (parent == "") {
+            null
+        } else {
+            RemoteVirtualFile(RemoteResourceInfo(getComponents(parent), sftp.stat(parent)), this)
+        }
     }
 
     override fun getProtocol(): String = PROTOCOL
 
     override fun findFileByPath(path: String): VirtualFile {
-        return RemoteVirtualFile(fs.getPath(path), this)
+        try {
+            return RemoteVirtualFile(RemoteResourceInfo(getComponents(path), sftp.stat(path)), this)
+        } catch (ex: IOException) {
+            println("Can't find file: $path")
+            throw ex
+        }
     }
 
     override fun refresh(asynchronous: Boolean) {
     }
 
     override fun refreshAndFindFileByPath(path: String): VirtualFile {
-        return RemoteVirtualFile(fs.getPath(path), this)
+        return findFileByPath(path)
     }
 
     override fun addVirtualFileListener(listener: VirtualFileListener) {
@@ -49,38 +71,48 @@ class RemoteFileSystem: VirtualFileSystem() {
     }
 
     override fun deleteFile(requestor: Any?, vFile: VirtualFile) {
-        Files.delete(vFile.toNioPath())
-    }
-
-    override fun getNioPath(file: VirtualFile): Path {
-        if (file is RemoteVirtualFile) {
-            return file.path
-        } else {
-            throw Exception("wrong file: $file")
-        }
+        sftp.rm(vFile.path)
     }
 
     override fun moveFile(requestor: Any?, vFile: VirtualFile, newParent: VirtualFile) {
-        Files.move(vFile.toNioPath(), newParent.toNioPath())
+        sftp.rename(vFile.path, newParent.path)
     }
 
     override fun renameFile(requestor: Any?, vFile: VirtualFile, newName: String) {
-        Files.move(vFile.toNioPath(), fs.getPath(newName))
+        sftp.rename(vFile.path, newName)
     }
 
     override fun createChildFile(requestor: Any?, vDir: VirtualFile, fileName: String): VirtualFile {
-        return RemoteVirtualFile(Files.createFile(fs.getPath(vDir.path, fileName)), this)
+        return sftp.open(vDir.path + "/" + fileName, setOf(OpenMode.CREAT)).convert()
     }
 
     override fun createChildDirectory(requestor: Any?, vDir: VirtualFile, dirName: String): VirtualFile {
-        return RemoteVirtualFile(Files.createDirectory(fs.getPath(vDir.path, dirName)), this)
+        val dirPath = vDir.path + "/" + dirName
+        sftp.mkdir(dirPath)
+        return sftp.open(dirPath).convert()
     }
 
     override fun copyFile(requestor: Any?, virtualFile: VirtualFile, newParent: VirtualFile, copyName: String): VirtualFile {
-        return RemoteVirtualFile(Files.copy(virtualFile.toNioPath(), newParent.toNioPath()), this)
+        throw OperationNotSupportedException("copy")
     }
 
     override fun isReadOnly(): Boolean {
         return false
+    }
+
+    fun fileOutputStream(remoteVirtualFile: RemoteVirtualFile): OutputStream {
+        return sftp.open(remoteVirtualFile.path, setOf(OpenMode.WRITE)).RemoteFileOutputStream()
+    }
+
+    fun fileInputStream(remoteVirtualFile: RemoteVirtualFile): InputStream {
+        return sftp.open(remoteVirtualFile.path).RemoteFileInputStream()
+    }
+
+    private fun RemoteFile.convert(): RemoteVirtualFile {
+        return RemoteVirtualFile(RemoteResourceInfo(sftp.sftpEngine.pathHelper.getComponents(path), fetchAttributes()), this@RemoteFileSystem)
+    }
+
+    private fun getComponents(path: String): PathComponents {
+        return sftp.sftpEngine.pathHelper.getComponents(path)
     }
 }

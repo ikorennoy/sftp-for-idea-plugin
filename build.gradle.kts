@@ -21,17 +21,16 @@ intellij {
 }
 
 dependencies {
-// https://mvnrepository.com/artifact/com.hierynomus/sshj
-//    implementation("com.hierynomus:sshj:0.37.0")
-// https://mvnrepository.com/artifact/org.apache.sshd/sshd-core
-    implementation("org.apache.sshd:sshd-core:2.11.0") {
-        exclude("org.slf4j", "slf4j-api")
-    }
-    // https://mvnrepository.com/artifact/org.apache.sshd/sshd-sftp
-    implementation("org.apache.sshd:sshd-sftp:2.11.0") {
-        exclude("org.slf4j", "slf4j-api")
-    }
-
+    implementation("com.hierynomus:sshj:0.37.0")
+//// https://mvnrepository.com/artifact/org.apache.sshd/sshd-core
+//    implementation("org.apache.sshd:sshd-core:2.11.0") {
+//        exclude("org.slf4j", "slf4j-api")
+//    }
+//    // https://mvnrepository.com/artifact/org.apache.sshd/sshd-sftp
+//    implementation("org.apache.sshd:sshd-sftp:2.11.0") {
+//        exclude("org.slf4j", "slf4j-api")
+//    }
+//
 
 }
 

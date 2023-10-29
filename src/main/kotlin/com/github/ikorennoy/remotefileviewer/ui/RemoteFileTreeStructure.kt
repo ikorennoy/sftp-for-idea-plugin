@@ -19,10 +19,10 @@ class RemoteFileTreeStructure(
 
     override fun getLeafState(element: Any): LeafState {
         return if (element is FileElement) {
-            if (element.file.toNioPath().isFile()) {
-                LeafState.ALWAYS
-            } else {
+            if (element.file.isDirectory) {
                 LeafState.NEVER
+            } else {
+                LeafState.ALWAYS
             }
         } else {
             LeafState.DEFAULT

@@ -2,105 +2,61 @@ package com.github.ikorennoy.remotefileviewer.filesystem
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.util.containers.toArray
-import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.exists
-import com.intellij.util.io.isWritable
-import com.intellij.util.io.lastModified
-import org.apache.sshd.sftp.client.fs.SftpPath
+import net.schmizz.sshj.sftp.FileMode
+import net.schmizz.sshj.sftp.RemoteResourceInfo
+import net.schmizz.sshj.xfer.FilePermission
 import java.io.InputStream
 import java.io.OutputStream
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.concurrent.locks.LockSupport
-import java.util.concurrent.locks.ReadWriteLock
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.io.path.isDirectory
-import kotlin.io.path.name
 
 class RemoteVirtualFile(
-        val path: Path,
-        val fs: RemoteFileSystem
+        val remoteFile: RemoteResourceInfo,
+        private val fs: RemoteFileSystem,
 ) : VirtualFile() {
 
-    val lock = ReentrantLock()
-
-
-    override fun getName(): String {
-        return path.name
-    }
+    override fun getName(): String = remoteFile.name
 
     override fun getFileSystem(): VirtualFileSystem {
         return fs
     }
 
     override fun getPath(): String {
-        return path.toAbsolutePath().toString()
+        return remoteFile.path
     }
 
     override fun isWritable(): Boolean {
-        try {
-            lock.lock()
-            return path.isWritable
-        } finally {
-            lock.unlock()
-        }
+        return remoteFile.attributes.permissions.contains(FilePermission.USR_R)
     }
 
     override fun isDirectory(): Boolean {
-        try {
-            lock.lock()
-            return path.isDirectory()
-        } finally {
-            lock.unlock()
-        }
+        return remoteFile.attributes.type == FileMode.Type.DIRECTORY
     }
 
     override fun isValid(): Boolean {
-        try {
-            lock.lock()
-            return path.exists()
-        } finally {
-            lock.unlock()
-        }
+        return true
     }
 
     override fun getParent(): VirtualFile? {
-        return if (path.parent == null) {
-            null
-        } else {
-            RemoteVirtualFile(path.parent, fs)
-        }
+        return fs.getParent(this)
     }
 
     override fun getChildren(): Array<VirtualFile> {
-        return path.directoryStreamIfExists { it.map { RemoteVirtualFile(it, fs) } }?.toTypedArray() ?: emptyArray()
+        return fs.getChildren(this)
     }
 
     override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): OutputStream {
-        return Files.newOutputStream(path)
+        return fs.fileOutputStream(this)
     }
 
     override fun contentsToByteArray(): ByteArray {
-        return Files.readAllBytes(path)
+        return fs.fileInputStream(this).readAllBytes()
     }
 
     override fun getTimeStamp(): Long {
-        try {
-            lock.lock()
-            return path.lastModified().toMillis()
-        } finally {
-            lock.unlock()
-        }
+        return remoteFile.attributes.mtime
     }
 
     override fun getLength(): Long {
-        try {
-            lock.lock()
-            return Files.size(path)
-        } finally {
-            lock.unlock()
-        }
+        return remoteFile.attributes.size
     }
 
     override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {
@@ -108,21 +64,10 @@ class RemoteVirtualFile(
     }
 
     override fun getInputStream(): InputStream {
-        try {
-            lock.lock()
-            return Files.newInputStream(path)
-        } finally {
-            lock.unlock()
-        }
+        return fs.fileInputStream(this)
     }
 
-
     override fun getModificationStamp(): Long {
-        try {
-            lock.lock()
-            return path.lastModified().toMillis()
-        } finally {
-            lock.unlock()
-        }
+        return remoteFile.attributes.mtime
     }
 }
