@@ -11,10 +11,8 @@ class SftpClient {
 
     }
 
-    companion object {
 
-        fun checkAndConnect() {
+    fun tryConnect(host: String, ) {
 
-        }
     }
 }

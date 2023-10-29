@@ -15,18 +15,19 @@ import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import kotlinx.coroutines.*
 import java.util.concurrent.ThreadLocalRandom
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 
 class ConnectionConfigurationDialog(project: Project) : DialogWrapper(project) {
+    private val DEFAULT_PORT = 22
 
-    private val hostField = ExtendableTextField(30)
-    private val usernameField = JBTextField(30)
+    private val hostField = ExtendableTextField(COLUMNS_SHORT)
+    private val usernameField = JBTextField(COLUMNS_SHORT)
     private val passwordField = JBPasswordField()
+
 
     private val loadingExtension = ExtendableTextComponent.Extension { AnimatedIcon.Default.INSTANCE }
 
@@ -36,31 +37,42 @@ class ConnectionConfigurationDialog(project: Project) : DialogWrapper(project) {
     private var accessError: ValidationInfo? = null
 
     init {
+        passwordField.columns = COLUMNS_SHORT
         title = FileViewerBundle.message("connection.configuration.dialog.name")
         init()
     }
 
+    var port: Int = DEFAULT_PORT
     val host: String get() = hostField.text.orEmpty().trim()
     val username: String get() = usernameField.text.orEmpty().trim()
     val password: CharArray get() = passwordField.password
+    lateinit var portField: JBTextField
 
 
     override fun createCenterPanel(): JComponent = panel {
-        row(FileViewerBundle.message("connection.configuration.dialog.host")) {
+        row {
+            label(FileViewerBundle.message("connection.configuration.dialog.host"))
+                .widthGroup("CredentialsLabel")
             cell(hostField)
-                .align(AlignX.FILL)
                 .validationOnApply { checkHostNotBlank() ?: accessError }
                 .applyToComponent { clearUrlAccessErrorOnTextChanged() }
                 .focused()
+
+            label("Port:")
+            portField = intTextField(0..65536)
+                .bindIntText(::port)
+                .text("22").component
         }
-        row(FileViewerBundle.message("connection.configuration.dialog.username")) {
+        row {
+            label(FileViewerBundle.message("connection.configuration.dialog.username"))
+                .widthGroup("CredentialsLabel")
             cell(usernameField)
-                .align(AlignX.FILL)
-                .validationOnApply { checkNameNotBlank() }
+                .validationOnApply { checkUsernameNotBlank() }
         }
-        row(FileViewerBundle.message("connection.configuration.dialog.password")) {
+        row {
+            label(FileViewerBundle.message("connection.configuration.dialog.password"))
+                .widthGroup("CredentialsLabel")
             cell(passwordField)
-                .align(AlignX.FILL)
         }
     }
 
@@ -82,6 +94,8 @@ class ConnectionConfigurationDialog(project: Project) : DialogWrapper(project) {
     }
 
     private fun setLoading(isLoading: Boolean) {
+        portField.isEnabled = !isLoading
+        hostField.isEnabled = !isLoading
         usernameField.isEnabled = !isLoading
         passwordField.isEnabled = !isLoading
 
@@ -98,7 +112,7 @@ class ConnectionConfigurationDialog(project: Project) : DialogWrapper(project) {
             hostField
         )
 
-    private fun checkNameNotBlank(): ValidationInfo? =
+    private fun checkUsernameNotBlank(): ValidationInfo? =
         if (username.isNotEmpty()) null
         else ValidationInfo(
             FileViewerBundle.message("connection.configuration.dialog.username.empty.validation"),
