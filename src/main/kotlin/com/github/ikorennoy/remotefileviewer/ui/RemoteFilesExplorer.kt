@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.ui
 
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
+import com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem
 import com.github.ikorennoy.remotefileviewer.template.FileViewerBundle
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
@@ -9,11 +9,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
 import com.intellij.openapi.fileChooser.impl.FileComparator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.ui.getTreePath
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
@@ -30,10 +28,15 @@ class RemoteFilesExplorer(
         private val project: Project
 ) : SimpleToolWindowPanel(true, true), Disposable {
 
+
     init {
         toolbar = createToolbarPanel()
         setContent(ScrollPaneFactory.createScrollPane())
+    }
 
+    private fun showPasswordDialog() {
+        val dialog = ConnectionConfigurationDialog(project)
+        dialog.show()
     }
 
     private fun createToolbarPanel(): JPanel {
@@ -42,7 +45,7 @@ class RemoteFilesExplorer(
                 FileViewerBundle.messagePointer("add.new.connection.action.description"),
                 IconUtil.getAddIcon()) {
             override fun actionPerformed(e: AnActionEvent) {
-                drawTree()
+                showPasswordDialog()
             }
         })
 
@@ -59,7 +62,7 @@ class RemoteFilesExplorer(
 
     private fun drawTree() {
         val descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor()
-        val fs = RemoteFileSystem()
+        val fs = SftpFileSystem()
         descriptor.setRoots(fs.root)
         descriptor.withTreeRootVisible(true)
         val treeStr = RemoteFileTreeStructure(project, descriptor)

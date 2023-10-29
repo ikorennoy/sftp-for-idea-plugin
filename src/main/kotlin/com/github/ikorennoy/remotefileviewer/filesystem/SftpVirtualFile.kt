@@ -8,12 +8,14 @@ import net.schmizz.sshj.xfer.FilePermission
 import java.io.InputStream
 import java.io.OutputStream
 
-class RemoteVirtualFile(
+class SftpVirtualFile(
         val remoteFile: RemoteResourceInfo,
-        private val fs: RemoteFileSystem,
+        private val fs: SftpFileSystem,
 ) : VirtualFile() {
 
     override fun getName(): String = remoteFile.name
+
+
 
     override fun getFileSystem(): VirtualFileSystem {
         return fs
@@ -48,7 +50,7 @@ class RemoteVirtualFile(
     }
 
     override fun contentsToByteArray(): ByteArray {
-        return fs.fileInputStream(this).readAllBytes()
+        return fs.fileInputStream(this).use { it.readAllBytes() }
     }
 
     override fun getTimeStamp(): Long {

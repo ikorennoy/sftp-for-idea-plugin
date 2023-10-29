@@ -1,5 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.filesystem
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileSystem
@@ -9,15 +11,16 @@ import net.schmizz.sshj.sftp.*
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.nio.file.Files
 import javax.naming.OperationNotSupportedException
 
 private const val PROTOCOL = "remoteFileSysSftp"
 
-class RemoteFileSystem : VirtualFileSystem() {
+class SftpFileSystem : VirtualFileSystem() {
 
-    val root: RemoteVirtualFile
-    val sftp: SFTPClient
+    val root: SftpVirtualFile
+    private val sftp: SFTPClient
+
+    private val openFileCache: LoadingCache<String, RemoteFile>
 
     init {
         val client = SSHClient()
@@ -28,20 +31,23 @@ class RemoteFileSystem : VirtualFileSystem() {
 
         root = sftp.open("/").convert()
         sftp.sftpEngine.timeoutMs = 5000
+        openFileCache = Caffeine.newBuilder()
+                .maximumSize(1000)
+                .build { k -> sftp.open(k, setOf(OpenMode.WRITE, OpenMode.READ)) }
     }
 
-    fun getChildren(file: RemoteVirtualFile): Array<VirtualFile> {
+    fun getChildren(file: SftpVirtualFile): Array<VirtualFile> {
         return sftp.ls(file.path).map {
-            RemoteVirtualFile(it, this)
+            SftpVirtualFile(it, this)
         }.toTypedArray()
     }
 
-    fun getParent(file: RemoteVirtualFile): VirtualFile? {
+    fun getParent(file: SftpVirtualFile): VirtualFile? {
         val parent = PathUtil.getParentPath(file.path)
         return if (parent == "") {
             null
         } else {
-            RemoteVirtualFile(RemoteResourceInfo(getComponents(parent), sftp.stat(parent)), this)
+            SftpVirtualFile(RemoteResourceInfo(getComponents(parent), sftp.stat(parent)), this)
         }
     }
 
@@ -49,7 +55,7 @@ class RemoteFileSystem : VirtualFileSystem() {
 
     override fun findFileByPath(path: String): VirtualFile {
         try {
-            return RemoteVirtualFile(RemoteResourceInfo(getComponents(path), sftp.stat(path)), this)
+            return SftpVirtualFile(RemoteResourceInfo(getComponents(path), sftp.stat(path)), this)
         } catch (ex: IOException) {
             println("Can't find file: $path")
             throw ex
@@ -100,16 +106,16 @@ class RemoteFileSystem : VirtualFileSystem() {
         return false
     }
 
-    fun fileOutputStream(remoteVirtualFile: RemoteVirtualFile): OutputStream {
-        return sftp.open(remoteVirtualFile.path, setOf(OpenMode.WRITE)).RemoteFileOutputStream()
+    fun fileOutputStream(sftpVirtualFile: SftpVirtualFile): OutputStream {
+        return sftp.open(sftpVirtualFile.path, setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)).RemoteFileOutputStream()
     }
 
-    fun fileInputStream(remoteVirtualFile: RemoteVirtualFile): InputStream {
-        return sftp.open(remoteVirtualFile.path).RemoteFileInputStream()
+    fun fileInputStream(sftpVirtualFile: SftpVirtualFile): InputStream {
+        return openFileCache.get(sftpVirtualFile.path).RemoteFileInputStream()
     }
 
-    private fun RemoteFile.convert(): RemoteVirtualFile {
-        return RemoteVirtualFile(RemoteResourceInfo(sftp.sftpEngine.pathHelper.getComponents(path), fetchAttributes()), this@RemoteFileSystem)
+    private fun RemoteFile.convert(): SftpVirtualFile {
+        return SftpVirtualFile(RemoteResourceInfo(sftp.sftpEngine.pathHelper.getComponents(path), fetchAttributes()), this@SftpFileSystem)
     }
 
     private fun getComponents(path: String): PathComponents {
