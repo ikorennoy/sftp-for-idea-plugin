@@ -9,8 +9,8 @@ import java.io.InputStream
 import java.io.OutputStream
 
 class SftpVirtualFile(
-        val remoteFile: RemoteResourceInfo,
-        private val fs: SftpFileSystem,
+    private val remoteFile: RemoteResourceInfo,
+    private val fs: SftpFileSystem,
 ) : VirtualFile() {
 
     override fun getName(): String = remoteFile.name

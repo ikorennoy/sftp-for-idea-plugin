@@ -13,6 +13,7 @@ import com.intellij.openapi.fileChooser.impl.FileComparator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
@@ -73,6 +74,7 @@ class RemoteFilesExplorer(
         val asyncModel = AsyncTreeModel(structureModel, this)
         val tree = Tree(asyncModel)
         TreeUtil.installActions(tree)
+        TreeUIHelper.getInstance().installTreeSpeedSearch(tree)
         ToolTipManager.sharedInstance().registerComponent(tree)
         EditSourceOnDoubleClickHandler.install(tree)
         EditSourceOnEnterKeyHandler.install(tree)
