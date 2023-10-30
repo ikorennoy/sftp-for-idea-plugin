@@ -2,10 +2,15 @@ package com.github.ikorennoy.remotefileviewer.filesystem
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSystem
+import com.intellij.openapi.vfs.ex.http.HttpFileSystem
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.util.PathUtil
+import com.intellij.util.io.URLUtil
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.*
 import net.schmizz.sshj.userauth.UserAuthException
@@ -18,11 +23,11 @@ import javax.naming.OperationNotSupportedException
 
 class SftpFileSystem : VirtualFileSystem() {
 
-    private val PROTOCOL = "remoteFileSysSftp"
-
     private val client = SSHClient()
     lateinit var root: VirtualFile
     private lateinit var sftp: SFTPClient
+
+    private val topic = ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES)
 
     private val openFileCache: LoadingCache<String, RemoteFile> = Caffeine.newBuilder()
             .maximumSize(1000)
@@ -34,12 +39,16 @@ class SftpFileSystem : VirtualFileSystem() {
         }.toTypedArray()
     }
 
+    fun exists(file: VirtualFile): Boolean {
+        return sftp.statExistence(file.path) != null
+    }
+
     fun getParent(file: SftpVirtualFile): VirtualFile? {
-        val parent = PathUtil.getParentPath(file.path)
-        return if (parent == "") {
+        val components = getComponents(file.path)
+        return if (components.parent == "") {
             null
         } else {
-            SftpVirtualFile(RemoteResourceInfo(getComponents(parent), sftp.stat(parent)), this)
+            SftpVirtualFile(RemoteResourceInfo(getComponents(components.parent), sftp.stat(components.parent)), this)
         }
     }
 
@@ -69,7 +78,12 @@ class SftpFileSystem : VirtualFileSystem() {
     }
 
     override fun deleteFile(requestor: Any?, vFile: VirtualFile) {
-        sftp.rm(vFile.path)
+        val event = listOf(VFileDeleteEvent(requestor, vFile, false))
+        if (vFile.isWritable) {
+            topic.before(event)
+            sftp.rm(vFile.path)
+            topic.after(event)
+        }
     }
 
     override fun moveFile(requestor: Any?, vFile: VirtualFile, newParent: VirtualFile) {
@@ -133,6 +147,14 @@ class SftpFileSystem : VirtualFileSystem() {
 
     fun isReady(): Boolean {
         return client.isConnected && client.isAuthenticated
+    }
+
+    companion object {
+        const val PROTOCOL = "remoteFileSysSftp"
+
+        fun getInstance(): SftpFileSystem {
+            return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as SftpFileSystem
+        }
     }
 }
 

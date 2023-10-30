@@ -6,35 +6,27 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.fileChooser.impl.FileComparator
+import com.intellij.openapi.fileChooser.FileSystemTree
+import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.TreeUIHelper
-import com.intellij.ui.tree.AsyncTreeModel
-import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JPanel
-import javax.swing.ToolTipManager
+import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
+
 
 class RemoteFileSystemPanel(
     private val project: Project
 ) : SimpleToolWindowPanel(true, true), Disposable {
 
-    internal val REMOTE_FS_KEY: DataKey<RemoteFileSystemPanel> = DataKey.create("remote.file.system.api")
 
-    private val fs = SftpFileSystem()
-
-    private lateinit var fileChooserDescriptor: FileChooserDescriptor
-    private lateinit var treeStructure: RemoteFileTreeStructure
-    private lateinit var treeModel: StructureTreeModel<RemoteFileTreeStructure>
-    private lateinit var tree: Tree
+    lateinit var tree: FileSystemTreeImpl
 
     init {
         toolbar = createToolbarPanel()
@@ -46,27 +38,45 @@ class RemoteFileSystemPanel(
     }
 
     private fun showConnectionDialog() {
+        val fs = SftpFileSystem.getInstance()
         val dialog = ConnectionConfigurationDialog(project, fs)
         if (dialog.showAndGet() && fs.isReady()) {
-            drawTree()
+            drawTree(fs)
         }
     }
 
-    private fun drawTree() {
-        fileChooserDescriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor()
+    private fun drawTree(fs: SftpFileSystem) {
+        val fileChooserDescriptor: FileChooserDescriptor =
+            FileChooserDescriptorFactory.createAllButJarContentsDescriptor()
         fileChooserDescriptor.setRoots(fs.root)
         fileChooserDescriptor.withTreeRootVisible(true)
-        treeStructure = RemoteFileTreeStructure(project, fileChooserDescriptor)
-        treeModel = StructureTreeModel(treeStructure, FileComparator.getInstance(), this)
-        tree = Tree(AsyncTreeModel(treeModel, this))
-        TreeUtil.installActions(tree)
-        TreeUIHelper.getInstance().installTreeSpeedSearch(tree)
-        ToolTipManager.sharedInstance().registerComponent(tree)
-        EditSourceOnDoubleClickHandler.install(tree)
-        EditSourceOnEnterKeyHandler.install(tree)
-        tree.isRootVisible = true
-        addDataProvider(RemoteFileSystemDataProvider(this))
-        setContent(ScrollPaneFactory.createScrollPane(tree))
+        tree = FileSystemTreeImpl(project, fileChooserDescriptor)
+        tree.registerMouseListener(createActionGroup())
+        tree.addOkAction {
+            val selectedFiles = tree.selectedFiles
+            for (file in selectedFiles) {
+                FileEditorManager.getInstance(project).openFile(file, true)
+            }
+        }
+        addDataProvider(MyDataProvider(tree))
+        setContent(ScrollPaneFactory.createScrollPane(tree.tree))
+    }
+
+    private fun registerTreeActionShortcut(actionId: String) {
+        val tree: JTree = tree.tree
+        val action = ActionManager.getInstance().getAction(actionId)
+        action.registerCustomShortcutSet(action.shortcutSet, tree, this)
+    }
+
+    private fun createActionGroup(): DefaultActionGroup {
+        registerTreeActionShortcut("FileChooser.Delete")
+        registerTreeActionShortcut("FileChooser.Refresh")
+        val group = DefaultActionGroup()
+        for (action in (ActionManager.getInstance()
+            .getAction("FileChooserToolbar") as DefaultActionGroup).getChildActionsOrStubs()) {
+            group.addAction(action)
+        }
+        return group
     }
 
     private fun createToolbarPanel(): JPanel {
@@ -90,10 +100,14 @@ class RemoteFileSystemPanel(
 
     }
 
-    private class RemoteFileSystemDataProvider(private val panel: RemoteFileSystemPanel): DataProvider {
+    private class MyDataProvider(private val fsTree: FileSystemTree) : DataProvider {
         override fun getData(dataId: String): Any? {
-            return if (panel.REMOTE_FS_KEY.`is`(dataId)) {
-                panel
+            return if (FileSystemTree.DATA_KEY.`is`(dataId)) {
+                fsTree
+            } else if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) {
+                fsTree.selectedFile
+            } else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId)) {
+                fsTree.selectedFiles
             } else {
                 null
             }

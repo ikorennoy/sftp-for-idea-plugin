@@ -18,14 +18,19 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.ikorennoy.remotefileviewer.ui.FileViewerWindowsFactory" id="Remote Files" anchor="right"/>
-<!--        <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem" key="remoteFileSysSftp" physical="true"/>-->
+        <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem" key="remoteFileSysSftp" physical="true"/>
 <!--        <applicationService serviceInterface="com.github.ikorennoy.remotefileviewer.sftp.SftpClient"-->
 <!--                            serviceImplementation="com.github.ikorennoy.remotefileviewer.sftp.SftpClientImpl"/>-->
     </extensions>
-    
 
-<!--    <applicationListeners>-->
-<!--        <listener class="org.jetbrains.plugins.template.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>-->
-<!--    </applicationListeners>-->
 
+    <actions>
+        <group id="RemoteFileSystemPopup">
+            <action id="RemoteFileSystem.Create" class="com.github.ikorennoy.remotefileviewer.actions.CreateFileAction"
+                    icon="AllIcons.Actions.AddFile"/>
+            <action id="RemoteFileSystem.Remove" class="com.github.ikorennoy.remotefileviewer.actions.DeleteFileAction"
+                    icon="AllIcons.Actions.Cancel" use-shortcut-of="$Delete"/>
+        </group>
+
+    </actions>
 </idea-plugin>
