@@ -71,11 +71,12 @@ class RemoteFileSystemPanel(
     private fun createActionGroup(): DefaultActionGroup {
         registerTreeActionShortcut("FileChooser.Delete")
         registerTreeActionShortcut("FileChooser.Refresh")
+        registerTreeActionShortcut("RemoteFileSystem.NewFileAction")
         val group = DefaultActionGroup()
-        for (action in (ActionManager.getInstance()
-            .getAction("FileChooserToolbar") as DefaultActionGroup).getChildActionsOrStubs()) {
+        for (action in (ActionManager.getInstance().getAction("FileChooserToolbar") as DefaultActionGroup).getChildActionsOrStubs()) {
             group.addAction(action)
         }
+        group.add(ActionManager.getInstance().getAction("RemoteFileSystem.NewFileAction"))
         return group
     }
 

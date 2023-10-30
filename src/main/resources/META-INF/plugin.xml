@@ -3,7 +3,7 @@
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>com.github.ikorennoy.remote-file-viewer</id>
 
-     <name>Remote File Viewer</name>
+    <name>Remote File Viewer</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor email="korennoy.ilya@gmail.com">Ilya Korennoy</vendor>
@@ -17,10 +17,12 @@
     <resource-bundle>messages.RemoteFileViewer</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.ikorennoy.remotefileviewer.ui.FileViewerWindowsFactory" id="Remote Files" anchor="right"/>
-        <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem" key="remoteFileSysSftp" physical="true"/>
-<!--        <applicationService serviceInterface="com.github.ikorennoy.remotefileviewer.sftp.SftpClient"-->
-<!--                            serviceImplementation="com.github.ikorennoy.remotefileviewer.sftp.SftpClientImpl"/>-->
+        <toolWindow factoryClass="com.github.ikorennoy.remotefileviewer.ui.FileViewerWindowsFactory" id="Remote Files"
+                    anchor="right"/>
+        <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem"
+                           key="remoteFileSysSftp" physical="true"/>
+        <!--        <applicationService serviceInterface="com.github.ikorennoy.remotefileviewer.sftp.SftpClient"-->
+        <!--                            serviceImplementation="com.github.ikorennoy.remotefileviewer.sftp.SftpClientImpl"/>-->
     </extensions>
 
 
@@ -31,6 +33,8 @@
             <action id="RemoteFileSystem.Remove" class="com.github.ikorennoy.remotefileviewer.actions.DeleteFileAction"
                     icon="AllIcons.Actions.Cancel" use-shortcut-of="$Delete"/>
         </group>
+        <action id="RemoteFileSystem.NewFileAction"
+                class="com.github.ikorennoy.remotefileviewer.actions.NewFileAction"/>
 
     </actions>
 </idea-plugin>
