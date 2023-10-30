@@ -8,7 +8,10 @@ import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
 import net.schmizz.sshj.SSHClient
@@ -30,8 +33,8 @@ class SftpFileSystem : VirtualFileSystem() {
     private val topic = ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES)
 
     private val openFileCache: LoadingCache<String, RemoteFile> = Caffeine.newBuilder()
-            .maximumSize(1000)
-            .build { k -> sftp.open(k, setOf(OpenMode.WRITE, OpenMode.READ)) }
+        .maximumSize(1000)
+        .build { k -> sftp.open(k, setOf(OpenMode.WRITE, OpenMode.READ)) }
 
     fun getChildren(file: SftpVirtualFile): Array<VirtualFile> {
         return sftp.ls(file.path).map {
@@ -81,21 +84,36 @@ class SftpFileSystem : VirtualFileSystem() {
         val event = listOf(VFileDeleteEvent(requestor, vFile, false))
         if (vFile.isWritable) {
             topic.before(event)
-            sftp.rm(vFile.path)
+            if (vFile.isDirectory) {
+                sftp.rmdir(vFile.path)
+            } else {
+                sftp.rm(vFile.path)
+            }
             topic.after(event)
         }
     }
 
     override fun moveFile(requestor: Any?, vFile: VirtualFile, newParent: VirtualFile) {
+        val moveEvent = listOf(VFileMoveEvent(requestor, vFile, newParent))
+        topic.before(moveEvent)
         sftp.rename(vFile.path, newParent.path)
+        topic.after(moveEvent)
     }
 
     override fun renameFile(requestor: Any?, vFile: VirtualFile, newName: String) {
+        val event =
+            listOf(VFilePropertyChangeEvent(requestor, vFile, VirtualFile.PROP_NAME, vFile.name, newName, false))
+        topic.before(event)
         sftp.rename(vFile.path, newName)
+        topic.after(event)
     }
 
     override fun createChildFile(requestor: Any?, vDir: VirtualFile, fileName: String): VirtualFile {
-        return sftp.open(vDir.path + "/" + fileName, setOf(OpenMode.CREAT)).convert()
+        val event = listOf(VFileCreateEvent(requestor, vDir, fileName, false, null, null, false, emptyArray()))
+        topic.before(event)
+        val result = sftp.open(vDir.path + "/" + fileName, setOf(OpenMode.CREAT)).convert()
+        topic.after(event)
+        return result
     }
 
     override fun createChildDirectory(requestor: Any?, vDir: VirtualFile, dirName: String): VirtualFile {
@@ -104,7 +122,12 @@ class SftpFileSystem : VirtualFileSystem() {
         return sftp.open(dirPath).convert()
     }
 
-    override fun copyFile(requestor: Any?, virtualFile: VirtualFile, newParent: VirtualFile, copyName: String): VirtualFile {
+    override fun copyFile(
+        requestor: Any?,
+        virtualFile: VirtualFile,
+        newParent: VirtualFile,
+        copyName: String
+    ): VirtualFile {
         throw OperationNotSupportedException("copy")
     }
 
@@ -113,7 +136,8 @@ class SftpFileSystem : VirtualFileSystem() {
     }
 
     fun fileOutputStream(sftpVirtualFile: SftpVirtualFile): OutputStream {
-        return sftp.open(sftpVirtualFile.path, setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)).RemoteFileOutputStream()
+        return sftp.open(sftpVirtualFile.path, setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC))
+            .RemoteFileOutputStream()
     }
 
     fun fileInputStream(sftpVirtualFile: SftpVirtualFile): InputStream {
@@ -121,7 +145,10 @@ class SftpFileSystem : VirtualFileSystem() {
     }
 
     private fun RemoteFile.convert(): SftpVirtualFile {
-        return SftpVirtualFile(RemoteResourceInfo(sftp.sftpEngine.pathHelper.getComponents(path), fetchAttributes()), this@SftpFileSystem)
+        return SftpVirtualFile(
+            RemoteResourceInfo(sftp.sftpEngine.pathHelper.getComponents(path), fetchAttributes()),
+            this@SftpFileSystem
+        )
     }
 
     private fun getComponents(path: String): PathComponents {
@@ -164,8 +191,8 @@ sealed interface RequestResult {
 
 class CannotFindHost(override val message: String) : RequestResult
 
-class UsernameOrPassword(override val message: String): RequestResult
+class UsernameOrPassword(override val message: String) : RequestResult
 
-class UnknownRequestError(override val message: String): RequestResult
+class UnknownRequestError(override val message: String) : RequestResult
 
 class Ok(override val message: String = "Ok") : RequestResult
