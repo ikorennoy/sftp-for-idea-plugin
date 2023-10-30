@@ -3,7 +3,6 @@ package com.github.ikorennoy.remotefileviewer.ui
 import com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.fileChooser.FileElement
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
