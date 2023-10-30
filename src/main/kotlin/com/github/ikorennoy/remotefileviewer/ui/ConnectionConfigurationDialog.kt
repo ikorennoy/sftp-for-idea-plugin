@@ -25,6 +25,8 @@ import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 
 class ConnectionConfigurationDialog(project: Project, private val remoteFs: SftpFileSystem) : DialogWrapper(project) {
+
+
     private val DEFAULT_PORT = 22
 
     private val hostField = ExtendableTextField(COLUMNS_SHORT)

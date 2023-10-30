@@ -1,17 +1,17 @@
 package com.github.ikorennoy.remotefileviewer.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileChooser.FileSystemTree
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.UIBundle
 
-class NewFileAction : AnAction({ "New File" }, AllIcons.Actions.New) {
+class NewFileAction : AnAction(ActionsBundle.messagePointer("action.FileChooser.NewFile.text"), AllIcons.FileTypes.AddAny) {
 
     override fun getActionUpdateThread(): ActionUpdateThread {
         return ActionUpdateThread.BGT

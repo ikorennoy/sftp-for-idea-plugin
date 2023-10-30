@@ -11,9 +11,9 @@ import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
@@ -52,6 +52,7 @@ class RemoteFileSystemPanel(
         fileChooserDescriptor.withTreeRootVisible(true)
         tree = FileSystemTreeImpl(project, fileChooserDescriptor)
         tree.registerMouseListener(createActionGroup())
+        EditSourceOnDoubleClickHandler.install(tree.tree)
         tree.addOkAction {
             val selectedFiles = tree.selectedFiles
             for (file in selectedFiles) {
@@ -73,7 +74,8 @@ class RemoteFileSystemPanel(
         registerTreeActionShortcut("FileChooser.Refresh")
         registerTreeActionShortcut("RemoteFileSystem.NewFileAction")
         val group = DefaultActionGroup()
-        for (action in (ActionManager.getInstance().getAction("FileChooserToolbar") as DefaultActionGroup).getChildActionsOrStubs()) {
+        for (action in (ActionManager.getInstance()
+            .getAction("FileChooserToolbar") as DefaultActionGroup).getChildActionsOrStubs()) {
             group.addAction(action)
         }
         group.add(ActionManager.getInstance().getAction("RemoteFileSystem.NewFileAction"))
