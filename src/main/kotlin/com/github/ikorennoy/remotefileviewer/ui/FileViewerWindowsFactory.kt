@@ -8,6 +8,7 @@ import com.intellij.ui.content.ContentFactory
 
 class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
 
+
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val myToolWindow = RemoteFilesExplorer(project)
         val content = ContentFactory.getInstance().createContent(myToolWindow, null, false)

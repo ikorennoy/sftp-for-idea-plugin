@@ -1,5 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.ui
 
+import com.github.ikorennoy.remotefileviewer.filesystem.*
 import com.github.ikorennoy.remotefileviewer.template.FileViewerBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -15,13 +16,15 @@ import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.COLUMNS_SHORT
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.text
 import kotlinx.coroutines.*
-import java.util.concurrent.ThreadLocalRandom
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 
-class ConnectionConfigurationDialog(project: Project) : DialogWrapper(project) {
+class ConnectionConfigurationDialog(project: Project, private val remoteFs: SftpFileSystem) : DialogWrapper(project) {
     private val DEFAULT_PORT = 22
 
     private val hostField = ExtendableTextField(COLUMNS_SHORT)
@@ -44,9 +47,11 @@ class ConnectionConfigurationDialog(project: Project) : DialogWrapper(project) {
 
     var port: Int = DEFAULT_PORT
     val host: String get() = hostField.text.orEmpty().trim()
+    val root: String get() = rootField.text.orEmpty().trim()
     val username: String get() = usernameField.text.orEmpty().trim()
     val password: CharArray get() = passwordField.password
     lateinit var portField: JBTextField
+    lateinit var rootField: JBTextField
 
 
     override fun createCenterPanel(): JComponent = panel {
@@ -58,16 +63,22 @@ class ConnectionConfigurationDialog(project: Project) : DialogWrapper(project) {
                 .applyToComponent { clearUrlAccessErrorOnTextChanged() }
                 .focused()
 
-            label("Port:")
+            label(FileViewerBundle.message("connection.configuration.dialog.port"))
             portField = intTextField(0..65536)
                 .bindIntText(::port)
                 .text("22").component
+        }
+        row {
+            label(FileViewerBundle.message("connection.configuration.dialog.root"))
+                .widthGroup("CredentialsLabel")
+            rootField = textField().component
         }
         row {
             label(FileViewerBundle.message("connection.configuration.dialog.username"))
                 .widthGroup("CredentialsLabel")
             cell(usernameField)
                 .validationOnApply { checkUsernameNotBlank() }
+                .applyToComponent { clearUrlAccessErrorOnTextChanged() }
         }
         row {
             label(FileViewerBundle.message("connection.configuration.dialog.password"))
@@ -87,13 +98,18 @@ class ConnectionConfigurationDialog(project: Project) : DialogWrapper(project) {
             if (accessError == null) {
                 super.doOKAction()
             } else {
-                IdeFocusManager.getGlobalInstance().requestFocus(hostField, true)
+                if (hostField == accessError?.component) {
+                    IdeFocusManager.getGlobalInstance().requestFocus(hostField, true)
+                } else if (usernameField == accessError?.component) {
+                    IdeFocusManager.getGlobalInstance().requestFocus(usernameField, true)
+                }
                 startTrackingValidation()
             }
         }
     }
 
     private fun setLoading(isLoading: Boolean) {
+        rootField.isEnabled = !isLoading
         portField.isEnabled = !isLoading
         hostField.isEnabled = !isLoading
         usernameField.isEnabled = !isLoading
@@ -120,21 +136,31 @@ class ConnectionConfigurationDialog(project: Project) : DialogWrapper(project) {
         )
 
     private suspend fun checkAccess(): ValidationInfo? {
-        val result = test()
+        return when (val result = testConnection()) {
+            is Ok -> null
+            is CannotFindHost -> ValidationInfo(
+                result.message,
+                hostField
+            ).withOKEnabled()
 
-        if (result) return null
+            is UsernameOrPassword -> ValidationInfo(
+                result.message,
+                usernameField
+            )
 
-        return ValidationInfo(
-            FileViewerBundle.message("connection.configuration.dialog.cannot.connect.validation"),
-            hostField
-        ).withOKEnabled()
+            is UnknownRequestError -> ValidationInfo(
+                result.message,
+                hostField
+            )
+        }
     }
 
-    private suspend fun test(): Boolean {
-        withContext(Dispatchers.IO) {
-            runBlocking { delay(3000) }
+    private suspend fun testConnection(): RequestResult {
+        return withContext(Dispatchers.IO) {
+            runBlocking {
+                remoteFs.init(host, port, root, username, password)
+            }
         }
-        return ThreadLocalRandom.current().nextBoolean()
     }
 
     private fun JBTextField.clearUrlAccessErrorOnTextChanged() =

@@ -8,33 +8,25 @@ import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.util.PathUtil
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.*
+import net.schmizz.sshj.userauth.UserAuthException
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.UnknownHostException
 import javax.naming.OperationNotSupportedException
 
-private const val PROTOCOL = "remoteFileSysSftp"
 
 class SftpFileSystem : VirtualFileSystem() {
 
-    val root: SftpVirtualFile
-    private val sftp: SFTPClient
+    private val PROTOCOL = "remoteFileSysSftp"
 
-    private val openFileCache: LoadingCache<String, RemoteFile>
+    private val client = SSHClient()
+    lateinit var root: VirtualFile
+    private lateinit var sftp: SFTPClient
 
-    init {
-        val client = SSHClient()
-        client.loadKnownHosts()
-        client.connect("localhost")
-        client.authPassword("ik", "")
-        sftp = client.newSFTPClient()
-
-        root = sftp.open("/").convert()
-        sftp.sftpEngine.timeoutMs = 5000
-        openFileCache = Caffeine.newBuilder()
-                .maximumSize(1000)
-                .build { k -> sftp.open(k, setOf(OpenMode.WRITE, OpenMode.READ)) }
-    }
+    private val openFileCache: LoadingCache<String, RemoteFile> = Caffeine.newBuilder()
+            .maximumSize(1000)
+            .build { k -> sftp.open(k, setOf(OpenMode.WRITE, OpenMode.READ)) }
 
     fun getChildren(file: SftpVirtualFile): Array<VirtualFile> {
         return sftp.ls(file.path).map {
@@ -121,4 +113,37 @@ class SftpFileSystem : VirtualFileSystem() {
     private fun getComponents(path: String): PathComponents {
         return sftp.sftpEngine.pathHelper.getComponents(path)
     }
+
+    fun init(host: String, port: Int, root: String, username: String, password: CharArray): RequestResult {
+        return try {
+            client.loadKnownHosts()
+            client.connect(host, port)
+            client.authPassword(username, password)
+            sftp = client.newSFTPClient()
+            this.root = findFileByPath(root)
+            Ok()
+        } catch (ex: UnknownHostException) {
+            CannotFindHost("Cannot connect to the host: '${ex.message}'")
+        } catch (ex: UserAuthException) {
+            UsernameOrPassword("Username or password is incorrect")
+        } catch (ex: IOException) {
+            UnknownRequestError("Unknown error")
+        }
+    }
+
+    fun isReady(): Boolean {
+        return client.isConnected && client.isAuthenticated
+    }
 }
+
+sealed interface RequestResult {
+    val message: String
+}
+
+class CannotFindHost(override val message: String) : RequestResult
+
+class UsernameOrPassword(override val message: String): RequestResult
+
+class UnknownRequestError(override val message: String): RequestResult
+
+class Ok(override val message: String = "Ok") : RequestResult

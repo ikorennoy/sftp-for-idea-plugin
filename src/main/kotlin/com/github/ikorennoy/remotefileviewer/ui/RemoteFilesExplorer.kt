@@ -28,6 +28,7 @@ class RemoteFilesExplorer(
         private val project: Project
 ) : SimpleToolWindowPanel(true, true), Disposable {
 
+    private val fs = SftpFileSystem()
 
     init {
         toolbar = createToolbarPanel()
@@ -35,8 +36,10 @@ class RemoteFilesExplorer(
     }
 
     private fun showPasswordDialog() {
-        val dialog = ConnectionConfigurationDialog(project)
-        dialog.show()
+        val dialog = ConnectionConfigurationDialog(project, fs)
+        if (dialog.showAndGet() && fs.isReady()) {
+            drawTree()
+        }
     }
 
     private fun createToolbarPanel(): JPanel {
@@ -62,14 +65,12 @@ class RemoteFilesExplorer(
 
     private fun drawTree() {
         val descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor()
-        val fs = SftpFileSystem()
+
         descriptor.setRoots(fs.root)
         descriptor.withTreeRootVisible(true)
         val treeStr = RemoteFileTreeStructure(project, descriptor)
         val structureModel = StructureTreeModel(treeStr, FileComparator.getInstance(), this)
         val asyncModel = AsyncTreeModel(structureModel, this)
-
-
         val tree = Tree(asyncModel)
         TreeUtil.installActions(tree)
         ToolTipManager.sharedInstance().registerComponent(tree)
