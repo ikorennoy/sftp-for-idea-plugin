@@ -2,10 +2,10 @@ package com.github.ikorennoy.remotefileviewer.ui
 
 import com.github.ikorennoy.remotefileviewer.filesystem.*
 import com.github.ikorennoy.remotefileviewer.template.FileViewerBundle
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
@@ -22,11 +22,14 @@ import kotlinx.coroutines.*
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 
+private const val HOST_PROPERTY = "REMOTE_FILE_SYSTEM_PLUGIN_HOST"
+private const val PORT_PROPERTY = "REMOTE_FILE_SYSTEM_PLUGIN_PORT"
+private const val USERNAME_PROPERTY = "REMOTE_FILE_SYSTEM_PLUGIN_USERNAME"
+private const val ROOT_PROPERTY = "REMOTE_FILE_SYSTEM_PLUGIN_ROOT"
+
 class ConnectionConfigurationDialog(project: Project, private val remoteFs: SftpFileSystem) : DialogWrapper(project) {
 
-    private val DEFAULT_PORT = 22
-
-    private val sshConfiguration = service<SshConnectionConfiguration>()
+    private val persistentConfiguration = PropertiesComponent.getInstance()
 
     private val hostField = ExtendableTextField(COLUMNS_SHORT)
     private val usernameField = JBTextField(COLUMNS_SHORT)
@@ -35,10 +38,10 @@ class ConnectionConfigurationDialog(project: Project, private val remoteFs: Sftp
     private val rootField: JBTextField = JBTextField(COLUMNS_SHORT)
 
     init {
-        hostField.text = sshConfiguration.host
-        usernameField.text = sshConfiguration.username
-        portField.text = sshConfiguration.port.toString()
-        rootField.text = sshConfiguration.root
+        hostField.text = persistentConfiguration.getValue(HOST_PROPERTY, "")
+        portField.text = persistentConfiguration.getValue(PORT_PROPERTY, "22")
+        usernameField.text = persistentConfiguration.getValue(USERNAME_PROPERTY, "")
+        rootField.text = persistentConfiguration.getValue(ROOT_PROPERTY, "")
     }
 
 
@@ -55,18 +58,16 @@ class ConnectionConfigurationDialog(project: Project, private val remoteFs: Sftp
         init()
     }
 
-    var port: Int = DEFAULT_PORT
-    val host: String get() = sshConfiguration.host
-    val root: String get() = sshConfiguration.root
-    val username: String get() = sshConfiguration.username
+    var port: Int = portField.text.toInt()
+    val host: String get() = hostField.text
+    val root: String get() = rootField.text
+    val username: String get() = usernameField.text
     val password: CharArray get() = passwordField.password
 
 
     override fun getPreferredFocusedComponent(): JComponent {
         return if (hostField.text.isEmpty()) {
             hostField
-        } else if (portField.text.isEmpty()) {
-            portField
         } else if (usernameField.text.isEmpty()) {
             usernameField
         } else {
@@ -128,10 +129,10 @@ class ConnectionConfigurationDialog(project: Project, private val remoteFs: Sftp
     }
 
     private fun saveState() {
-        sshConfiguration.host = hostField.text.trim()
-        sshConfiguration.port = portField.text.toInt()
-        sshConfiguration.root = rootField.text.trim()
-        sshConfiguration.username = usernameField.text.trim()
+        persistentConfiguration.setValue(HOST_PROPERTY, hostField.text.trim())
+        persistentConfiguration.setValue(PORT_PROPERTY, portField.text)
+        persistentConfiguration.setValue(ROOT_PROPERTY, rootField.text.trim())
+        persistentConfiguration.setValue(USERNAME_PROPERTY, usernameField.text.trim())
     }
 
     private fun setLoading(isLoading: Boolean) {
@@ -195,43 +196,4 @@ class ConnectionConfigurationDialog(project: Project, private val remoteFs: Sftp
                 accessError = null
             }
         })
-}
-
-@Service
-@State(name = "SshConnectionConfiguration", storages = [Storage("SshConfiguration.xml")])
-class SshConnectionConfiguration :
-    SimplePersistentStateComponent<SshConnectionConfiguration.SshConnectionConfigurationState>(
-        SshConnectionConfigurationState()
-    ) {
-
-    var host: String
-        get() = state.host ?: ""
-        set(value) {
-            state.host = value
-        }
-
-    var port: Int
-        get() = state.port
-        set(value) {
-            state.port = value
-        }
-
-    var root: String
-        get() = state.root ?: ""
-        set(value) {
-            state.root = value
-        }
-
-    var username: String
-        get() = state.username ?: ""
-        set(value) {
-            state.username = value
-        }
-
-    class SshConnectionConfigurationState : BaseState() {
-        var host by string()
-        var port by property(22)
-        var root by string()
-        var username by string()
-    }
 }

@@ -8,10 +8,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileChooser.FileSystemTree
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.UIBundle
+import org.apache.pdfbox.util.filetypedetector.FileType
 
-class NewFileAction : AnAction(ActionsBundle.messagePointer("action.FileChooser.NewFile.text"), AllIcons.FileTypes.AddAny) {
+class NewFileAction :
+    AnAction(ActionsBundle.messagePointer("action.FileChooser.NewFile.text"), AllIcons.FileTypes.AddAny) {
 
     override fun getActionUpdateThread(): ActionUpdateThread {
         return ActionUpdateThread.BGT
@@ -39,7 +43,11 @@ class NewFileAction : AnAction(ActionsBundle.messagePointer("action.FileChooser.
                 )
                 continue
             }
-            val type = FileTypeManager.getInstance().getFileTypeByFileName(name)
+            var type = FileTypeManager.getInstance().getFileTypeByFileName(name)
+            // we need this because the code in FileSystemTreeImpl for UnknownFileType creates a filename with '.' at the end
+            if (type == UnknownFileType.INSTANCE) {
+                type = PlainTextFileType.INSTANCE
+            }
             val failReason =
                 (fsTree as FileSystemTreeImpl).createNewFile(parent, name, type, null)
             if (failReason != null) {
