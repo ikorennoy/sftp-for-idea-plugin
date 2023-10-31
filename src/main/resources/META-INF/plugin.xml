@@ -40,7 +40,6 @@
         <action id="RemoteFileSystem.NewFileAction"
                 class="com.github.ikorennoy.remotefileviewer.actions.NewFileAction"/>
         <action id="RemoteFileSystem.UploadCurrentFileProjection"
-                class="com.github.ikorennoy.remotefileviewer.actions.UploadCurrentFileProjection"/>
-
+                class="com.github.ikorennoy.remotefileviewer.actions.UploadCurrentFileProjection" use-shortcut-of="SaveAll"/>
     </actions>
 </idea-plugin>

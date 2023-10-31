@@ -17,9 +17,11 @@ class ProjectionFileEditorPanel(
 
     init {
         myLinksPanel.layout = FlowLayout()
+        val saveAction = ActionManager.getInstance().getAction("RemoteFileSystem.UploadCurrentFileProjection")
+        saveAction.registerCustomShortcutSet(ActionManager.getInstance().getAction("SaveAll").shortcutSet, editor.component)
         myLinksPanel.add(
             createButton(
-                ActionManager.getInstance().getAction("RemoteFileSystem.UploadCurrentFileProjection")
+                saveAction
             )
         )
     }

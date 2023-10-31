@@ -3,14 +3,21 @@ package com.github.ikorennoy.remotefileviewer.actions
 import com.github.ikorennoy.remotefileviewer.remoteEdit.FileProjectionStateService
 import com.github.ikorennoy.remotefileviewer.remoteEdit.LocalVirtualFile
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 
 class UploadCurrentFileProjection : DumbAwareAction({ "Upload Current Remote File" }, AllIcons.Actions.MenuSaveall) {
+
+    init {
+        val set = ActionManager.getInstance().getAction("SaveAll").shortcutSet
+        println(set)
+    }
 
     override fun getActionUpdateThread(): ActionUpdateThread {
         return ActionUpdateThread.BGT
