@@ -20,13 +20,11 @@ import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
 
-
 class RemoteFileSystemPanel(
     private val project: Project
 ) : SimpleToolWindowPanel(true, true), Disposable {
 
-
-    lateinit var tree: FileSystemTreeImpl
+    private lateinit var tree: FileSystemTreeImpl
 
     init {
         toolbar = createToolbarPanel()
@@ -58,23 +56,33 @@ class RemoteFileSystemPanel(
         setContent(ScrollPaneFactory.createScrollPane(tree.tree))
     }
 
-    private fun registerTreeActionShortcut(actionId: String) {
-        val tree: JTree = tree.tree
-        val action = ActionManager.getInstance().getAction(actionId)
-        action.registerCustomShortcutSet(action.shortcutSet, tree, this)
+    private fun createActionGroup(): DefaultActionGroup {
+        val showCreate = ActionManager.getInstance().getAction("RemoteFileSystem.ShowCreate")
+        val newFolder = ActionManager.getInstance().getAction("FileChooser.NewFolder")
+        val delete = ActionManager.getInstance().getAction("FileChooser.Delete")
+//        val refresh = ActionManager.getInstance().getAction("FileChooser.Refresh")
+
+        registerTreeActionShortcut(showCreate, newFolder.shortcutSet)
+        registerTreeActionShortcut(delete)
+
+//        registerTreeActionShortcut(refresh)
+
+        val group = DefaultActionGroup()
+        group.add(showCreate)
+        group.addSeparator()
+        group.add(delete)
+        group.addSeparator()
+//        group.add(refresh)
+        return group
     }
 
-    private fun createActionGroup(): DefaultActionGroup {
-        registerTreeActionShortcut("FileChooser.Delete")
-        registerTreeActionShortcut("FileChooser.Refresh")
-        registerTreeActionShortcut("RemoteFileSystem.NewFileAction")
-        val group = DefaultActionGroup()
-        for (action in (ActionManager.getInstance()
-            .getAction("FileChooserToolbar") as DefaultActionGroup).getChildActionsOrStubs()) {
-            group.addAction(action)
-        }
-        group.add(ActionManager.getInstance().getAction("RemoteFileSystem.NewFileAction"))
-        return group
+    private fun registerTreeActionShortcut(action: AnAction, shortcutSet: ShortcutSet = action.shortcutSet) {
+        val tree: JTree = tree.tree
+        action.registerCustomShortcutSet(shortcutSet, tree, this)
+    }
+
+    private fun createNewActionGroup() {
+
     }
 
     private fun createToolbarPanel(): JPanel {

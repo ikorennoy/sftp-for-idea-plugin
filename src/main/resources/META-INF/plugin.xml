@@ -24,18 +24,15 @@
         <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.remoteEdit.LocalFileSystem"
                            key="remoteFileViewerLocalFs" physical="false"/>
 
-        <editorNotificationProvider
-                implementation="com.github.ikorennoy.remotefileviewer.remoteEdit.ProjectionFileEditorPanelProvider"/>
+<!--        <editorNotificationProvider-->
+<!--                implementation="com.github.ikorennoy.remotefileviewer.remoteEdit.ProjectionFileEditorPanelProvider"/>-->
 
     </extensions>
 
 
     <actions>
         <group id="RemoteFileSystemPopup">
-            <action id="RemoteFileSystem.Create" class="com.github.ikorennoy.remotefileviewer.actions.CreateFileAction"
-                    icon="AllIcons.Actions.AddFile"/>
-            <action id="RemoteFileSystem.Remove" class="com.github.ikorennoy.remotefileviewer.actions.DeleteFileAction"
-                    icon="AllIcons.Actions.Cancel" use-shortcut-of="$Delete"/>
+            <action id="RemoteFileSystem.ShowCreate" class="com.github.ikorennoy.remotefileviewer.actions.ShowCreateAction"/>
         </group>
         <action id="RemoteFileSystem.NewFileAction"
                 class="com.github.ikorennoy.remotefileviewer.actions.NewFileAction"/>
