@@ -19,7 +19,6 @@ import java.net.UnknownHostException
 import javax.naming.OperationNotSupportedException
 import kotlin.math.min
 
-
 class SftpFileSystem : VirtualFileSystem() {
 
     private val client = SSHClient()
