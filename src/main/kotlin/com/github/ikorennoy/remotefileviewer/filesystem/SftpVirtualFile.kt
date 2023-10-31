@@ -14,8 +14,6 @@ class SftpVirtualFile(
     private val fs: SftpFileSystem,
 ) : VirtualFile() {
 
-
-
     override fun getName(): String = remoteFile.name
 
     override fun getFileSystem(): VirtualFileSystem {

@@ -21,6 +21,10 @@
                     anchor="right"/>
         <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem"
                            key="remoteFileSysSftp" physical="true"/>
+        <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.remoteEdit.LocalFileSystem"
+                           key="remoteFileViewerLocalFs" physical="false"/>
+
+
         <!--        <applicationService serviceInterface="com.github.ikorennoy.remotefileviewer.sftp.SftpClient"-->
         <!--                            serviceImplementation="com.github.ikorennoy.remotefileviewer.sftp.SftpClientImpl"/>-->
     </extensions>

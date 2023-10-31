@@ -1,5 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.ui
 
+import com.github.ikorennoy.remotefileviewer.remoteEdit.EditRemoteFileTask
 import com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem
 import com.github.ikorennoy.remotefileviewer.template.FileViewerBundle
 import com.intellij.openapi.Disposable
@@ -8,7 +9,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileSystemTree
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.ui.ScrollPaneFactory
@@ -53,12 +53,7 @@ class RemoteFileSystemPanel(
         tree = FileSystemTreeImpl(project, fileChooserDescriptor)
         tree.registerMouseListener(createActionGroup())
         EditSourceOnDoubleClickHandler.install(tree.tree)
-        tree.addOkAction {
-            val selectedFiles = tree.selectedFiles
-            for (file in selectedFiles) {
-                FileEditorManager.getInstance(project).openFile(file, true)
-            }
-        }
+        tree.addOkAction(EditRemoteFileTask(project, fs, tree))
         addDataProvider(MyDataProvider(tree))
         setContent(ScrollPaneFactory.createScrollPane(tree.tree))
     }

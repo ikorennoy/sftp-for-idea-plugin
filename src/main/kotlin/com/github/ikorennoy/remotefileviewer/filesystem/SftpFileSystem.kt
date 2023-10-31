@@ -151,7 +151,7 @@ class SftpFileSystem : VirtualFileSystem() {
         )
     }
 
-    private fun getComponents(path: String): PathComponents {
+    fun getComponents(path: String): PathComponents {
         return sftp.sftpEngine.pathHelper.getComponents(path)
     }
 
@@ -178,7 +178,6 @@ class SftpFileSystem : VirtualFileSystem() {
 
     companion object {
         const val PROTOCOL = "remoteFileSysSftp"
-
         fun getInstance(): SftpFileSystem {
             return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as SftpFileSystem
         }
