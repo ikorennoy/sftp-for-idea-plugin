@@ -24,9 +24,9 @@
         <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.remoteEdit.LocalFileSystem"
                            key="remoteFileViewerLocalFs" physical="false"/>
 
+        <editorNotificationProvider
+                implementation="com.github.ikorennoy.remotefileviewer.remoteEdit.ProjectionFileEditorPanelProvider"/>
 
-        <!--        <applicationService serviceInterface="com.github.ikorennoy.remotefileviewer.sftp.SftpClient"-->
-        <!--                            serviceImplementation="com.github.ikorennoy.remotefileviewer.sftp.SftpClientImpl"/>-->
     </extensions>
 
 
@@ -39,6 +39,8 @@
         </group>
         <action id="RemoteFileSystem.NewFileAction"
                 class="com.github.ikorennoy.remotefileviewer.actions.NewFileAction"/>
+        <action id="RemoteFileSystem.UploadCurrentFileProjection"
+                class="com.github.ikorennoy.remotefileviewer.actions.UploadCurrentFileProjection"/>
 
     </actions>
 </idea-plugin>

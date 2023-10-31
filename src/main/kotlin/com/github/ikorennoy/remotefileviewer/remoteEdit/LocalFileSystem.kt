@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 private const val PROTOCOL = "remoteFileViewerLocalFs"
 
-class LocalFileSystem: VirtualFileSystem() {
+class LocalFileSystem : VirtualFileSystem() {
     private val openedFiles = ConcurrentHashMap<String, LocalVirtualFile>()
 
     override fun getProtocol(): String {
@@ -21,7 +21,7 @@ class LocalFileSystem: VirtualFileSystem() {
         val fs = originalFile.fileSystem as SftpFileSystem
         val components = fs.getComponents(originalFile.path)
 
-        val file = LocalVirtualFile(components.name, this, components.path, content)
+        val file = LocalVirtualFile(components.name, this, components.path, originalFile, content)
         openedFiles[components.path] = file
         return file
     }

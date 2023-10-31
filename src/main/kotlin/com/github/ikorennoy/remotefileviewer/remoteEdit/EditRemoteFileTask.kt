@@ -36,21 +36,20 @@ class EditRemoteFileTask(
 
                     val selectedFile = tree.selectedFile as? SftpVirtualFile ?: return
                     val fileSize = selectedFile.length.toDouble()
-                    val buffer = ByteArray(10)
+                    val buffer = ByteArray(1024)
                     val byteArrayOutputStream = ByteArrayOutputStream()
                     selectedFile.inputStream.use {
                         var read = it.read(buffer)
                         var readTotal = read
                         indicator.text = selectedFile.path
                         while (read != -1) {
-                            byteArrayOutputStream.writeBytes(buffer)
+                            byteArrayOutputStream.write(buffer, 0, read)
                             indicator.checkCanceled()
                             indicator.fraction = readTotal / fileSize
                             read = it.read(buffer)
                             readTotal += read
                         }
                     }
-
                     ApplicationManager.getApplication().invokeLater {
                         val localFs = LocalFileSystem.getInstance()
                         val localFileProjection = localFs.createNewFile(selectedFile, byteArrayOutputStream.toByteArray())

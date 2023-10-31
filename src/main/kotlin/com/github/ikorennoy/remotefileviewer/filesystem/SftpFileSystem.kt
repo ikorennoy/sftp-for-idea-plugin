@@ -136,8 +136,9 @@ class SftpFileSystem : VirtualFileSystem() {
     }
 
     fun fileOutputStream(sftpVirtualFile: SftpVirtualFile): OutputStream {
-        return sftp.open(sftpVirtualFile.path, setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC))
-            .RemoteFileOutputStream()
+//        return sftp.open(sftpVirtualFile.path, setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC))
+//            .RemoteFileOutputStream()
+        return openFileCache.get(sftpVirtualFile.path).RemoteFileOutputStream()
     }
 
     fun fileInputStream(sftpVirtualFile: SftpVirtualFile): InputStream {
