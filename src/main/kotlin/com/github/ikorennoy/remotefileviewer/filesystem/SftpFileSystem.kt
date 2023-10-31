@@ -1,19 +1,14 @@
 package com.github.ikorennoy.remotefileviewer.filesystem
 
-import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.util.PathUtil
-import com.intellij.util.io.URLUtil
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.*
 import net.schmizz.sshj.userauth.UserAuthException
@@ -22,6 +17,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.UnknownHostException
 import javax.naming.OperationNotSupportedException
+import kotlin.math.min
 
 
 class SftpFileSystem : VirtualFileSystem() {
@@ -31,10 +27,8 @@ class SftpFileSystem : VirtualFileSystem() {
     private lateinit var sftp: SFTPClient
 
     private val topic = ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES)
+    private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
 
-    private val openFileCache: LoadingCache<String, RemoteFile> = Caffeine.newBuilder()
-        .maximumSize(1000)
-        .build { k -> sftp.open(k, setOf(OpenMode.WRITE, OpenMode.READ)) }
 
     fun getChildren(file: SftpVirtualFile): Array<VirtualFile> {
         return sftp.ls(file.path).map {
@@ -136,13 +130,11 @@ class SftpFileSystem : VirtualFileSystem() {
     }
 
     fun fileOutputStream(sftpVirtualFile: SftpVirtualFile): OutputStream {
-//        return sftp.open(sftpVirtualFile.path, setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC))
-//            .RemoteFileOutputStream()
-        return openFileCache.get(sftpVirtualFile.path).RemoteFileOutputStream()
+        return RemoteFileOutputStream(sftp.open(sftpVirtualFile.path, writeOperationOpenFlags))
     }
 
     fun fileInputStream(sftpVirtualFile: SftpVirtualFile): InputStream {
-        return openFileCache.get(sftpVirtualFile.path).RemoteFileInputStream()
+        return RemoteFileInputStream(sftp.open(sftpVirtualFile.path))
     }
 
     private fun RemoteFile.convert(): SftpVirtualFile {
@@ -184,6 +176,76 @@ class SftpFileSystem : VirtualFileSystem() {
         }
     }
 }
+
+// closes internal file on close
+internal class RemoteFileInputStream(private val remoteFile: RemoteFile): InputStream() {
+    private val b = ByteArray(1)
+
+    private var fileOffset: Long = 0
+    private var markPos: Long = 0
+    private var readLimit: Long = 0
+
+    override fun markSupported(): Boolean {
+        return true
+    }
+
+    override fun mark(readLimit: Int) {
+        this.readLimit = readLimit.toLong()
+        markPos = fileOffset
+    }
+
+    override fun reset() {
+        fileOffset = markPos
+    }
+
+    override fun skip(n: Long): Long {
+        val fileLength: Long = remoteFile.length()
+        val previousFileOffset = fileOffset
+        fileOffset = min((fileOffset + n).toDouble(), fileLength.toDouble()).toLong()
+        return fileOffset - previousFileOffset
+    }
+
+    override fun read(): Int {
+        return if (read(b, 0, 1) == -1) -1 else b[0].toInt() and 0xff
+    }
+
+    override fun read(into: ByteArray, off: Int, len: Int): Int {
+        val read: Int = this.remoteFile.read(fileOffset, into, off, len)
+        if (read != -1) {
+            fileOffset += read.toLong()
+            if (markPos != 0L && read > readLimit) {
+                markPos = 0
+            }
+        }
+        return read
+    }
+
+    override fun close() {
+        remoteFile.close()
+    }
+}
+
+// closes internal file on close
+internal class RemoteFileOutputStream(private val remoteFile: RemoteFile): OutputStream() {
+
+    private val b = ByteArray(1)
+    private var fileOffset: Long = 0
+
+    override fun write(w: Int) {
+        b[0] = w.toByte()
+        write(b, 0, 1)
+    }
+
+    override fun write(buf: ByteArray, off: Int, len: Int) {
+        remoteFile.write(fileOffset, buf, off, len)
+        fileOffset += len.toLong()
+    }
+
+    override fun close() {
+        remoteFile.close()
+    }
+}
+
 
 sealed interface RequestResult {
     val message: String
