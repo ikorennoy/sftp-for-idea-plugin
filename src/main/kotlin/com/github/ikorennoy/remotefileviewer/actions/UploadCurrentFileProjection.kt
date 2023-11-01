@@ -14,11 +14,6 @@ import com.intellij.openapi.project.DumbAwareAction
 
 class UploadCurrentFileProjection : DumbAwareAction({ "Upload Current Remote File" }, AllIcons.Actions.MenuSaveall) {
 
-    init {
-        val set = ActionManager.getInstance().getAction("SaveAll").shortcutSet
-        println(set)
-    }
-
     override fun getActionUpdateThread(): ActionUpdateThread {
         return ActionUpdateThread.BGT
     }

@@ -18,7 +18,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.ikorennoy.remotefileviewer.ui.FileViewerWindowsFactory" id="Remote Files"
-                    anchor="right"/>
+                    anchor="right" doNotActivateOnStart="true"/>
         <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem"
                            key="remoteFileSysSftp" physical="true"/>
         <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.remoteEdit.LocalFileSystem"
@@ -32,13 +32,18 @@
                 instance="com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
                 id="com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
                 displayName="SSH Configuration"/>
+
+        <editorNotificationProvider
+                implementation="com.github.ikorennoy.remotefileviewer.remoteEdit.ProjectionFileEditorPanelProvider"/>
     </extensions>
 
 
     <actions>
         <group id="RemoteFileSystemPopup">
             <action id="RemoteFileSystem.ShowCreate"
-                    class="com.github.ikorennoy.remotefileviewer.actions.ShowCreateAction"/>
+                    class="com.github.ikorennoy.remotefileviewer.actions.ShowCreateAction"
+                    use-shortcut-of="NewDir"
+            />
         </group>
         <action id="RemoteFileSystem.NewFileAction"
                 class="com.github.ikorennoy.remotefileviewer.actions.NewFileAction"/>

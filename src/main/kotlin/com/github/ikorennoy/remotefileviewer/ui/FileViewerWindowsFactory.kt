@@ -8,10 +8,6 @@ import com.intellij.ui.content.ContentFactory
 
 class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
 
-    override fun init(toolWindow: ToolWindow) {
-        super.init(toolWindow)
-    }
-
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val myToolWindow = RemoteFileSystemPanel(project)
         val content = ContentFactory.getInstance().createContent(myToolWindow, null, false)
@@ -19,6 +15,4 @@ class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
     }
 
     override fun shouldBeAvailable(project: Project) = true
-
-
 }

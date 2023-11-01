@@ -28,19 +28,10 @@ class RemoteFileSystemPanel(
 
     init {
         toolbar = createToolbarPanel()
-        setContent(ScrollPaneFactory.createScrollPane(setupEmptyTree()))
+        val remoteFs = SftpFileSystem.getInstance()
+        drawTree(remoteFs)
     }
 
-    private fun setupEmptyTree(): Tree {
-        return Tree(DefaultTreeModel(null))
-    }
-
-    private fun showConnectionDialog() {
-        val fs = SftpFileSystem.getInstance()
-        // need to process several stages
-        // 1. empty options or not completed options -> open settings
-        // 2. need only password (for example after restart) -> open window asking password and saving it
-    }
 
     private fun drawTree(fs: SftpFileSystem) {
         val fileChooserDescriptor: FileChooserDescriptor =
@@ -49,8 +40,6 @@ class RemoteFileSystemPanel(
         fileChooserDescriptor.withTreeRootVisible(true)
         tree = FileSystemTreeImpl(project, fileChooserDescriptor)
         tree.registerMouseListener(createActionGroup())
-        tree.updateTree()
-        EditSourceOnDoubleClickHandler.install(tree.tree)
         tree.addOkAction(EditRemoteFileTask(project, fs, tree))
         addDataProvider(MyDataProvider(tree))
         setContent(ScrollPaneFactory.createScrollPane(tree.tree))
@@ -58,29 +47,14 @@ class RemoteFileSystemPanel(
 
     private fun createActionGroup(): DefaultActionGroup {
         val showCreate = ActionManager.getInstance().getAction("RemoteFileSystem.ShowCreate")
-        val newFolder = ActionManager.getInstance().getAction("FileChooser.NewFolder")
         val delete = ActionManager.getInstance().getAction("FileChooser.Delete")
-//        val refresh = ActionManager.getInstance().getAction("FileChooser.Refresh")
-
-        registerTreeActionShortcut(showCreate, newFolder.shortcutSet)
-        registerTreeActionShortcut(delete)
-
-//        registerTreeActionShortcut(refresh)
-
         val group = DefaultActionGroup()
         group.add(showCreate)
         group.addSeparator()
         group.add(delete)
         group.addSeparator()
-//        group.add(refresh)
         return group
     }
-
-    private fun registerTreeActionShortcut(action: AnAction, shortcutSet: ShortcutSet = action.shortcutSet) {
-        val tree: JTree = tree.tree
-        action.registerCustomShortcutSet(shortcutSet, tree, this)
-    }
-
 
     private fun createToolbarPanel(): JPanel {
         val toolbarGroup = DefaultActionGroup()
