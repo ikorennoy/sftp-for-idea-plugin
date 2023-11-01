@@ -1,6 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.settings.ui
 
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
+import com.github.ikorennoy.remotefileviewer.sftp.SftpClientService
 import com.github.ikorennoy.remotefileviewer.template.FileViewerBundle
 import com.intellij.openapi.components.service
 import com.intellij.ui.components.JBPasswordField
@@ -9,7 +10,6 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.COLUMNS_TINY
 import com.intellij.ui.dsl.builder.panel
-import javax.swing.JComponent
 import javax.swing.JPanel
 
 // todo add validation
@@ -56,8 +56,10 @@ class RemoteFilePluginSettingsComponent {
             }
             row {
                 button("Test Connection") {
-                    // todo should open a task with a progress bar similar to download/upload and initialize sftp client
-                    println("test connection")
+                    saveState()
+                    val clientService = service<SftpClientService>()
+                    clientService.getClient() // it ensures everything is ok
+
                 }
             }
         }

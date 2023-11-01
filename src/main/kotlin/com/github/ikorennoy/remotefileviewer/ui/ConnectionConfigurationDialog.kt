@@ -185,7 +185,8 @@ class ConnectionConfigurationDialog(project: Project, private val remoteFs: Sftp
     private suspend fun testConnection(): RequestResult {
         return withContext(Dispatchers.IO) {
             runBlocking {
-                remoteFs.init(host, port, root, username, password)
+//                remoteFs.init(host, port, root, username, password)
+                Ok()
             }
         }
     }

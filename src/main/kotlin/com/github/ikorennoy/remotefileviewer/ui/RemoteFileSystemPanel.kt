@@ -40,10 +40,6 @@ class RemoteFileSystemPanel(
         // need to process several stages
         // 1. empty options or not completed options -> open settings
         // 2. need only password (for example after restart) -> open window asking password and saving it
-        val dialog = ConnectionConfigurationDialog(project, fs)
-        if (dialog.showAndGet() && fs.isReady()) {
-            drawTree(fs)
-        }
     }
 
     private fun drawTree(fs: SftpFileSystem) {
@@ -53,6 +49,7 @@ class RemoteFileSystemPanel(
         fileChooserDescriptor.withTreeRootVisible(true)
         tree = FileSystemTreeImpl(project, fileChooserDescriptor)
         tree.registerMouseListener(createActionGroup())
+        tree.updateTree()
         EditSourceOnDoubleClickHandler.install(tree.tree)
         tree.addOkAction(EditRemoteFileTask(project, fs, tree))
         addDataProvider(MyDataProvider(tree))

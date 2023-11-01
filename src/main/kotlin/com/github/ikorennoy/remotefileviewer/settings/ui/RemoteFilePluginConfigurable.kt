@@ -1,5 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.settings.ui
 
+import com.github.ikorennoy.remotefileviewer.sftp.SftpClientService
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
 import javax.swing.JComponent
 
@@ -17,7 +19,10 @@ class RemoteFilePluginConfigurable : Configurable {
     }
 
     override fun apply() {
+        // todo draw a tree (check if init and connected and draw)
         settingsComponent.saveState()
+        val sftpService = service<SftpClientService>()
+        sftpService.getClient() // ensures connection
     }
 
     override fun getDisplayName(): String {

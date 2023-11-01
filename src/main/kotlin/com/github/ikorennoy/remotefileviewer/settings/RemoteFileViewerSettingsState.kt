@@ -41,6 +41,28 @@ class RemoteFileViewerSettingsState :
             state.password = value
         }
 
+    // valid means we have all fields not empty
+    // in that case we just return true
+
+    // but it's possible to have an empty password
+    // in that case we return false
+    // it's a responsibility of connection state manager service to process this situation
+    // usual flow will be: show enter password dialogue
+    // but write that password could be empty and in case user left password empty just attempt to connect
+    // if connection is successful, then password is not necessary, but connection already exist, so the call to this
+    // method is not required anymore
+    // if connection is not established we keep to asking for password enter on every attempt, that's the limitation
+    // it's avoidable by a checkbox, but I decided to omit it for now for simplicity
+
+    // todo remove
+    fun isNotValidWithEmptyPassword(): Boolean {
+        return host.isEmpty() || username.isEmpty() || root.isEmpty()
+    }
+
+    fun isNotValid(): Boolean {
+        return host.isEmpty() || username.isEmpty() || root.isEmpty() || password.isEmpty()
+    }
+
     class ConfigurationState : BaseState() {
         var host by string()
         var port: Int by property(22)

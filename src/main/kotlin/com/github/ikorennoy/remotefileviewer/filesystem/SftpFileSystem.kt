@@ -1,6 +1,9 @@
 package com.github.ikorennoy.remotefileviewer.filesystem
 
+import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
+import com.github.ikorennoy.remotefileviewer.sftp.SftpClientService
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -9,33 +12,35 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.*
-import net.schmizz.sshj.userauth.UserAuthException
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.net.UnknownHostException
 import javax.naming.OperationNotSupportedException
 import kotlin.math.min
 
 class SftpFileSystem : VirtualFileSystem() {
 
-    private val client = SSHClient()
-    lateinit var root: VirtualFile
-    private lateinit var sftp: SFTPClient
-
     private val topic = ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES)
     private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
 
 
+    val root: VirtualFile by lazy { init() }
+
+    private fun init(): VirtualFile {
+        val conf = service<RemoteFileViewerSettingsState>()
+        return findFileByPath(conf.root)
+    }
+
     fun getChildren(file: SftpVirtualFile): Array<VirtualFile> {
+        val sftp = getClient()
         return sftp.ls(file.path).map {
             SftpVirtualFile(it, this)
         }.toTypedArray()
     }
 
     fun exists(file: VirtualFile): Boolean {
+        val sftp = getClient()
         return sftp.statExistence(file.path) != null
     }
 
@@ -44,6 +49,7 @@ class SftpFileSystem : VirtualFileSystem() {
         return if (components.parent == "") {
             null
         } else {
+            val sftp = getClient()
             SftpVirtualFile(RemoteResourceInfo(getComponents(components.parent), sftp.stat(components.parent)), this)
         }
     }
@@ -51,6 +57,7 @@ class SftpFileSystem : VirtualFileSystem() {
     override fun getProtocol(): String = PROTOCOL
 
     override fun findFileByPath(path: String): VirtualFile {
+        val sftp = getClient()
         try {
             return SftpVirtualFile(RemoteResourceInfo(getComponents(path), sftp.stat(path)), this)
         } catch (ex: IOException) {
@@ -76,6 +83,7 @@ class SftpFileSystem : VirtualFileSystem() {
     override fun deleteFile(requestor: Any?, vFile: VirtualFile) {
         val event = listOf(VFileDeleteEvent(requestor, vFile, false))
         if (vFile.isWritable) {
+            val sftp = getClient()
             topic.before(event)
             if (vFile.isDirectory) {
                 sftp.rmdir(vFile.path)
@@ -87,6 +95,7 @@ class SftpFileSystem : VirtualFileSystem() {
     }
 
     override fun moveFile(requestor: Any?, vFile: VirtualFile, newParent: VirtualFile) {
+        val sftp = getClient()
         val moveEvent = listOf(VFileMoveEvent(requestor, vFile, newParent))
         topic.before(moveEvent)
         sftp.rename(vFile.path, newParent.path)
@@ -94,6 +103,7 @@ class SftpFileSystem : VirtualFileSystem() {
     }
 
     override fun renameFile(requestor: Any?, vFile: VirtualFile, newName: String) {
+        val sftp = getClient()
         val event =
             listOf(VFilePropertyChangeEvent(requestor, vFile, VirtualFile.PROP_NAME, vFile.name, newName, false))
         topic.before(event)
@@ -102,6 +112,7 @@ class SftpFileSystem : VirtualFileSystem() {
     }
 
     override fun createChildFile(requestor: Any?, vDir: VirtualFile, fileName: String): VirtualFile {
+        val sftp = getClient()
         val event = listOf(VFileCreateEvent(requestor, vDir, fileName, false, null, null, false, emptyArray()))
         topic.before(event)
         val result = sftp.open(vDir.path + "/" + fileName, setOf(OpenMode.CREAT)).convert()
@@ -110,6 +121,7 @@ class SftpFileSystem : VirtualFileSystem() {
     }
 
     override fun createChildDirectory(requestor: Any?, vDir: VirtualFile, dirName: String): VirtualFile {
+        val sftp = getClient()
         val dirPath = vDir.path + "/" + dirName
         sftp.mkdir(dirPath)
         return sftp.open(dirPath).convert()
@@ -129,47 +141,35 @@ class SftpFileSystem : VirtualFileSystem() {
     }
 
     fun fileOutputStream(sftpVirtualFile: SftpVirtualFile): OutputStream {
+        val sftp = getClient()
         return RemoteFileOutputStream(sftp.open(sftpVirtualFile.path, writeOperationOpenFlags))
     }
 
     fun fileInputStream(sftpVirtualFile: SftpVirtualFile): InputStream {
+        val sftp = getClient()
         return RemoteFileInputStream(sftp.open(sftpVirtualFile.path))
     }
 
+    fun getComponents(path: String): PathComponents {
+        val sftp = getClient()
+        return sftp.sftpEngine.pathHelper.getComponents(path)
+    }
+
     private fun RemoteFile.convert(): SftpVirtualFile {
+        val sftp = getClient()
         return SftpVirtualFile(
             RemoteResourceInfo(sftp.sftpEngine.pathHelper.getComponents(path), fetchAttributes()),
             this@SftpFileSystem
         )
     }
 
-    fun getComponents(path: String): PathComponents {
-        return sftp.sftpEngine.pathHelper.getComponents(path)
-    }
-
-    fun init(host: String, port: Int, root: String, username: String, password: CharArray): RequestResult {
-        return try {
-            client.loadKnownHosts()
-            client.connect(host, port)
-            client.authPassword(username, password)
-            sftp = client.newSFTPClient()
-            this.root = findFileByPath(root)
-            Ok()
-        } catch (ex: UnknownHostException) {
-            CannotFindHost("Cannot connect to the host: '${ex.message}'")
-        } catch (ex: UserAuthException) {
-            UsernameOrPassword("Username or password is incorrect")
-        } catch (ex: IOException) {
-            UnknownRequestError("Unknown error")
-        }
-    }
-
-    fun isReady(): Boolean {
-        return client.isConnected && client.isAuthenticated
+    private fun getClient(): SFTPClient {
+        return service<SftpClientService>().getClient()
     }
 
     companion object {
         const val PROTOCOL = "remoteFileSysSftp"
+
         fun getInstance(): SftpFileSystem {
             return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as SftpFileSystem
         }

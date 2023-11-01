@@ -1,10 +1,14 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
+import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
+import com.github.ikorennoy.remotefileviewer.sftp.SftpClientService
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 
 @Service
 class FileProjectionStateService {

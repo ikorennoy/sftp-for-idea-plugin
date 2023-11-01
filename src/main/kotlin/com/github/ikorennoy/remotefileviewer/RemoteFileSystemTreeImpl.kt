@@ -31,11 +31,6 @@ class RemoteFileSystemTreeImpl(
     private val fs: SftpFileSystem
 ) : Disposable, DataProvider {
 
-    init {
-        if (!fs.isReady()) {
-            throw IllegalStateException("FileSystem is not initialized")
-        }
-    }
 
     private val fileChooserDescriptor: FileChooserDescriptor
     private val treeStructure: RemoteFileTreeStructure
