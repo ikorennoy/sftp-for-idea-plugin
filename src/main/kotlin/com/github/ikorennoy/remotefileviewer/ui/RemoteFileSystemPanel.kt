@@ -32,7 +32,6 @@ class RemoteFileSystemPanel(
         drawTree(remoteFs)
     }
 
-
     private fun drawTree(fs: SftpFileSystem) {
         val fileChooserDescriptor: FileChooserDescriptor =
             FileChooserDescriptorFactory.createAllButJarContentsDescriptor()

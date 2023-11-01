@@ -25,7 +25,7 @@ class SftpClientService {
 
     /**
      * Thread safe
-     * Ensures that client is connected and authenticated
+     * Ensures that the client is connected and authenticated
      */
     fun init(): Boolean {
         var localClient = sftpClient
@@ -64,7 +64,7 @@ class SftpClientService {
                 }
             }
 
-            connect(configuration.host, configuration.port, configuration.username, configuration.password)
+            tryConnect(configuration.host, configuration.port, configuration.username, configuration.password)
             val clientVal = client
 
             if (clientVal == null) {
@@ -79,7 +79,6 @@ class SftpClientService {
     }
 
     fun getClient(): SFTPClient {
-
         val res = sftpClient
 
         if (res != null) {
@@ -97,7 +96,6 @@ class SftpClientService {
             // 2. initialization is failed, in that case user is already notified by a message window
             TODO("Add special ignore it exception")
         }
-
     }
 
     private fun sshClientIsOk(): Boolean {
@@ -105,7 +103,7 @@ class SftpClientService {
         return clientVal.isConnected && clientVal.isAuthenticated
     }
 
-    private fun connect(host: String, port: Int, username: String, password: CharArray) {
+    private fun tryConnect(host: String, port: Int, username: String, password: CharArray) {
         val project = ProjectManager.getInstance().defaultProject // todo find a way to get current project
 
         var failReason: Exception? = null
