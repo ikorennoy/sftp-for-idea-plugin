@@ -60,7 +60,7 @@ class RemoteFileViewerSettingsState :
     }
 
     fun isNotValid(): Boolean {
-        return host.isEmpty() || username.isEmpty() || root.isEmpty() || password.isEmpty()
+        return host.isEmpty() || username.isEmpty() || root.isEmpty()
     }
 
     class ConfigurationState : BaseState() {

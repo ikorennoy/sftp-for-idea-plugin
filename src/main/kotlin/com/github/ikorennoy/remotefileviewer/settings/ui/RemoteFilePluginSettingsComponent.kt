@@ -3,13 +3,16 @@ package com.github.ikorennoy.remotefileviewer.settings.ui
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
 import com.github.ikorennoy.remotefileviewer.sftp.SftpClientService
 import com.github.ikorennoy.remotefileviewer.template.FileViewerBundle
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.COLUMNS_TINY
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
+import javax.swing.JLabel
 import javax.swing.JPanel
 
 // todo add validation
@@ -29,6 +32,8 @@ class RemoteFilePluginSettingsComponent {
         portField.text = state.port.toString()
         usernameField.text = state.username
         rootField.text = state.root
+        passwordField.setPasswordIsStored(state.password.isNotEmpty())
+
         panel = panel {
             row {
                 label(FileViewerBundle.message("connection.configuration.dialog.host"))
@@ -55,12 +60,16 @@ class RemoteFilePluginSettingsComponent {
                 cell(passwordField)
             }
             row {
+                var icon: Cell<JLabel>? = null
                 button("Test Connection") {
                     saveState()
                     val clientService = service<SftpClientService>()
-                    clientService.getClient() // it ensures everything is ok
-
+                    if (clientService.init()) {
+                        icon?.visible(true)
+                    }
                 }
+                icon = icon(AllIcons.Actions.Commit)
+                icon.visible(false)
             }
         }
     }

@@ -22,10 +22,12 @@ class RemoteFilePluginConfigurable : Configurable {
         // todo draw a tree (check if init and connected and draw)
         settingsComponent.saveState()
         val sftpService = service<SftpClientService>()
-        sftpService.getClient() // ensures connection
+        sftpService.init() // ensures connection
     }
 
     override fun getDisplayName(): String {
         return "SSH Configuration"
     }
+
+
 }
