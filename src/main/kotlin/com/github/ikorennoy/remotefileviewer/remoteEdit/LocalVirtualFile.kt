@@ -96,6 +96,4 @@ class LocalVirtualFile(
     override fun getInputStream(): InputStream {
         return delegateFile.inputStream
     }
-
-
 }

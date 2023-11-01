@@ -1,7 +1,5 @@
 package com.github.ikorennoy.remotefileviewer.settings.ui
 
-import com.github.ikorennoy.remotefileviewer.sftp.SftpClientService
-import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
 import javax.swing.JComponent
 
@@ -28,6 +26,4 @@ class RemoteFilePluginConfigurable : Configurable {
     override fun getDisplayName(): String {
         return "SSH Configuration"
     }
-
-
 }

@@ -41,7 +41,7 @@ class RemoteFileSystemPanel(
 
     private fun drawRemoteFileSystemTree(fs: SftpFileSystem): JTree {
         val fileChooserDescriptor: FileChooserDescriptor =
-            FileChooserDescriptorFactory.createAllButJarContentsDescriptor()
+            FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
         fileChooserDescriptor.setRoots(fs.root)
         fileChooserDescriptor.withTreeRootVisible(true)
         tree = FileSystemTreeImpl(project, fileChooserDescriptor)

@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import net.schmizz.sshj.SSHClient
+import net.schmizz.sshj.connection.channel.direct.Session
 import net.schmizz.sshj.sftp.SFTPClient
 import java.io.IOException
 import java.lang.IllegalStateException
@@ -20,6 +21,7 @@ class SftpClientService {
     @Volatile
     private var sftpClient: SFTPClient? = null
 
+    @Volatile
     private var client: SSHClient? = null
 
 
@@ -35,10 +37,10 @@ class SftpClientService {
         }
 
         synchronized(this) {
-           localClient = sftpClient
-           if (localClient != null) {
-               return sshClientIsOk()
-           }
+            localClient = sftpClient
+            if (localClient != null) {
+                return sshClientIsOk()
+            }
 
             val configuration = service<RemoteFileViewerSettingsState>()
 
@@ -66,7 +68,6 @@ class SftpClientService {
 
             tryConnect(configuration.host, configuration.port, configuration.username, configuration.password)
             val clientVal = client
-
             if (clientVal == null) {
                 // initialization is completely failed, just return false, user is notified with com.intellij.openapi.progress.Task.Modal#reportError
                 return false
@@ -78,17 +79,31 @@ class SftpClientService {
         }
     }
 
-    fun getClient(): SFTPClient {
-        val res = sftpClient
+    fun getSessionClient(): Session {
+        var res = client
+
+        return if (res != null) {
+            res.startSession()
+        } else {
+            if (init()) {
+                res = client ?: throw IllegalStateException("Can't be null after successful initialization")
+                res.startSession()
+            } else {
+                throw IllegalStateException("Can't connect")
+            }
+        }
+    }
+
+    fun getSftpClient(): SFTPClient {
+        var res = sftpClient
 
         if (res != null) {
-            if (sshClientIsOk()) {
-                return res
-            }
+            return res
         }
 
         if (init()) {
-            return sftpClient ?: throw IllegalStateException("Can't be null after successful initialization")
+            res = sftpClient ?: throw IllegalStateException("Can't be null after successful initialization")
+            return res
         } else {
             // it means one of the followings states
             // 1. user somehow cancelled initialization, probably by clicking cancel on password prompt or in conf

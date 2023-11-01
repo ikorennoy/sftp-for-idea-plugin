@@ -1,10 +1,10 @@
 package com.github.ikorennoy.remotefileviewer.filesystem
 
+import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import net.schmizz.sshj.sftp.FileMode
 import net.schmizz.sshj.sftp.RemoteResourceInfo
-import net.schmizz.sshj.xfer.FilePermission
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -13,6 +13,8 @@ class SftpVirtualFile(
     private val remoteFile: RemoteResourceInfo,
     private val fs: SftpFileSystem,
 ) : VirtualFile() {
+
+    private val writable: Boolean by lazy { fs.isWritable(this) }
 
     override fun getName(): String = remoteFile.name
 
@@ -25,11 +27,16 @@ class SftpVirtualFile(
     }
 
     override fun isWritable(): Boolean {
-        return remoteFile.attributes.permissions.contains(FilePermission.USR_R)
+        return writable
     }
 
     override fun isDirectory(): Boolean {
-        return remoteFile.attributes.type == FileMode.Type.DIRECTORY
+        return if (remoteFile.attributes.type == FileMode.Type.SYMLINK) {
+            val originalAttrs = fs.resolveSymlink(this)
+            originalAttrs.type == FileMode.Type.DIRECTORY
+        } else {
+            remoteFile.attributes.type == FileMode.Type.DIRECTORY
+        }
     }
 
     override fun isValid(): Boolean {
@@ -66,6 +73,22 @@ class SftpVirtualFile(
 
     override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {
 
+    }
+
+    override fun `is`(property: VFileProperty): Boolean {
+        return when (property) {
+            VFileProperty.HIDDEN -> false
+            VFileProperty.SPECIAL -> isSpecial()
+            VFileProperty.SYMLINK -> remoteFile.attributes.type == FileMode.Type.SYMLINK
+        }
+    }
+
+    private fun isSpecial(): Boolean {
+        val type = remoteFile.attributes.mode.type
+        return type == FileMode.Type.BLOCK_SPECIAL ||
+                type == FileMode.Type.CHAR_SPECIAL ||
+                type == FileMode.Type.FIFO_SPECIAL ||
+                type == FileMode.Type.SOCKET_SPECIAL
     }
 
     override fun getInputStream(): InputStream {
