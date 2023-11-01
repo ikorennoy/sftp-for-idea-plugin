@@ -90,11 +90,13 @@ class SftpClientService {
         if (init()) {
             return sftpClient ?: throw IllegalStateException("Can't be null after successful initialization")
         } else {
-            // it means one of two states
+            // it means one of the followings states
             // 1. user somehow cancelled initialization, probably by clicking cancel on password prompt or in conf
             // in that case we don't need to do anything
             // 2. initialization is failed, in that case user is already notified by a message window
-            TODO("Add special ignore it exception")
+            // 3. user has corrupted settings, but we asked only password and failed, in that case we need to open full
+            // settings and ask to fix them
+            throw IllegalStateException("Can't connect")
         }
     }
 
@@ -133,7 +135,7 @@ class SftpClientService {
                 private fun reportError() {
                     if (failReason != null) {
                         Messages.showMessageDialog(
-                            "Could not connect to ${username}@${host}:${port}\n ${failReason?.javaClass}",
+                            "Cannot not connect to ${username}@${host}:${port}\n ${failReason?.javaClass}",
                             "Error",
                             Messages.getErrorIcon()
                         )

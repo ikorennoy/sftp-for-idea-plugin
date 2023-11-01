@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
 
-class EditSettingsAction : AnAction({"Show Settings"}, AllIcons.General.Settings) {
+class ShowSettingsAction : AnAction({"Show Settings"}, AllIcons.General.Settings) {
 
 
     override fun actionPerformed(e: AnActionEvent) {

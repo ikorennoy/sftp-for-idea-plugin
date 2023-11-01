@@ -2,7 +2,6 @@ package com.github.ikorennoy.remotefileviewer.ui
 
 import com.github.ikorennoy.remotefileviewer.remoteEdit.EditRemoteFileTask
 import com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem
-import com.github.ikorennoy.remotefileviewer.template.FileViewerBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -13,8 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
 import javax.swing.JTree
@@ -29,10 +26,20 @@ class RemoteFileSystemPanel(
     init {
         toolbar = createToolbarPanel()
         val remoteFs = SftpFileSystem.getInstance()
-        drawTree(remoteFs)
+        val tree = try {
+            drawRemoteFileSystemTree(remoteFs)
+        } catch (ex: Throwable) {
+            ex.printStackTrace()
+            setupEmptyTree()
+        }
+        setContent(ScrollPaneFactory.createScrollPane(tree))
     }
 
-    private fun drawTree(fs: SftpFileSystem) {
+    private fun setupEmptyTree(): JTree {
+        return Tree(DefaultTreeModel(null))
+    }
+
+    private fun drawRemoteFileSystemTree(fs: SftpFileSystem): JTree {
         val fileChooserDescriptor: FileChooserDescriptor =
             FileChooserDescriptorFactory.createAllButJarContentsDescriptor()
         fileChooserDescriptor.setRoots(fs.root)
@@ -41,7 +48,7 @@ class RemoteFileSystemPanel(
         tree.registerMouseListener(createActionGroup())
         tree.addOkAction(EditRemoteFileTask(project, fs, tree))
         addDataProvider(MyDataProvider(tree))
-        setContent(ScrollPaneFactory.createScrollPane(tree.tree))
+        return tree.tree
     }
 
     private fun createActionGroup(): DefaultActionGroup {

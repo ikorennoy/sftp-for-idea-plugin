@@ -51,6 +51,6 @@
                 class="com.github.ikorennoy.remotefileviewer.actions.UploadCurrentFileProjection"
                 use-shortcut-of="SaveAll"/>
         <action id="RemoteFileSystem.ShowSshConfiguration"
-                class="com.github.ikorennoy.remotefileviewer.actions.EditSettingsAction"/>
+                class="com.github.ikorennoy.remotefileviewer.actions.ShowSettingsAction"/>
     </actions>
 </idea-plugin>

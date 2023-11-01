@@ -5,6 +5,8 @@ import com.github.ikorennoy.remotefileviewer.sftp.SftpClientService
 import com.github.ikorennoy.remotefileviewer.template.FileViewerBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -39,7 +41,6 @@ class RemoteFilePluginSettingsComponent {
                 label(FileViewerBundle.message("connection.configuration.dialog.host"))
                     .widthGroup("CredentialsLabel")
                 cell(hostField)
-                    .focused()
 
                 label(FileViewerBundle.message("connection.configuration.dialog.port"))
                 cell(portField)
@@ -75,6 +76,19 @@ class RemoteFilePluginSettingsComponent {
     }
 
     fun saveState() {
+        if (hostField.text.isEmpty()) {
+            throw ConfigurationException("Host can't be blank")
+        }
+        val portVal = portField.text.toIntOrNull() ?: throw ConfigurationException("Port can't be blank")
+        if (portVal !in 0..65535) {
+            throw ConfigurationException("Port must be between 0 and 65535")
+        }
+        if (rootField.text.isEmpty()) {
+            throw ConfigurationException("Root path can't be blank")
+        }
+        if (usernameField.text.isEmpty()) {
+            throw ConfigurationException("Username can't be blank")
+        }
         state.host = hostField.text.trim()
         state.port = portField.text.toInt()
         state.root = rootField.text.trim()
@@ -89,4 +103,17 @@ class RemoteFilePluginSettingsComponent {
                 state.username != usernameField.text ||
                 passwordField.password.isNotEmpty()
     }
+
+
+    private fun checkHostIsNotBlank(): ValidationInfo? {
+        return if (hostField.text.isNotEmpty()) {
+            null
+        } else {
+            ValidationInfo(
+                FileViewerBundle.message("connection.configuration.dialog.host.empty.validation"),
+                hostField
+            )
+        }
+    }
+
 }
