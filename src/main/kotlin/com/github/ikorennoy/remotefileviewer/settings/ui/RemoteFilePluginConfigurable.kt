@@ -13,7 +13,7 @@ class RemoteFilePluginConfigurable : Configurable {
     }
 
     override fun isModified(): Boolean {
-        return settingsComponent.modified()
+        return settingsComponent.isModified()
     }
 
     override fun apply() {

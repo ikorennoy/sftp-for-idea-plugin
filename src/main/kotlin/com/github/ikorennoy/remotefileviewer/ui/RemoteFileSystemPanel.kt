@@ -37,6 +37,9 @@ class RemoteFileSystemPanel(
 
     private fun showConnectionDialog() {
         val fs = SftpFileSystem.getInstance()
+        // need to process several stages
+        // 1. empty options or not completed options -> open settings
+        // 2. need only password (for example after restart) -> open window asking password and saving it
         val dialog = ConnectionConfigurationDialog(project, fs)
         if (dialog.showAndGet() && fs.isReady()) {
             drawTree(fs)
@@ -81,21 +84,10 @@ class RemoteFileSystemPanel(
         action.registerCustomShortcutSet(shortcutSet, tree, this)
     }
 
-    private fun createNewActionGroup() {
-
-    }
 
     private fun createToolbarPanel(): JPanel {
         val toolbarGroup = DefaultActionGroup()
-        toolbarGroup.add(object : AnAction(
-            FileViewerBundle.messagePointer("add.new.connection.action.name"),
-            FileViewerBundle.messagePointer("add.new.connection.action.description"),
-            IconUtil.getAddIcon()
-        ) {
-            override fun actionPerformed(e: AnActionEvent) {
-                showConnectionDialog()
-            }
-        })
+        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.ShowSshConfiguration"))
 
         val actionToolbar = ActionManager.getInstance().createActionToolbar("FVToolbar", toolbarGroup, true)
         actionToolbar.targetComponent = this

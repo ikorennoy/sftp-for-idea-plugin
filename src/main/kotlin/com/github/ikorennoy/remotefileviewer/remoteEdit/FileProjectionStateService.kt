@@ -15,7 +15,6 @@ class FileProjectionStateService {
         CommandProcessor.getInstance().executeCommand(project, {
             object : Task.Modal(project, "Uploading File", true) {
                 override fun run(indicator: ProgressIndicator) {
-
                     if (remoteFile.isWritable) {
                         val size = localFileProjection.length.toDouble()
                         val buffer = ByteArray(1024)

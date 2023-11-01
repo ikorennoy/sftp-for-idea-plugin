@@ -24,24 +24,28 @@
         <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.remoteEdit.LocalFileSystem"
                            key="remoteFileViewerLocalFs" physical="false"/>
 
-<!--        <editorNotificationProvider-->
-<!--                implementation="com.github.ikorennoy.remotefileviewer.remoteEdit.ProjectionFileEditorPanelProvider"/>-->
+        <!--        <editorNotificationProvider-->
+        <!--                implementation="com.github.ikorennoy.remotefileviewer.remoteEdit.ProjectionFileEditorPanelProvider"/>-->
 
         <applicationConfigurable
-            parentId="tools"
-            instance="com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
-            id="com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
-            displayName="SSH Configuration"/>
+                parentId="tools"
+                instance="com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
+                id="com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
+                displayName="SSH Configuration"/>
     </extensions>
 
 
     <actions>
         <group id="RemoteFileSystemPopup">
-            <action id="RemoteFileSystem.ShowCreate" class="com.github.ikorennoy.remotefileviewer.actions.ShowCreateAction"/>
+            <action id="RemoteFileSystem.ShowCreate"
+                    class="com.github.ikorennoy.remotefileviewer.actions.ShowCreateAction"/>
         </group>
         <action id="RemoteFileSystem.NewFileAction"
                 class="com.github.ikorennoy.remotefileviewer.actions.NewFileAction"/>
         <action id="RemoteFileSystem.UploadCurrentFileProjection"
-                class="com.github.ikorennoy.remotefileviewer.actions.UploadCurrentFileProjection" use-shortcut-of="SaveAll"/>
+                class="com.github.ikorennoy.remotefileviewer.actions.UploadCurrentFileProjection"
+                use-shortcut-of="SaveAll"/>
+        <action id="RemoteFileSystem.ShowSshConfiguration"
+                class="com.github.ikorennoy.remotefileviewer.actions.EditSettingsAction"/>
     </actions>
 </idea-plugin>
