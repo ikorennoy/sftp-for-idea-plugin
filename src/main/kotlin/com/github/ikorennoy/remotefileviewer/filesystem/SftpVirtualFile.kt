@@ -56,7 +56,7 @@ class SftpVirtualFile(
     }
 
     override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): OutputStream {
-        return fs.fileOutputStream(this)
+        throw UnsupportedOperationException("not supported")
     }
 
     override fun contentsToByteArray(): ByteArray {

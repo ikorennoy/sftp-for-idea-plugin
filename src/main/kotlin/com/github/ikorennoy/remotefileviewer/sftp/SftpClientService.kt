@@ -130,6 +130,7 @@ class SftpClientService {
                     indicator.isIndeterminate = true
                     val client = SSHClient()
                     try {
+                        client.useCompression()
                         client.loadKnownHosts()
                         client.connect(host, port)
                         client.authPassword(username, password)

@@ -142,11 +142,6 @@ class SftpFileSystem : VirtualFileSystem() {
         return false
     }
 
-    fun fileOutputStream(sftpVirtualFile: SftpVirtualFile): OutputStream {
-        val sftp = getSftpClient()
-        return RemoteFileOutputStream(sftp.open(sftpVirtualFile.path, writeOperationOpenFlags))
-    }
-
     fun fileInputStream(sftpVirtualFile: SftpVirtualFile): InputStream {
         val sftp = getSftpClient()
         return RemoteFileInputStream(sftp.open(sftpVirtualFile.path))
@@ -201,8 +196,32 @@ class SftpFileSystem : VirtualFileSystem() {
         return client.stat(file.path)
     }
 
+    fun openTempFile(forFile: SftpVirtualFile): OutputStream {
+        val client = getSftpClient()
+        return RemoteFileOutputStream(client.open(getTmpName(forFile), writeOperationOpenFlags))
+    }
+
+    // we don't want to rebuild file tree
+    // the operation is used only to transfer file to remote
+    fun removeFile(file: SftpVirtualFile) {
+        val client = getSftpClient()
+        if (!file.isDirectory) {
+            client.rm(file.path)
+        }
+    }
+
+    fun renameTempFile(forFile: SftpVirtualFile) {
+        val client = getSftpClient()
+        client.rename(getTmpName(forFile), forFile.path)
+    }
+
+
     companion object {
         const val PROTOCOL = "remoteFileSysSftp"
+
+        private fun getTmpName(file: SftpVirtualFile): String {
+            return "/tmp/${file.name}.tmp"
+        }
 
         fun getInstance(): SftpFileSystem {
             return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as SftpFileSystem

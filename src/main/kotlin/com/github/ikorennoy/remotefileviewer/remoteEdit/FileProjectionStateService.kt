@@ -1,14 +1,11 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
-import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
-import com.github.ikorennoy.remotefileviewer.sftp.SftpClientService
+import com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 
 @Service
 class FileProjectionStateService {
@@ -20,9 +17,12 @@ class FileProjectionStateService {
             object : Task.Modal(project, "Uploading File", true) {
                 override fun run(indicator: ProgressIndicator) {
                     if (remoteFile.isWritable) {
+                        val fs = remoteFile.fileSystem as SftpFileSystem
+                        // open a temp file and upload new content in it
+                        val remoteTempFile = fs.openTempFile(remoteFile)
                         val size = localFileProjection.length.toDouble()
                         val buffer = ByteArray(1024)
-                        remoteFile.getOutputStream(null).use { remoteFileOs ->
+                        remoteTempFile.use { remoteFileOs ->
                             localFileProjection.inputStream.use { localFileIs ->
                                 var writtenTotal = 0.0
                                 var readFromLocal = localFileIs.read(buffer)
@@ -35,6 +35,11 @@ class FileProjectionStateService {
                                 }
                             }
                         }
+                        // because most of sftp implementations don't support atomic rename
+                        // we have to remove the original file and then do rename
+                        fs.removeFile(remoteFile)
+                        fs.renameTempFile(remoteFile)
+
                     }
                 }
             }.queue()

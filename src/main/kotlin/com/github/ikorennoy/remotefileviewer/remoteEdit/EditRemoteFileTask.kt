@@ -22,13 +22,6 @@ class EditRemoteFileTask(
 
 
     override fun run() {
-        val result = MessageDialogBuilder.yesNo("Edit", "Do you want to edit selected file?")
-            .yesText("Edit")
-            .icon(UIUtil.getQuestionIcon())
-            .ask(project)
-
-        if (!result) return
-
         CommandProcessor.getInstance().executeCommand(project, {
             object : Task.Modal(project, "Downloading File", true) {
 
