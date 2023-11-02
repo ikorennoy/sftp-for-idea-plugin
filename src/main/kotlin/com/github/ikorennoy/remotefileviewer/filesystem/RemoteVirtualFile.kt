@@ -14,8 +14,6 @@ class RemoteVirtualFile(
     private val fs: RemoteFileSystem,
 ) : VirtualFile() {
 
-    private val writable: Boolean by lazy { fs.isWritable(this) }
-
     override fun getName(): String = remoteFile.name
 
     override fun getFileSystem(): VirtualFileSystem {
@@ -27,7 +25,7 @@ class RemoteVirtualFile(
     }
 
     override fun isWritable(): Boolean {
-        return writable
+        return true
     }
 
     override fun isDirectory(): Boolean {
@@ -75,9 +73,10 @@ class RemoteVirtualFile(
 
     }
 
+
     override fun `is`(property: VFileProperty): Boolean {
         return when (property) {
-            VFileProperty.HIDDEN -> false
+            VFileProperty.HIDDEN -> remoteFile.name.startsWith(".")
             VFileProperty.SPECIAL -> isSpecial()
             VFileProperty.SYMLINK -> remoteFile.attributes.type == FileMode.Type.SYMLINK
         }

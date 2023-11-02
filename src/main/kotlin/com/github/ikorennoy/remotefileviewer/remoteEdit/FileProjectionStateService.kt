@@ -21,7 +21,7 @@ class FileProjectionStateService {
                         // open a temp file and upload new content into it
                         val remoteTempFile = fs.openTempFile(remoteFile)
                         val size = localFileProjection.length.toDouble()
-                        val buffer = ByteArray(1024)
+                        val buffer = ByteArray(localFileProjection.length.toInt().coerceAtMost(1024))
                         remoteTempFile.use { remoteFileOs ->
                             localFileProjection.inputStream.use { localFileIs ->
                                 var writtenTotal = 0.0

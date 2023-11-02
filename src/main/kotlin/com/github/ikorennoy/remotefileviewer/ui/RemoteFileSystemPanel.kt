@@ -1,14 +1,15 @@
 package com.github.ikorennoy.remotefileviewer.ui
 
+import com.github.ikorennoy.remotefileviewer.tree.RemoteFileSystemTree
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.fileChooser.FileSystemTree
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.JBUI
-import java.io.IOException
 import javax.swing.JPanel
 import javax.swing.JTree
-import javax.swing.tree.DefaultTreeModel
 
 // todo add update for this panel
 //  check why not all files opening
@@ -18,14 +19,13 @@ import javax.swing.tree.DefaultTreeModel
 //  fix a case when configuration is corrupted (like wrong host and etc), but only password prompt is shown, after firs unsuccessful attempt
 //  we should show full configuration page
 class RemoteFileSystemPanel(
-    private val tree: JTree,
-    private val isSimple: Boolean,
+    tree: RemoteFileSystemTree,
 ) : SimpleToolWindowPanel(true, true), Disposable {
 
     init {
         toolbar = createToolbarPanel()
-        setContent(ScrollPaneFactory.createScrollPane(tree))
-
+        setContent(ScrollPaneFactory.createScrollPane(tree.tree))
+        addDataProvider(MyDataProvider(tree))
     }
 
     private fun createToolbarPanel(): JPanel {
@@ -41,5 +41,17 @@ class RemoteFileSystemPanel(
 
     }
 
-
+    private class MyDataProvider(private val fsTree: RemoteFileSystemTree) : DataProvider {
+        override fun getData(dataId: String): Any? {
+            return if (CommonDataKeys.NAVIGATABLE.`is`(dataId)) {
+                val file = fsTree.getSelectedFile() ?: return null
+                OpenFileDescriptor(fsTree.project, file, 0)
+            } else if (CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId)) {
+                val file = fsTree.getSelectedFile() ?: return null
+                arrayOf(OpenFileDescriptor(fsTree.project, file, 0))
+            } else {
+                null
+            }
+        }
+    }
 }

@@ -166,29 +166,6 @@ class RemoteFileSystem : VirtualFileSystem() {
         return service<RemoteConnectionManager>().getSessionClient()
     }
 
-    fun isWritable(file: RemoteVirtualFile): Boolean {
-        // if it's a file just try to open it with a write flag
-        return if (!file.isDirectory) {
-            val sftp = getSftpClient()
-            try {
-                sftp.open(file.path, setOf(OpenMode.WRITE)).close()
-                true
-            } catch (_: IOException) {
-                false
-            }
-        } else {
-            // the hard way, send a command 'test -w path'
-            val sessionClient = getSessionClient()
-            try {
-                val result = sessionClient.exec("test -w ${file.path}")
-                result.close()
-                result.exitStatus == 0
-            } catch (_: IOException) {
-                false
-            }
-        }
-    }
-
     fun resolveSymlink(file: RemoteVirtualFile): FileAttributes {
         val client = getSftpClient()
         return client.stat(file.path)

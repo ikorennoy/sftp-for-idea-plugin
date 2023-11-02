@@ -1,31 +1,27 @@
 package com.github.ikorennoy.remotefileviewer.ui
 
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
 import com.github.ikorennoy.remotefileviewer.remote.RemoteConnectionListener
-import com.github.ikorennoy.remotefileviewer.remoteEdit.EditRemoteFileTask
+import com.github.ikorennoy.remotefileviewer.remote.RemoteConnectionManager
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
+import com.github.ikorennoy.remotefileviewer.tree.RemoteFileSystemTree
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.fileChooser.FileSystemTree
-import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
+import com.intellij.openapi.fileChooser.FileElement
+import com.intellij.openapi.fileChooser.impl.FileTreeStructure
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.treeStructure.Tree
+import com.intellij.ui.tree.LeafState
+import com.intellij.util.io.isFile
 import com.intellij.util.ui.UIUtil
-import javax.swing.JTree
-import javax.swing.tree.DefaultTreeModel
 
 class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
 
@@ -58,91 +54,59 @@ class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
             }
         }
 
-
-        var remoteFsTree: FileSystemTree? = null
         if (tryConnect) {
-            val remoteFs = RemoteFileSystem.getInstance()
-            remoteFsTree = tryPrepareRemoteFsTree(project, remoteFs)
+            val connManager = service<RemoteConnectionManager>()
+            connManager.init()
         }
 
-        val remoteFsPanel = if (remoteFsTree != null) {
-            RemoteFileSystemPanel(remoteFsTree.tree, false)
-        } else {
-            RemoteFileSystemPanel(setupEmptyTree(), true)
-        }
-        if (remoteFsTree != null) {
-            remoteFsPanel.addDataProvider(MyDataProvider(remoteFsTree))
-        }
-        val toolWindowContent = ContentFactory.getInstance().createContent(remoteFsPanel, null, false)
+        val remoteFileSystemTree = RemoteFileSystemTree(project)
+        val remoteFileSystemPanel = RemoteFileSystemPanel(remoteFileSystemTree)
+
+
+        val toolWindowContent = ContentFactory.getInstance().createContent(remoteFileSystemPanel, null, false)
         toolWindow.contentManager.addContent(toolWindowContent)
-        ApplicationManager.getApplication().messageBus.connect().subscribe(RemoteConnectionListener.TOPIC, object : RemoteConnectionListener {
-            override fun connectionEstablished() {
-                if (remoteFsTree != null) {
-                    remoteFsTree?.updateTree()
-                } else {
-                    remoteFsTree = tryPrepareRemoteFsTree(project, RemoteFileSystem.getInstance())
+
+        ApplicationManager.getApplication().messageBus.connect()
+            .subscribe(RemoteConnectionListener.TOPIC, object : RemoteConnectionListener {
+                override fun connectionEstablished() {
                     UIUtil.invokeLaterIfNeeded {
-                        toolWindow.contentManager.removeContent(toolWindowContent, false)
-                        toolWindow.contentManager.addContent(
-                            ContentFactory.getInstance()
-                                .createContent(RemoteFileSystemPanel(remoteFsTree!!.tree, false), null, false)
-                        )
+                        remoteFileSystemTree.invalidate()
                     }
                 }
-            }
-        })
-    }
-
-
-    private fun setupEmptyTree(): JTree {
-        return Tree(DefaultTreeModel(null))
-    }
-
-    private fun tryPrepareRemoteFsTree(project: Project, fs: RemoteFileSystem): FileSystemTreeImpl? {
-        return try {
-            val fileChooserDescriptor: FileChooserDescriptor =
-                FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
-            fileChooserDescriptor.setRoots(fs.getRoot())
-            fileChooserDescriptor.withTreeRootVisible(true)
-            val tree = FileSystemTreeImpl(project, fileChooserDescriptor)
-            tree.registerMouseListener(createActionGroup())
-            tree.addOkAction(EditRemoteFileTask(project, fs, tree))
-            tree
-        } catch (ex: Throwable) {
-            ex.printStackTrace()
-            null
-        }
-    }
-
-    private fun createActionGroup(): DefaultActionGroup {
-        val showCreate = ActionManager.getInstance().getAction("RemoteFileSystem.ShowCreate")
-        val delete = ActionManager.getInstance().getAction("FileChooser.Delete")
-        val group = DefaultActionGroup()
-        group.add(showCreate)
-        group.addSeparator()
-        group.add(delete)
-        group.addSeparator()
-        return group
+            })
     }
 
     override fun shouldBeAvailable(project: Project) = true
 
-    private fun repaintContent(myToolWindow: RemoteFileSystemPanel, content: Content, toolWindow: ToolWindow) {
-        myToolWindow.repaint()
+}
+
+class RemoteFileTreeStructure(
+    project: Project,
+    fileChooserDescriptor: FileChooserDescriptor,
+) : FileTreeStructure(project, fileChooserDescriptor) {
+
+    override fun isToBuildChildrenInBackground(element: Any): Boolean {
+        return true
     }
 
-    private class MyDataProvider(private val fsTree: FileSystemTree) : DataProvider {
-        override fun getData(dataId: String): Any? {
-            return if (FileSystemTree.DATA_KEY.`is`(dataId)) {
-                fsTree
-            } else if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) {
-                fsTree.selectedFile
-            } else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId)) {
-                fsTree.selectedFiles
+    override fun getLeafState(element: Any): LeafState {
+        return if (element is FileElement) {
+            if (element.file.isDirectory) {
+                LeafState.NEVER
             } else {
-                null
+                LeafState.ALWAYS
             }
+        } else {
+            LeafState.DEFAULT
         }
     }
 
+    override fun isAlwaysLeaf(element: Any): Boolean {
+        return if (element is FileElement) {
+            element.file.toNioPath().isFile()
+        } else {
+            false
+        }
+    }
 }
+
