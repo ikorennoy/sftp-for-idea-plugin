@@ -1,7 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.ui
 
 import com.github.ikorennoy.remotefileviewer.remoteEdit.EditRemoteFileTask
-import com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem
+import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -17,6 +17,14 @@ import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
 
+
+// todo add update for this panel
+//  check why not all files opening
+//  prob add new create dir action
+//  check that everything works with 'bind mounts'
+//  start writing tests
+//  fix a case when configuration is corrupted (like wrong host and etc), but only password prompt is shown, after firs unsuccessful attempt
+//  we should show full configuration page
 class RemoteFileSystemPanel(
     private val project: Project
 ) : SimpleToolWindowPanel(true, true), Disposable {
@@ -25,7 +33,7 @@ class RemoteFileSystemPanel(
 
     init {
         toolbar = createToolbarPanel()
-        val remoteFs = SftpFileSystem.getInstance()
+        val remoteFs = RemoteFileSystem.getInstance()
         val tree = try {
             drawRemoteFileSystemTree(remoteFs)
         } catch (ex: Throwable) {
@@ -39,7 +47,7 @@ class RemoteFileSystemPanel(
         return Tree(DefaultTreeModel(null))
     }
 
-    private fun drawRemoteFileSystemTree(fs: SftpFileSystem): JTree {
+    private fun drawRemoteFileSystemTree(fs: RemoteFileSystem): JTree {
         val fileChooserDescriptor: FileChooserDescriptor =
             FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
         fileChooserDescriptor.setRoots(fs.root)

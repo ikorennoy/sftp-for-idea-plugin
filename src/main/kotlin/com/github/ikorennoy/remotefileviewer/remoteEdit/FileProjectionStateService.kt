@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
-import com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem
+import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -17,8 +17,8 @@ class FileProjectionStateService {
             object : Task.Modal(project, "Uploading File", true) {
                 override fun run(indicator: ProgressIndicator) {
                     if (remoteFile.isWritable) {
-                        val fs = remoteFile.fileSystem as SftpFileSystem
-                        // open a temp file and upload new content in it
+                        val fs = remoteFile.fileSystem as RemoteFileSystem
+                        // open a temp file and upload new content into it
                         val remoteTempFile = fs.openTempFile(remoteFile)
                         val size = localFileProjection.length.toDouble()
                         val buffer = ByteArray(1024)

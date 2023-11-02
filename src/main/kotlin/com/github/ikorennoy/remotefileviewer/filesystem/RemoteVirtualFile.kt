@@ -9,9 +9,9 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
-class SftpVirtualFile(
+class RemoteVirtualFile(
     private val remoteFile: RemoteResourceInfo,
-    private val fs: SftpFileSystem,
+    private val fs: RemoteFileSystem,
 ) : VirtualFile() {
 
     private val writable: Boolean by lazy { fs.isWritable(this) }
@@ -103,7 +103,7 @@ class SftpVirtualFile(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as SftpVirtualFile
+        other as RemoteVirtualFile
 
         return remoteFile == other.remoteFile
     }

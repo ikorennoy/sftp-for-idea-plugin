@@ -1,7 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
-import com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem
-import com.github.ikorennoy.remotefileviewer.filesystem.SftpVirtualFile
+import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
+import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
@@ -9,14 +9,12 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.util.ui.UIUtil
 import java.io.ByteArrayOutputStream
 
 
 class EditRemoteFileTask(
     private val project: Project,
-    private val fs: SftpFileSystem,
+    private val fs: RemoteFileSystem,
     private val tree: FileSystemTreeImpl,
 ) : Runnable {
 
@@ -27,7 +25,7 @@ class EditRemoteFileTask(
 
                 override fun run(indicator: ProgressIndicator) {
 
-                    val selectedFile = tree.selectedFile as? SftpVirtualFile ?: return
+                    val selectedFile = tree.selectedFile as? RemoteVirtualFile ?: return
                     val fileSize = selectedFile.length.toDouble()
                     val buffer = ByteArray(1024)
                     val byteArrayOutputStream = ByteArrayOutputStream()

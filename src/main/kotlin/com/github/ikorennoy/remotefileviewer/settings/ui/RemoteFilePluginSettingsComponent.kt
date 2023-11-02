@@ -1,7 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.settings.ui
 
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
-import com.github.ikorennoy.remotefileviewer.sftp.SftpClientService
+import com.github.ikorennoy.remotefileviewer.sftp.SftpOperationsService
 import com.github.ikorennoy.remotefileviewer.template.FileViewerBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
@@ -64,7 +64,7 @@ class RemoteFilePluginSettingsComponent {
                 var icon: Cell<JLabel>? = null
                 button("Test Connection") {
                     saveState()
-                    val clientService = service<SftpClientService>()
+                    val clientService = service<SftpOperationsService>()
                     if (clientService.init()) {
                         icon?.visible(true)
                     }

@@ -1,7 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.filesystem
 
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
-import com.github.ikorennoy.remotefileviewer.sftp.SftpClientService
+import com.github.ikorennoy.remotefileviewer.sftp.SftpOperationsService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,7 +22,7 @@ import kotlin.math.min
 
 // todo check that I can read and edit symlink/hardlink file
 //  check that I can correctly identify symlink dir
-class SftpFileSystem : VirtualFileSystem() {
+class RemoteFileSystem : VirtualFileSystem() {
 
     private val topic = ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES)
     private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
@@ -34,10 +34,10 @@ class SftpFileSystem : VirtualFileSystem() {
         return findFileByPath(conf.root)
     }
 
-    fun getChildren(file: SftpVirtualFile): Array<VirtualFile> {
+    fun getChildren(file: RemoteVirtualFile): Array<VirtualFile> {
         val sftp = getSftpClient()
         return sftp.ls(file.path).map {
-            SftpVirtualFile(it, this)
+            RemoteVirtualFile(it, this)
         }.toTypedArray()
     }
 
@@ -46,13 +46,13 @@ class SftpFileSystem : VirtualFileSystem() {
         return sftp.statExistence(file.path) != null
     }
 
-    fun getParent(file: SftpVirtualFile): VirtualFile? {
+    fun getParent(file: RemoteVirtualFile): VirtualFile? {
         val components = getComponents(file.path)
         return if (components.parent == "") {
             null
         } else {
             val sftp = getSftpClient()
-            SftpVirtualFile(RemoteResourceInfo(getComponents(components.parent), sftp.stat(components.parent)), this)
+            RemoteVirtualFile(RemoteResourceInfo(getComponents(components.parent), sftp.stat(components.parent)), this)
         }
     }
 
@@ -61,7 +61,7 @@ class SftpFileSystem : VirtualFileSystem() {
     override fun findFileByPath(path: String): VirtualFile {
         val sftp = getSftpClient()
         try {
-            return SftpVirtualFile(RemoteResourceInfo(getComponents(path), sftp.stat(path)), this)
+            return RemoteVirtualFile(RemoteResourceInfo(getComponents(path), sftp.stat(path)), this)
         } catch (ex: IOException) {
             println("Can't find file: $path")
             throw ex
@@ -142,9 +142,9 @@ class SftpFileSystem : VirtualFileSystem() {
         return false
     }
 
-    fun fileInputStream(sftpVirtualFile: SftpVirtualFile): InputStream {
+    fun fileInputStream(remoteVirtualFile: RemoteVirtualFile): InputStream {
         val sftp = getSftpClient()
-        return RemoteFileInputStream(sftp.open(sftpVirtualFile.path))
+        return RemoteFileInputStream(sftp.open(remoteVirtualFile.path))
     }
 
     fun getComponents(path: String): PathComponents {
@@ -152,23 +152,23 @@ class SftpFileSystem : VirtualFileSystem() {
         return sftp.sftpEngine.pathHelper.getComponents(path)
     }
 
-    private fun RemoteFile.convert(): SftpVirtualFile {
+    private fun RemoteFile.convert(): RemoteVirtualFile {
         val sftp = getSftpClient()
-        return SftpVirtualFile(
+        return RemoteVirtualFile(
             RemoteResourceInfo(sftp.sftpEngine.pathHelper.getComponents(path), fetchAttributes()),
-            this@SftpFileSystem
+            this@RemoteFileSystem
         )
     }
 
     private fun getSftpClient(): SFTPClient {
-        return service<SftpClientService>().getSftpClient()
+        return service<SftpOperationsService>().getSftpClient()
     }
 
     private fun getSessionClient(): Session {
-        return service<SftpClientService>().getSessionClient()
+        return service<SftpOperationsService>().getSessionClient()
     }
 
-    fun isWritable(file: SftpVirtualFile): Boolean {
+    fun isWritable(file: RemoteVirtualFile): Boolean {
         // if it's a file just try to open it with a write flag
         return if (!file.isDirectory) {
             val sftp = getSftpClient()
@@ -191,26 +191,26 @@ class SftpFileSystem : VirtualFileSystem() {
         }
     }
 
-    fun resolveSymlink(file: SftpVirtualFile): FileAttributes {
+    fun resolveSymlink(file: RemoteVirtualFile): FileAttributes {
         val client = getSftpClient()
         return client.stat(file.path)
     }
 
-    fun openTempFile(forFile: SftpVirtualFile): OutputStream {
+    fun openTempFile(forFile: RemoteVirtualFile): OutputStream {
         val client = getSftpClient()
         return RemoteFileOutputStream(client.open(getTmpName(forFile), writeOperationOpenFlags))
     }
 
     // we don't want to rebuild file tree
     // the operation is used only to transfer file to remote
-    fun removeFile(file: SftpVirtualFile) {
+    fun removeFile(file: RemoteVirtualFile) {
         val client = getSftpClient()
         if (!file.isDirectory) {
             client.rm(file.path)
         }
     }
 
-    fun renameTempFile(forFile: SftpVirtualFile) {
+    fun renameTempFile(forFile: RemoteVirtualFile) {
         val client = getSftpClient()
         client.rename(getTmpName(forFile), forFile.path)
     }
@@ -219,12 +219,12 @@ class SftpFileSystem : VirtualFileSystem() {
     companion object {
         const val PROTOCOL = "remoteFileSysSftp"
 
-        private fun getTmpName(file: SftpVirtualFile): String {
+        private fun getTmpName(file: RemoteVirtualFile): String {
             return "/tmp/${file.name}.tmp"
         }
 
-        fun getInstance(): SftpFileSystem {
-            return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as SftpFileSystem
+        fun getInstance(): RemoteFileSystem {
+            return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as RemoteFileSystem
         }
     }
 }

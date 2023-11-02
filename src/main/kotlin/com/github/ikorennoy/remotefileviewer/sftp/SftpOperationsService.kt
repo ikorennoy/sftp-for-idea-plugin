@@ -16,7 +16,7 @@ import java.io.IOException
 import java.lang.IllegalStateException
 
 @Service
-class SftpClientService {
+class SftpOperationsService {
 
     @Volatile
     private var sftpClient: SFTPClient? = null
@@ -134,7 +134,7 @@ class SftpClientService {
                         client.loadKnownHosts()
                         client.connect(host, port)
                         client.authPassword(username, password)
-                        this@SftpClientService.client = client
+                        this@SftpOperationsService.client = client
                     } catch (ex: IOException) {
                         try {
                             client.close()

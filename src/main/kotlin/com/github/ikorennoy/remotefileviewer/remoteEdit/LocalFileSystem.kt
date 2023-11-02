@@ -1,7 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
-import com.github.ikorennoy.remotefileviewer.filesystem.SftpFileSystem
-import com.github.ikorennoy.remotefileviewer.filesystem.SftpVirtualFile
+import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
+import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -17,8 +17,8 @@ class LocalFileSystem : VirtualFileSystem() {
         return PROTOCOL
     }
 
-    fun createNewFile(originalFile: SftpVirtualFile, content: ByteArray): LocalVirtualFile {
-        val fs = originalFile.fileSystem as SftpFileSystem
+    fun createNewFile(originalFile: RemoteVirtualFile, content: ByteArray): LocalVirtualFile {
+        val fs = originalFile.fileSystem as RemoteFileSystem
         val components = fs.getComponents(originalFile.path)
 
         val file = LocalVirtualFile(components.name, this, components.path, originalFile, content)

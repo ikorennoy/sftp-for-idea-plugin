@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
-import com.github.ikorennoy.remotefileviewer.filesystem.SftpVirtualFile
+import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.BinaryLightVirtualFile
@@ -12,7 +12,7 @@ class LocalVirtualFile(
     private val name: String,
     private val fileSystem: VirtualFileSystem,
     private val path: String,
-    val remoteFile: SftpVirtualFile,
+    val remoteFile: RemoteVirtualFile,
     private val content: ByteArray
 ) : VirtualFile() {
 
