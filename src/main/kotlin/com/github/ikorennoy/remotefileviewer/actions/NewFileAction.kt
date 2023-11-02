@@ -10,12 +10,13 @@ import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.fileTypes.UnknownFileType
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.UIBundle
 import org.apache.pdfbox.util.filetypedetector.FileType
 
 class NewFileAction :
-    AnAction(ActionsBundle.messagePointer("action.FileChooser.NewFile.text"), AllIcons.FileTypes.AddAny) {
+    DumbAwareAction(ActionsBundle.messagePointer("action.FileChooser.NewFile.text"), AllIcons.FileTypes.AddAny) {
 
     override fun getActionUpdateThread(): ActionUpdateThread {
         return ActionUpdateThread.BGT
@@ -23,7 +24,12 @@ class NewFileAction :
 
     override fun actionPerformed(e: AnActionEvent) {
         val fsTree = e.getData(FileSystemTree.DATA_KEY) ?: return
-        val parent = fsTree.newFileParent
+        var parent = fsTree.newFileParent ?: return
+
+        if (!parent.isDirectory) {
+           parent = parent.parent
+        }
+
         var name: String?
         while (true) {
             name = Messages.showInputDialog(
@@ -65,8 +71,11 @@ class NewFileAction :
 
     override fun update(e: AnActionEvent) {
         val fsTree = e.getData(FileSystemTree.DATA_KEY) ?: return
-        val parent = fsTree.newFileParent
+        var parent = fsTree.newFileParent ?: return
+        if (!parent.isDirectory) {
+            parent = parent.parent
+        }
         e.presentation.setVisible(true)
-        e.presentation.isEnabled = parent != null && parent.isWritable && parent.isWritable
+        e.presentation.isEnabled = parent.isWritable
     }
 }
