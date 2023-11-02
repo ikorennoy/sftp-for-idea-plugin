@@ -1,11 +1,9 @@
 package com.github.ikorennoy.remotefileviewer.remote
 
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.ProjectManager
@@ -18,7 +16,6 @@ import java.util.concurrent.locks.ReentrantLock
 
 @Service
 class RemoteConnectionManager {
-
 
     @Volatile
     private var sftpClient: SFTPClient? = null
@@ -45,28 +42,6 @@ class RemoteConnectionManager {
             }
 
             val configuration = service<RemoteFileViewerSettingsState>()
-
-            if (configuration.isNotValid()) {
-                // show full configuration dialogue
-                ShowSettingsUtil.getInstance().showSettingsDialog(
-                    ProjectManager.getInstance().defaultProject,
-                    "com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
-                )
-
-                if (configuration.isNotValid()) {
-                    return false // user cancelled configuration, just return false
-                }
-            } else {
-                if (configuration.password.isEmpty()) {
-                    // show password prompt dialogue
-                    val password = Messages.showPasswordDialog(
-                        "Enter a password:",
-                        "Connecting to: ${configuration.username}@${configuration.host}:${configuration.port}",
-                    ) ?: return false // it means cancel, we don't have a password and user don't want to enter it
-
-                    configuration.password = password.toCharArray()
-                }
-            }
 
             tryConnect(configuration.host, configuration.port, configuration.username, configuration.password)
             val clientVal = client

@@ -3,42 +3,68 @@ package com.github.ikorennoy.remotefileviewer.ui
 import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
 import com.github.ikorennoy.remotefileviewer.remote.RemoteConnectionListener
 import com.github.ikorennoy.remotefileviewer.remoteEdit.EditRemoteFileTask
+import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileSystemTree
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.UIUtil
-import java.io.IOException
 import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
 
 class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
 
-    override fun init(toolWindow: ToolWindow) {
-        val project = toolWindow.project
-        val manager = ToolWindowManager.getInstance(project)
-
-    }
-
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         // first try to connect on window open
-        val remoteFs = RemoteFileSystem.getInstance()
-        var remoteFsTree = tryPrepareRemoteFsTree(project, remoteFs)
+        val configuration = service<RemoteFileViewerSettingsState>()
+        var tryConnect = true
+
+        if (configuration.isNotValid()) {
+            // show full configuration dialogue
+            ShowSettingsUtil.getInstance().showSettingsDialog(
+                project,
+                "com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
+            )
+            tryConnect = !configuration.isNotValid() // user cancelled settings dialog
+        } else {
+            if (configuration.password.isEmpty()) {
+                // show password prompt dialogue
+                val password = Messages.showPasswordDialog(
+                    "Enter a password:",
+                    "Connecting to: ${configuration.username}@${configuration.host}:${configuration.port}",
+                )
+
+                if (password != null) {
+                    configuration.password = password.toCharArray()
+                } else {
+                    // it means user cancelled password enter dialog
+                    tryConnect = false
+                }
+            }
+        }
+
+
+        var remoteFsTree: FileSystemTree? = null
+        if (tryConnect) {
+            val remoteFs = RemoteFileSystem.getInstance()
+            remoteFsTree = tryPrepareRemoteFsTree(project, remoteFs)
+        }
+
         val remoteFsPanel = if (remoteFsTree != null) {
             RemoteFileSystemPanel(remoteFsTree.tree, false)
         } else {
@@ -54,7 +80,7 @@ class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
                 if (remoteFsTree != null) {
                     remoteFsTree?.updateTree()
                 } else {
-                    remoteFsTree = tryPrepareRemoteFsTree(project, remoteFs)
+                    remoteFsTree = tryPrepareRemoteFsTree(project, RemoteFileSystem.getInstance())
                     UIUtil.invokeLaterIfNeeded {
                         toolWindow.contentManager.removeContent(toolWindowContent, false)
                         toolWindow.contentManager.addContent(
@@ -66,6 +92,7 @@ class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
             }
         })
     }
+
 
     private fun setupEmptyTree(): JTree {
         return Tree(DefaultTreeModel(null))
