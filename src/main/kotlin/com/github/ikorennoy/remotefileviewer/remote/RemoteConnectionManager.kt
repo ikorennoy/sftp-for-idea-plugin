@@ -1,6 +1,7 @@
-package com.github.ikorennoy.remotefileviewer.sftp
+package com.github.ikorennoy.remotefileviewer.remote
 
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -13,10 +14,11 @@ import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.connection.channel.direct.Session
 import net.schmizz.sshj.sftp.SFTPClient
 import java.io.IOException
-import java.lang.IllegalStateException
+import java.util.concurrent.locks.ReentrantLock
 
 @Service
-class SftpOperationsService {
+class RemoteConnectionManager {
+
 
     @Volatile
     private var sftpClient: SFTPClient? = null
@@ -24,9 +26,9 @@ class SftpOperationsService {
     @Volatile
     private var client: SSHClient? = null
 
+    private val lock = ReentrantLock()
 
     /**
-     * Thread safe
      * Ensures that the client is connected and authenticated
      */
     fun init(): Boolean {
@@ -35,8 +37,8 @@ class SftpOperationsService {
         if (localClient != null) {
             return sshClientIsOk()
         }
-
-        synchronized(this) {
+        try {
+            lock.lock()
             localClient = sftpClient
             if (localClient != null) {
                 return sshClientIsOk()
@@ -68,14 +70,16 @@ class SftpOperationsService {
 
             tryConnect(configuration.host, configuration.port, configuration.username, configuration.password)
             val clientVal = client
-            if (clientVal == null) {
-                // initialization is completely failed, just return false, user is notified with com.intellij.openapi.progress.Task.Modal#reportError
-                return false
+            return if (clientVal == null) {
+                // initialization is completely failed, just return false, user is notified by tryConnect
+                false
             } else {
                 val newSftpClient = clientVal.newSFTPClient()
                 sftpClient = newSftpClient
-                return true
+                true
             }
+        } finally {
+            lock.unlock()
         }
     }
 
@@ -122,7 +126,6 @@ class SftpOperationsService {
 
     private fun tryConnect(host: String, port: Int, username: String, password: CharArray) {
         val project = ProjectManager.getInstance().defaultProject // todo find a way to get current project
-
         var failReason: Exception? = null
         CommandProcessor.getInstance().executeCommand(project, {
             object : Task.Modal(project, "Connecting to: ${username}@${host}:${port}", false) {
@@ -134,7 +137,7 @@ class SftpOperationsService {
                         client.loadKnownHosts()
                         client.connect(host, port)
                         client.authPassword(username, password)
-                        this@SftpOperationsService.client = client
+                        this@RemoteConnectionManager.client = client
                     } catch (ex: IOException) {
                         try {
                             client.close()

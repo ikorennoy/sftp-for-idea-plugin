@@ -1,7 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.settings.ui
 
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
-import com.github.ikorennoy.remotefileviewer.sftp.SftpOperationsService
+import com.github.ikorennoy.remotefileviewer.remote.RemoteConnectionManager
 import com.github.ikorennoy.remotefileviewer.template.FileViewerBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.COLUMNS_TINY
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
@@ -64,7 +65,7 @@ class RemoteFilePluginSettingsComponent {
                 var icon: Cell<JLabel>? = null
                 button("Test Connection") {
                     saveState()
-                    val clientService = service<SftpOperationsService>()
+                    val clientService = service<RemoteConnectionManager>()
                     if (clientService.init()) {
                         icon?.visible(true)
                     }
@@ -104,6 +105,17 @@ class RemoteFilePluginSettingsComponent {
                 passwordField.password.isNotEmpty()
     }
 
+    fun getPreferredFocusedComponent(): JComponent {
+        return if (hostField.text.isEmpty()) {
+            hostField
+        } else if (portField.text.isEmpty()) {
+            portField
+        } else if (usernameField.text.isEmpty()) {
+            usernameField
+        } else {
+            passwordField
+        }
+    }
 
     private fun checkHostIsNotBlank(): ValidationInfo? {
         return if (hostField.text.isNotEmpty()) {

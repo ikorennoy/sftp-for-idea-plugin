@@ -31,7 +31,8 @@
                 parentId="tools"
                 instance="com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
                 id="com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
-                displayName="SSH Configuration"/>
+                displayName="SSH Configuration"
+        />
 
         <editorNotificationProvider
                 implementation="com.github.ikorennoy.remotefileviewer.remoteEdit.ProjectionFileEditorPanelProvider"/>

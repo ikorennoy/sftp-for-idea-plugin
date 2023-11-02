@@ -1,7 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.filesystem
 
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
-import com.github.ikorennoy.remotefileviewer.sftp.SftpOperationsService
+import com.github.ikorennoy.remotefileviewer.remote.RemoteConnectionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,9 +27,7 @@ class RemoteFileSystem : VirtualFileSystem() {
     private val topic = ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES)
     private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
 
-    val root: VirtualFile by lazy { init() }
-
-    private fun init(): VirtualFile {
+    fun getRoot(): VirtualFile {
         val conf = service<RemoteFileViewerSettingsState>()
         return findFileByPath(conf.root)
     }
@@ -63,7 +61,7 @@ class RemoteFileSystem : VirtualFileSystem() {
         try {
             return RemoteVirtualFile(RemoteResourceInfo(getComponents(path), sftp.stat(path)), this)
         } catch (ex: IOException) {
-            println("Can't find file: $path")
+            println("Can't find a file: $path")
             throw ex
         }
     }
@@ -161,11 +159,11 @@ class RemoteFileSystem : VirtualFileSystem() {
     }
 
     private fun getSftpClient(): SFTPClient {
-        return service<SftpOperationsService>().getSftpClient()
+        return service<RemoteConnectionManager>().getSftpClient()
     }
 
     private fun getSessionClient(): Session {
-        return service<SftpOperationsService>().getSessionClient()
+        return service<RemoteConnectionManager>().getSessionClient()
     }
 
     fun isWritable(file: RemoteVirtualFile): Boolean {
