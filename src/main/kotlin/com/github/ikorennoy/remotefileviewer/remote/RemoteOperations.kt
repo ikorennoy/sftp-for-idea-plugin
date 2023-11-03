@@ -12,12 +12,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
-import com.intellij.ui.UIBundle
 import com.intellij.util.ui.UIUtil
 import net.schmizz.sshj.SSHClient
-import net.schmizz.sshj.sftp.Response
-import net.schmizz.sshj.sftp.SFTPClient
-import net.schmizz.sshj.sftp.SFTPException
+import net.schmizz.sshj.sftp.*
 import java.awt.EventQueue
 import java.io.IOException
 import java.util.concurrent.locks.ReentrantLock
@@ -98,6 +95,23 @@ class RemoteOperations {
         }
     }
 
+    fun getParent(remotePath: String): RemoteVirtualFile? {
+        assertNotEdt()
+        return try {
+            val client = getSftpClient()
+            val fs = RemoteFileSystem.getInstance()
+            val components = getPathComponents(remotePath)
+            if (components.parent == "") {
+                null
+            } else {
+                RemoteVirtualFile(RemoteResourceInfo(components, client.stat(remotePath)), fs)
+            }
+        } catch (ex: SFTPException) {
+            UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog("Can't get a parent for '${remotePath}' ${ex.message}", "Error") }
+            null
+        }
+    }
+
     fun getSftpClient(): SFTPClient {
         var res = sftpClient
 
@@ -172,6 +186,10 @@ class RemoteOperations {
             }, "Connecting...", null)
     }
 
+    private fun getPathComponents(path: String): PathComponents {
+        val sftp = getSftpClient()
+        return sftp.sftpEngine.pathHelper.getComponents(path)
+    }
 
     companion object {
         fun messageFromStatusCode(ex: SFTPException) : String {

@@ -36,13 +36,8 @@ class RemoteFileSystem : VirtualFileSystem() {
     }
 
     fun getParent(file: RemoteVirtualFile): VirtualFile? {
-        val components = getComponents(file.path)
-        return if (components.parent == "") {
-            null
-        } else {
-            val sftp = getSftpClient()
-            RemoteVirtualFile(RemoteResourceInfo(getComponents(components.parent), sftp.stat(components.parent)), this)
-        }
+        val operation = getRemoteOperations()
+        return operation.getParent(file.path)
     }
 
     override fun getProtocol(): String = PROTOCOL
