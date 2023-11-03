@@ -17,7 +17,9 @@ import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.*
 import java.awt.EventQueue
 import java.io.IOException
+import java.io.InputStream
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.math.min
 
 @Service
 class RemoteOperations {
@@ -29,7 +31,6 @@ class RemoteOperations {
     private var client: SSHClient? = null
 
     private val lock = ReentrantLock()
-
 
 
     fun initialized(): Boolean {
@@ -79,18 +80,28 @@ class RemoteOperations {
                 .map { RemoteVirtualFile(it, remoteFs) }
                 .toTypedArray()
         } catch (ex: SFTPException) {
-            UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog("Can't open a directory '${remotePath}' ${ex.message}", "Error") }
+            UIUtil.invokeLaterIfNeeded {
+                Messages.showErrorDialog(
+                    "Can't open a directory '${remotePath}' ${ex.message}",
+                    "Error"
+                )
+            }
             emptyArray()
         }
     }
 
-    fun exists(remotePath: String) : Boolean {
+    fun exists(remotePath: String): Boolean {
         assertNotEdt()
         return try {
             val client = getSftpClient()
             client.statExistence(remotePath) != null
         } catch (ex: SFTPException) {
-            UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog("Can't execute an operation '${remotePath}' ${ex.message}", "Error") }
+            UIUtil.invokeLaterIfNeeded {
+                Messages.showErrorDialog(
+                    "Can't execute an operation '${remotePath}' ${ex.message}",
+                    "Error"
+                )
+            }
             false
         }
     }
@@ -107,9 +118,134 @@ class RemoteOperations {
                 RemoteVirtualFile(RemoteResourceInfo(components, client.stat(remotePath)), fs)
             }
         } catch (ex: SFTPException) {
-            UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog("Can't get a parent for '${remotePath}' ${ex.message}", "Error") }
+            UIUtil.invokeLaterIfNeeded {
+                Messages.showErrorDialog(
+                    "Can't get a parent for '${remotePath}' ${ex.message}",
+                    "Error"
+                )
+            }
             null
         }
+    }
+
+    fun findFileByPath(path: String): RemoteVirtualFile? {
+        assertNotEdt()
+        return try {
+            val client = getSftpClient()
+            val fs = RemoteFileSystem.getInstance()
+            RemoteVirtualFile(RemoteResourceInfo(getPathComponents(path), client.stat(path)), fs)
+        } catch (ex: SFTPException) {
+            UIUtil.invokeLaterIfNeeded {
+                Messages.showErrorDialog(
+                    "Can't find a file for path '${path}' ${ex.message}",
+                    "Error"
+                )
+            }
+            null
+        }
+    }
+
+    fun remove(file: RemoteVirtualFile) {
+        assertNotEdt()
+        var entity: String? = null
+        try {
+            val client = getSftpClient()
+            if (file.isDirectory) {
+                entity = "directory"
+                client.rmdir(file.path)
+            } else {
+                entity = "file"
+                client.rm(file.path)
+            }
+        } catch (ex: SFTPException) {
+            UIUtil.invokeLaterIfNeeded {
+                Messages.showErrorDialog(
+                    "Can't remove a $entity with path '${file.path}' ${ex.message}",
+                    "Error"
+                )
+            }
+        }
+    }
+
+    fun rename(fromPath: String, toPath: String) {
+        assertNotEdt()
+        try {
+            val client = getSftpClient()
+            client.rename(fromPath, toPath)
+        } catch (ex: SFTPException) {
+            UIUtil.invokeLaterIfNeeded {
+                Messages.showErrorDialog(
+                    "Can't rename a file with path '${fromPath}' to path '${toPath}' ${ex.message}",
+                    "Error"
+                )
+            }
+        }
+    }
+
+    fun createChildFile(parent: RemoteVirtualFile, newFileName: String): RemoteVirtualFile {
+        assertNotEdt()
+        return try {
+            val client = getSftpClient()
+            val realPath = client.canonicalize(parent.path)
+            val newFile = client.open("$realPath/$newFileName", setOf(OpenMode.CREAT, OpenMode.TRUNC))
+            val newFilePath = newFile.path
+            newFile.close()
+            RemoteVirtualFile(RemoteResourceInfo(getPathComponents(newFilePath), client.stat(newFilePath)), RemoteFileSystem.getInstance())
+        } catch (ex: SFTPException) {
+            UIUtil.invokeLaterIfNeeded {
+                Messages.showErrorDialog(
+                    "Can't create new file in '${parent.path}' ${ex.message}",
+                    "Error"
+                )
+            }
+            throw ex
+        }
+    }
+
+    fun createChildDirectory(parent: RemoteVirtualFile, newDirName: String): RemoteVirtualFile {
+        assertNotEdt()
+        return try {
+            val client = getSftpClient()
+            val parentDirCanonicalPath = client.canonicalize(parent.path)
+            val newDirPath = "$parentDirCanonicalPath/$newDirName"
+            client.mkdir(newDirPath)
+            val newDirStat = client.stat(newDirPath)
+            RemoteVirtualFile(RemoteResourceInfo(getPathComponents(newDirPath), newDirStat), RemoteFileSystem.getInstance())
+        } catch (ex: SFTPException) {
+            UIUtil.invokeLaterIfNeeded {
+                Messages.showErrorDialog(
+                    "Can't create new directory in '${parent.path}' ${ex.message}",
+                    "Error"
+                )
+            }
+            throw ex
+        }
+    }
+
+    fun fileInputStream(file: RemoteVirtualFile): InputStream {
+        assertNotEdt()
+        return try {
+            val client = getSftpClient()
+            RemoteFileInputStream(client.open(file.path))
+        } catch (ex: SFTPException) {
+            throw ex
+        }
+    }
+
+    fun getFileAttributes(file: RemoteVirtualFile): FileAttributes {
+        assertNotEdt()
+        return try {
+            val client = getSftpClient()
+            client.stat(file.path)
+        } catch (ex: SFTPException) {
+            throw ex
+        }
+    }
+
+    fun getPathComponents(path: String): PathComponents {
+        assertNotEdt()
+        val sftp = getSftpClient()
+        return sftp.sftpEngine.pathHelper.getComponents(path)
     }
 
     fun getSftpClient(): SFTPClient {
@@ -186,49 +322,51 @@ class RemoteOperations {
             }, "Connecting...", null)
     }
 
-    private fun getPathComponents(path: String): PathComponents {
-        val sftp = getSftpClient()
-        return sftp.sftpEngine.pathHelper.getComponents(path)
+}
+
+internal class RemoteFileInputStream(private val remoteFile: RemoteFile) : InputStream() {
+    private val b = ByteArray(1)
+
+    private var fileOffset: Long = 0
+    private var markPos: Long = 0
+    private var readLimit: Long = 0
+
+    override fun markSupported(): Boolean {
+        return true
     }
 
-    companion object {
-        fun messageFromStatusCode(ex: SFTPException) : String {
-            return when (ex.statusCode) {
-                Response.StatusCode.UNKNOWN -> TODO()
-                Response.StatusCode.OK -> TODO()
-                Response.StatusCode.EOF -> TODO()
-                Response.StatusCode.NO_SUCH_FILE -> TODO()
-                Response.StatusCode.PERMISSION_DENIED -> "Permission denied"
-                Response.StatusCode.FAILURE -> TODO()
-                Response.StatusCode.BAD_MESSAGE -> TODO()
-                Response.StatusCode.NO_CONNECTION -> TODO()
-                Response.StatusCode.CONNECITON_LOST -> TODO()
-                Response.StatusCode.OP_UNSUPPORTED -> TODO()
-                Response.StatusCode.INVALID_HANDLE -> TODO()
-                Response.StatusCode.NO_SUCH_PATH -> TODO()
-                Response.StatusCode.FILE_ALREADY_EXISTS -> TODO()
-                Response.StatusCode.WRITE_PROTECT -> TODO()
-                Response.StatusCode.NO_MEDIA -> TODO()
-                Response.StatusCode.NO_SPACE_ON_FILESYSTEM -> TODO()
-                Response.StatusCode.QUOTA_EXCEEDED -> TODO()
-                Response.StatusCode.UNKNOWN_PRINCIPAL -> TODO()
-                Response.StatusCode.LOCK_CONFLICT -> TODO()
-                Response.StatusCode.DIR_NOT_EMPTY -> TODO()
-                Response.StatusCode.NOT_A_DIRECTORY -> TODO()
-                Response.StatusCode.INVALID_FILENAME -> TODO()
-                Response.StatusCode.LINK_LOOP -> TODO()
-                Response.StatusCode.CANNOT_DELETE -> TODO()
-                Response.StatusCode.INVALID_PARAMETER -> TODO()
-                Response.StatusCode.FILE_IS_A_DIRECTORY -> TODO()
-                Response.StatusCode.BYTE_RANGE_LOCK_CONFLICT -> TODO()
-                Response.StatusCode.BYTE_RANGE_LOCK_REFUSED -> TODO()
-                Response.StatusCode.DELETE_PENDING -> TODO()
-                Response.StatusCode.FILE_CORRUPT -> TODO()
-                Response.StatusCode.OWNER_INVALID -> TODO()
-                Response.StatusCode.GROUP_INVALID -> TODO()
-                Response.StatusCode.NO_MATCHING_BYTE_RANGE_LOCK -> TODO()
-                null -> TODO()
+    override fun mark(readLimit: Int) {
+        this.readLimit = readLimit.toLong()
+        markPos = fileOffset
+    }
+
+    override fun reset() {
+        fileOffset = markPos
+    }
+
+    override fun skip(n: Long): Long {
+        val fileLength: Long = remoteFile.length()
+        val previousFileOffset = fileOffset
+        fileOffset = min((fileOffset + n).toDouble(), fileLength.toDouble()).toLong()
+        return fileOffset - previousFileOffset
+    }
+
+    override fun read(): Int {
+        return if (read(b, 0, 1) == -1) -1 else b[0].toInt() and 0xff
+    }
+
+    override fun read(into: ByteArray, off: Int, len: Int): Int {
+        val read: Int = this.remoteFile.read(fileOffset, into, off, len)
+        if (read != -1) {
+            fileOffset += read.toLong()
+            if (markPos != 0L && read > readLimit) {
+                markPos = 0
             }
         }
+        return read
+    }
+
+    override fun close() {
+        remoteFile.close()
     }
 }

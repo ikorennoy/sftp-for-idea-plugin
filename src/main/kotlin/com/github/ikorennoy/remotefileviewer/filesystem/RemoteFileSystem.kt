@@ -10,13 +10,11 @@ import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import net.schmizz.sshj.sftp.*
-import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.lang.IllegalArgumentException
 import javax.naming.OperationNotSupportedException
-import kotlin.math.min
 
 // todo check that I can read and edit symlink/hardlink file
 //  check that I can correctly identify symlink dir
@@ -26,91 +24,58 @@ class RemoteFileSystem : VirtualFileSystem() {
     private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
 
     fun getChildren(file: RemoteVirtualFile): Array<RemoteVirtualFile> {
-        val remoteOperations = getRemoteOperations()
-        return remoteOperations.getChildren(file.path)
+        return getRemoteOperations().getChildren(file.path)
     }
 
     fun exists(file: VirtualFile): Boolean {
-        val remoteOperations = getRemoteOperations()
-        return remoteOperations.exists(file.path)
+        return getRemoteOperations().exists(file.path)
     }
 
     fun getParent(file: RemoteVirtualFile): VirtualFile? {
-        val operation = getRemoteOperations()
-        return operation.getParent(file.path)
+        return  getRemoteOperations().getParent(file.path)
     }
 
     override fun getProtocol(): String = PROTOCOL
 
-    override fun findFileByPath(path: String): VirtualFile {
-        val sftp = getSftpClient()
-        try {
-            return RemoteVirtualFile(RemoteResourceInfo(getComponents(path), sftp.stat(path)), this)
-        } catch (ex: IOException) {
-            println("Can't find a file: $path")
-            throw ex
-        }
+    override fun findFileByPath(path: String): VirtualFile? {
+        return getRemoteOperations().findFileByPath(path)
     }
 
-    override fun refresh(asynchronous: Boolean) {
-    }
 
-    override fun refreshAndFindFileByPath(path: String): VirtualFile {
+    override fun refreshAndFindFileByPath(path: String): VirtualFile? {
         return findFileByPath(path)
     }
 
-    override fun addVirtualFileListener(listener: VirtualFileListener) {
-
-    }
-
-    override fun removeVirtualFileListener(listener: VirtualFileListener) {
-    }
-
     override fun deleteFile(requestor: Any?, vFile: VirtualFile) {
+        if (vFile !is RemoteVirtualFile) return
+        val operations = getRemoteOperations()
         val event = listOf(VFileDeleteEvent(requestor, vFile, false))
-        if (vFile.isWritable) {
-            val sftp = getSftpClient()
-            topic.before(event)
-            if (vFile.isDirectory) {
-                sftp.rmdir(vFile.path)
-            } else {
-                sftp.rm(vFile.path)
-            }
-            topic.after(event)
-        }
-    }
-
-    override fun moveFile(requestor: Any?, vFile: VirtualFile, newParent: VirtualFile) {
-        val sftp = getSftpClient()
-        val moveEvent = listOf(VFileMoveEvent(requestor, vFile, newParent))
-        topic.before(moveEvent)
-        sftp.rename(vFile.path, newParent.path)
-        topic.after(moveEvent)
-    }
-
-    override fun renameFile(requestor: Any?, vFile: VirtualFile, newName: String) {
-        val sftp = getSftpClient()
-        val event =
-            listOf(VFilePropertyChangeEvent(requestor, vFile, VirtualFile.PROP_NAME, vFile.name, newName, false))
         topic.before(event)
-        sftp.rename(vFile.path, newName)
+        operations.remove(vFile)
         topic.after(event)
     }
 
+    override fun moveFile(requestor: Any?, vFile: VirtualFile, newParent: VirtualFile) {
+        val operations = getRemoteOperations()
+        val moveEvent = listOf(VFileMoveEvent(requestor, vFile, newParent))
+        topic.before(moveEvent)
+        operations.rename(vFile.path, newParent.path)
+        topic.after(moveEvent)
+    }
+
     override fun createChildFile(requestor: Any?, vDir: VirtualFile, fileName: String): VirtualFile {
-        val sftp = getSftpClient()
+        if (vDir !is RemoteVirtualFile) throw IllegalArgumentException("Wrong VirtualFile: $vDir")
+        val operations = getRemoteOperations()
         val event = listOf(VFileCreateEvent(requestor, vDir, fileName, false, null, null, false, emptyArray()))
         topic.before(event)
-        val result = sftp.open(vDir.path + "/" + fileName, setOf(OpenMode.CREAT)).convert()
+        val result = operations.createChildFile(vDir, fileName)
         topic.after(event)
         return result
     }
 
     override fun createChildDirectory(requestor: Any?, vDir: VirtualFile, dirName: String): VirtualFile {
-        val sftp = getSftpClient()
-        val dirPath = vDir.path + "/" + dirName
-        sftp.mkdir(dirPath)
-        return sftp.open(dirPath).convert()
+        if (vDir !is RemoteVirtualFile) throw IllegalArgumentException("Wrong VirtualFile $vDir")
+        return getRemoteOperations().createChildDirectory(vDir, dirName)
     }
 
     override fun copyFile(
@@ -126,22 +91,16 @@ class RemoteFileSystem : VirtualFileSystem() {
         return false
     }
 
-    fun fileInputStream(remoteVirtualFile: RemoteVirtualFile): InputStream {
-        val sftp = getSftpClient()
-        return RemoteFileInputStream(sftp.open(remoteVirtualFile.path))
+    fun fileInputStream(file: RemoteVirtualFile): InputStream {
+        return getRemoteOperations().fileInputStream(file)
+    }
+
+    fun getFileAttributes(file: RemoteVirtualFile): FileAttributes {
+        return getRemoteOperations().getFileAttributes(file)
     }
 
     fun getComponents(path: String): PathComponents {
-        val sftp = getSftpClient()
-        return sftp.sftpEngine.pathHelper.getComponents(path)
-    }
-
-    private fun RemoteFile.convert(): RemoteVirtualFile {
-        val sftp = getSftpClient()
-        return RemoteVirtualFile(
-            RemoteResourceInfo(sftp.sftpEngine.pathHelper.getComponents(path), fetchAttributes()),
-            this@RemoteFileSystem
-        )
+        return getRemoteOperations().getPathComponents(path)
     }
 
     private fun getRemoteOperations(): RemoteOperations {
@@ -150,11 +109,6 @@ class RemoteFileSystem : VirtualFileSystem() {
 
     private fun getSftpClient(): SFTPClient {
         return service<RemoteOperations>().getSftpClient()
-    }
-
-    fun resolveSymlink(file: RemoteVirtualFile): FileAttributes {
-        val client = getSftpClient()
-        return client.stat(file.path)
     }
 
     fun openTempFile(forFile: RemoteVirtualFile): OutputStream {
@@ -176,6 +130,21 @@ class RemoteFileSystem : VirtualFileSystem() {
         client.rename(getTmpName(forFile), forFile.path)
     }
 
+    override fun renameFile(requestor: Any?, vFile: VirtualFile, newName: String) {
+        throw UnsupportedOperationException("renameFile")
+    }
+
+    override fun addVirtualFileListener(listener: VirtualFileListener) {
+
+    }
+
+    override fun removeVirtualFileListener(listener: VirtualFileListener) {
+    }
+
+
+    override fun refresh(asynchronous: Boolean) {
+    }
+
 
     companion object {
         const val PROTOCOL = "remoteFileSysSftp"
@@ -191,55 +160,10 @@ class RemoteFileSystem : VirtualFileSystem() {
 }
 
 // closes internal file on close
-internal class RemoteFileInputStream(private val remoteFile: RemoteFile): InputStream() {
-    private val b = ByteArray(1)
 
-    private var fileOffset: Long = 0
-    private var markPos: Long = 0
-    private var readLimit: Long = 0
-
-    override fun markSupported(): Boolean {
-        return true
-    }
-
-    override fun mark(readLimit: Int) {
-        this.readLimit = readLimit.toLong()
-        markPos = fileOffset
-    }
-
-    override fun reset() {
-        fileOffset = markPos
-    }
-
-    override fun skip(n: Long): Long {
-        val fileLength: Long = remoteFile.length()
-        val previousFileOffset = fileOffset
-        fileOffset = min((fileOffset + n).toDouble(), fileLength.toDouble()).toLong()
-        return fileOffset - previousFileOffset
-    }
-
-    override fun read(): Int {
-        return if (read(b, 0, 1) == -1) -1 else b[0].toInt() and 0xff
-    }
-
-    override fun read(into: ByteArray, off: Int, len: Int): Int {
-        val read: Int = this.remoteFile.read(fileOffset, into, off, len)
-        if (read != -1) {
-            fileOffset += read.toLong()
-            if (markPos != 0L && read > readLimit) {
-                markPos = 0
-            }
-        }
-        return read
-    }
-
-    override fun close() {
-        remoteFile.close()
-    }
-}
 
 // closes internal file on close
-internal class RemoteFileOutputStream(private val remoteFile: RemoteFile): OutputStream() {
+internal class RemoteFileOutputStream(private val remoteFile: RemoteFile) : OutputStream() {
 
     private val b = ByteArray(1)
     private var fileOffset: Long = 0

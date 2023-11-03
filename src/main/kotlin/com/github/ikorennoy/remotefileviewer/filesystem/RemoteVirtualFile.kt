@@ -30,7 +30,7 @@ class RemoteVirtualFile(
 
     override fun isDirectory(): Boolean {
         return if (remoteFile.attributes.type == FileMode.Type.SYMLINK) {
-            val originalAttrs = fs.resolveSymlink(this)
+            val originalAttrs = fs.getFileAttributes(this)
             originalAttrs.type == FileMode.Type.DIRECTORY
         } else {
             remoteFile.attributes.type == FileMode.Type.DIRECTORY
