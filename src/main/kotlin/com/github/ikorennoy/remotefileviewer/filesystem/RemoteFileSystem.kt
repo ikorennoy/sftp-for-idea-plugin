@@ -41,7 +41,6 @@ class RemoteFileSystem : VirtualFileSystem() {
         return getRemoteOperations().findFileByPath(path)
     }
 
-
     override fun refreshAndFindFileByPath(path: String): VirtualFile? {
         return findFileByPath(path)
     }

@@ -5,7 +5,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import net.schmizz.sshj.sftp.FileMode
 import net.schmizz.sshj.sftp.RemoteResourceInfo
-import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -15,6 +14,19 @@ class RemoteVirtualFile(
 ) : VirtualFile() {
 
     override fun getName(): String = remoteFile.name
+
+    private val myParent: VirtualFile? by lazy { fs.getParent(this) }
+
+    private val myChildren: Array<RemoteVirtualFile> by lazy { fs.getChildren(this) }
+
+    private val isDir: Boolean by lazy {
+        if (remoteFile.attributes.type == FileMode.Type.SYMLINK) {
+            val originalAttrs = fs.getFileAttributes(this)
+            originalAttrs.type == FileMode.Type.DIRECTORY
+        } else {
+            remoteFile.attributes.type == FileMode.Type.DIRECTORY
+        }
+    }
 
     override fun getFileSystem(): VirtualFileSystem {
         return fs
@@ -29,28 +41,19 @@ class RemoteVirtualFile(
     }
 
     override fun isDirectory(): Boolean {
-        return if (remoteFile.attributes.type == FileMode.Type.SYMLINK) {
-            val originalAttrs = fs.getFileAttributes(this)
-            originalAttrs.type == FileMode.Type.DIRECTORY
-        } else {
-            remoteFile.attributes.type == FileMode.Type.DIRECTORY
-        }
+        return isDir
     }
 
     override fun isValid(): Boolean {
-        return fs.exists(this)
+        return true
     }
 
     override fun getParent(): VirtualFile? {
-        return fs.getParent(this)
+        return myParent
     }
 
     override fun getChildren(): Array<RemoteVirtualFile> {
-        return try {
-            fs.getChildren(this)
-        } catch (ex: IOException) {
-            emptyArray()
-        }
+        return myChildren
     }
 
     override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): OutputStream {

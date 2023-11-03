@@ -13,6 +13,8 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.*
 import java.awt.EventQueue
@@ -32,6 +34,7 @@ class RemoteOperations {
 
     private val lock = ReentrantLock()
 
+    private val scope = CoroutineScope(SupervisorJob())
 
     fun initialized(): Boolean {
         val currentClient = client ?: return false
