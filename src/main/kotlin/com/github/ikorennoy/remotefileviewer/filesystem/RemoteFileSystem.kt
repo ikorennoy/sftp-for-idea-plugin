@@ -1,7 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.filesystem
 
-import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
-import com.github.ikorennoy.remotefileviewer.remote.RemoteConnectionManager
+import com.github.ikorennoy.remotefileviewer.remote.RemoteOperations
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,7 +11,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import net.schmizz.sshj.connection.channel.direct.Session
 import net.schmizz.sshj.sftp.*
 import java.io.IOException
 import java.io.InputStream
@@ -27,16 +25,9 @@ class RemoteFileSystem : VirtualFileSystem() {
     private val topic = ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES)
     private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
 
-    fun getRoot(): VirtualFile {
-        val conf = service<RemoteFileViewerSettingsState>()
-        return findFileByPath(conf.root)
-    }
-
-    fun getChildren(file: RemoteVirtualFile): Array<VirtualFile> {
-        val sftp = getSftpClient()
-        return sftp.ls(file.path).map {
-            RemoteVirtualFile(it, this)
-        }.toTypedArray()
+    fun getChildren(file: RemoteVirtualFile): Array<RemoteVirtualFile> {
+        val remoteOperations = getRemoteOperations()
+        return remoteOperations.getChildren(file.path)
     }
 
     fun exists(file: VirtualFile): Boolean {
@@ -158,12 +149,12 @@ class RemoteFileSystem : VirtualFileSystem() {
         )
     }
 
-    private fun getSftpClient(): SFTPClient {
-        return service<RemoteConnectionManager>().getSftpClient()
+    private fun getRemoteOperations(): RemoteOperations {
+        return service()
     }
 
-    private fun getSessionClient(): Session {
-        return service<RemoteConnectionManager>().getSessionClient()
+    private fun getSftpClient(): SFTPClient {
+        return service<RemoteOperations>().getSftpClient()
     }
 
     fun resolveSymlink(file: RemoteVirtualFile): FileAttributes {

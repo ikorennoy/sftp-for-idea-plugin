@@ -1,5 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.remote
 
+import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
+import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
@@ -10,15 +12,17 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.messages.MessageDialog
+import com.intellij.util.ui.UIUtil
 import net.schmizz.sshj.SSHClient
-import net.schmizz.sshj.connection.channel.direct.Session
 import net.schmizz.sshj.sftp.SFTPClient
+import net.schmizz.sshj.sftp.SFTPException
 import java.awt.EventQueue
 import java.io.IOException
 import java.util.concurrent.locks.ReentrantLock
 
 @Service
-class RemoteConnectionManager {
+class RemoteOperations {
 
     @Volatile
     private var sftpClient: SFTPClient? = null
@@ -29,9 +33,10 @@ class RemoteConnectionManager {
     private val lock = ReentrantLock()
 
 
+
     fun initialized(): Boolean {
-        val clientL = client ?: return false
-        return clientL.isConnected && clientL.isAuthenticated
+        val currentClient = client ?: return false
+        return currentClient.isConnected && currentClient.isAuthenticated
     }
 
     /**
@@ -67,18 +72,17 @@ class RemoteConnectionManager {
         }
     }
 
-    fun getSessionClient(): Session {
-        var res = client
-
-        return if (res != null) {
-            res.startSession()
-        } else {
-            if (init()) {
-                res = client ?: throw IllegalStateException("Can't be null after successful initialization")
-                res.startSession()
-            } else {
-                throw IllegalStateException("Can't connect")
-            }
+    fun getChildren(remotePath: String): Array<RemoteVirtualFile> {
+        assertNotEdt()
+        return try {
+            val client = getSftpClient()
+            val remoteFs = RemoteFileSystem.getInstance()
+            client.ls(remotePath)
+                .map { RemoteVirtualFile(it, remoteFs) }
+                .toTypedArray()
+        } catch (ex: SFTPException) {
+            UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog("Can't open a directory '${remotePath}' ${ex.message}", "Error") }
+            emptyArray()
         }
     }
 
@@ -103,6 +107,13 @@ class RemoteConnectionManager {
         }
     }
 
+    private fun assertNotEdt() {
+        thisLogger().assertTrue(
+            !EventQueue.isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode,
+            "Must not be executed on Event Dispatch Thread"
+        )
+    }
+
     private fun sshClientIsOk(): Boolean {
         val clientVal = client ?: return false
         return clientVal.isConnected && clientVal.isAuthenticated
@@ -115,10 +126,6 @@ class RemoteConnectionManager {
             .executeCommand(project, {
                 object : Task.Modal(project, "Connecting to: ${username}@${host}:${port}", false) {
                     override fun run(indicator: ProgressIndicator) {
-                        thisLogger().assertTrue(
-                            !EventQueue.isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode,
-                            "Must not be executed on Event Dispatch Thread"
-                        )
                         indicator.isIndeterminate = true
                         val client = SSHClient()
                         try {
@@ -126,7 +133,7 @@ class RemoteConnectionManager {
                             client.loadKnownHosts()
                             client.connect(host, port)
                             client.authPassword(username, password)
-                            this@RemoteConnectionManager.client = client
+                            this@RemoteOperations.client = client
                         } catch (ex: IOException) {
                             try {
                                 client.close()
@@ -150,41 +157,7 @@ class RemoteConnectionManager {
                         }
                     }
                 }.queue()
-            }, "Connecting to Remote", null)
-//        CommandProcessor.getInstance().executeCommand(project, {
-//            object : Task.Modal(project, "Connecting to: ${username}@${host}:${port}", false) {
-//                override fun run(indicator: ProgressIndicator) {
-//                    indicator.isIndeterminate = true
-//                    val client = SSHClient()
-//                    try {
-//                        client.useCompression()
-//                        client.loadKnownHosts()
-//                        client.connect(host, port)
-//                        client.authPassword(username, password)
-//                        this@RemoteConnectionManager.client = client
-//                    } catch (ex: IOException) {
-//                        try {
-//                            client.close()
-//                        } catch (_: IOException) {
-//                        }
-//                        failReason = ex
-//                    }
-//                }
-//
-//                override fun onFinished() {
-//                    reportError()
-//                }
-//
-//                private fun reportError() {
-//                    if (failReason != null) {
-//                        Messages.showMessageDialog(
-//                            "Cannot not connect to ${username}@${host}:${port}\n ${failReason?.javaClass}",
-//                            "Error",
-//                            Messages.getErrorIcon()
-//                        )
-//                    }
-//                }
-//            }.queue()
-//        }, "Connecting...", null)
+            }, "Connecting...", null)
     }
+
 }

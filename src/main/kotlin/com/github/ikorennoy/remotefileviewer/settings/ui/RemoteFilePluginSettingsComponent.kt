@@ -1,7 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.settings.ui
 
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
-import com.github.ikorennoy.remotefileviewer.remote.RemoteConnectionManager
+import com.github.ikorennoy.remotefileviewer.remote.RemoteOperations
 import com.github.ikorennoy.remotefileviewer.template.FileViewerBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
@@ -65,7 +65,7 @@ class RemoteFilePluginSettingsComponent {
                 var icon: Cell<JLabel>? = null
                 button("Test Connection") {
                     saveState()
-                    val clientService = service<RemoteConnectionManager>()
+                    val clientService = service<RemoteOperations>()
                     if (clientService.init()) {
                         icon?.visible(true)
                     }

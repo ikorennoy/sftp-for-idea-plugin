@@ -45,11 +45,11 @@ class RemoteVirtualFile(
         return fs.getParent(this)
     }
 
-    override fun getChildren(): Array<VirtualFile> {
+    override fun getChildren(): Array<RemoteVirtualFile> {
         return try {
             fs.getChildren(this)
         } catch (ex: IOException) {
-            emptyArray<VirtualFile>()
+            emptyArray()
         }
     }
 

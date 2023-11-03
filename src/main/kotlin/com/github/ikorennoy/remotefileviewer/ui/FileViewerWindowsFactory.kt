@@ -2,7 +2,7 @@ package com.github.ikorennoy.remotefileviewer.ui
 
 import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
 import com.github.ikorennoy.remotefileviewer.remote.RemoteConnectionListener
-import com.github.ikorennoy.remotefileviewer.remote.RemoteConnectionManager
+import com.github.ikorennoy.remotefileviewer.remote.RemoteOperations
 import com.github.ikorennoy.remotefileviewer.remoteEdit.EditRemoteFileTask
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
 import com.intellij.openapi.actionSystem.ActionManager
@@ -64,7 +64,7 @@ class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
             }
 
             override fun getChildren(): Array<VirtualFile> {
-                val connManager = service<RemoteConnectionManager>()
+                val connManager = service<RemoteOperations>()
                 val conf = service<RemoteFileViewerSettingsState>()
                 return if (connManager.initialized()) {
                     val originalRoot = fileSystem.findFileByPath(conf.root)
@@ -138,7 +138,7 @@ class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
         }
 
         if (tryConnect) {
-            val connManager = service<RemoteConnectionManager>()
+            val connManager = service<RemoteOperations>()
             connManager.init()
         }
 

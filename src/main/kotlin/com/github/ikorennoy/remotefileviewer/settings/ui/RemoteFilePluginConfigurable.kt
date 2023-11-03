@@ -1,7 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.settings.ui
 
 import com.github.ikorennoy.remotefileviewer.remote.RemoteConnectionListener
-import com.github.ikorennoy.remotefileviewer.remote.RemoteConnectionManager
+import com.github.ikorennoy.remotefileviewer.remote.RemoteOperations
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
@@ -24,7 +24,7 @@ class RemoteFilePluginConfigurable : Configurable {
         // todo draw a tree (check if init and connected and draw)
         // according to guidelines on ok and conf change I should perform an action and draw a tree
         settingsComponent.saveState()
-        val clientService = service<RemoteConnectionManager>()
+        val clientService = service<RemoteOperations>()
         if (clientService.init()) {
             ApplicationManager.getApplication().messageBus.syncPublisher(RemoteConnectionListener.TOPIC).connectionEstablished()
         }
