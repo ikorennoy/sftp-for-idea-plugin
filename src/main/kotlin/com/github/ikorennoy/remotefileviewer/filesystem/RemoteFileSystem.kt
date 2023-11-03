@@ -31,8 +31,8 @@ class RemoteFileSystem : VirtualFileSystem() {
     }
 
     fun exists(file: VirtualFile): Boolean {
-        val sftp = getSftpClient()
-        return sftp.statExistence(file.path) != null
+        val remoteOperations = getRemoteOperations()
+        return remoteOperations.exists(file.path)
     }
 
     fun getParent(file: RemoteVirtualFile): VirtualFile? {

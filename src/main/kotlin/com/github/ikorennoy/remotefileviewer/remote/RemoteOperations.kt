@@ -12,9 +12,10 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.messages.MessageDialog
+import com.intellij.ui.UIBundle
 import com.intellij.util.ui.UIUtil
 import net.schmizz.sshj.SSHClient
+import net.schmizz.sshj.sftp.Response
 import net.schmizz.sshj.sftp.SFTPClient
 import net.schmizz.sshj.sftp.SFTPException
 import java.awt.EventQueue
@@ -83,6 +84,17 @@ class RemoteOperations {
         } catch (ex: SFTPException) {
             UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog("Can't open a directory '${remotePath}' ${ex.message}", "Error") }
             emptyArray()
+        }
+    }
+
+    fun exists(remotePath: String) : Boolean {
+        assertNotEdt()
+        return try {
+            val client = getSftpClient()
+            client.statExistence(remotePath) != null
+        } catch (ex: SFTPException) {
+            UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog("Can't execute an operation '${remotePath}' ${ex.message}", "Error") }
+            false
         }
     }
 
@@ -160,4 +172,45 @@ class RemoteOperations {
             }, "Connecting...", null)
     }
 
+
+    companion object {
+        fun messageFromStatusCode(ex: SFTPException) : String {
+            return when (ex.statusCode) {
+                Response.StatusCode.UNKNOWN -> TODO()
+                Response.StatusCode.OK -> TODO()
+                Response.StatusCode.EOF -> TODO()
+                Response.StatusCode.NO_SUCH_FILE -> TODO()
+                Response.StatusCode.PERMISSION_DENIED -> "Permission denied"
+                Response.StatusCode.FAILURE -> TODO()
+                Response.StatusCode.BAD_MESSAGE -> TODO()
+                Response.StatusCode.NO_CONNECTION -> TODO()
+                Response.StatusCode.CONNECITON_LOST -> TODO()
+                Response.StatusCode.OP_UNSUPPORTED -> TODO()
+                Response.StatusCode.INVALID_HANDLE -> TODO()
+                Response.StatusCode.NO_SUCH_PATH -> TODO()
+                Response.StatusCode.FILE_ALREADY_EXISTS -> TODO()
+                Response.StatusCode.WRITE_PROTECT -> TODO()
+                Response.StatusCode.NO_MEDIA -> TODO()
+                Response.StatusCode.NO_SPACE_ON_FILESYSTEM -> TODO()
+                Response.StatusCode.QUOTA_EXCEEDED -> TODO()
+                Response.StatusCode.UNKNOWN_PRINCIPAL -> TODO()
+                Response.StatusCode.LOCK_CONFLICT -> TODO()
+                Response.StatusCode.DIR_NOT_EMPTY -> TODO()
+                Response.StatusCode.NOT_A_DIRECTORY -> TODO()
+                Response.StatusCode.INVALID_FILENAME -> TODO()
+                Response.StatusCode.LINK_LOOP -> TODO()
+                Response.StatusCode.CANNOT_DELETE -> TODO()
+                Response.StatusCode.INVALID_PARAMETER -> TODO()
+                Response.StatusCode.FILE_IS_A_DIRECTORY -> TODO()
+                Response.StatusCode.BYTE_RANGE_LOCK_CONFLICT -> TODO()
+                Response.StatusCode.BYTE_RANGE_LOCK_REFUSED -> TODO()
+                Response.StatusCode.DELETE_PENDING -> TODO()
+                Response.StatusCode.FILE_CORRUPT -> TODO()
+                Response.StatusCode.OWNER_INVALID -> TODO()
+                Response.StatusCode.GROUP_INVALID -> TODO()
+                Response.StatusCode.NO_MATCHING_BYTE_RANGE_LOCK -> TODO()
+                null -> TODO()
+            }
+        }
+    }
 }
