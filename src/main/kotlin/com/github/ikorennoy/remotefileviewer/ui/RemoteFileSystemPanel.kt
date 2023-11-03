@@ -1,15 +1,16 @@
 package com.github.ikorennoy.remotefileviewer.ui
 
-import com.github.ikorennoy.remotefileviewer.tree.RemoteFileSystemTree
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.fileChooser.FileSystemTree
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
-import javax.swing.JTree
 
 // todo add update for this panel
 //  check why not all files opening
@@ -19,7 +20,7 @@ import javax.swing.JTree
 //  fix a case when configuration is corrupted (like wrong host and etc), but only password prompt is shown, after firs unsuccessful attempt
 //  we should show full configuration page
 class RemoteFileSystemPanel(
-    tree: RemoteFileSystemTree,
+    tree: FileSystemTreeImpl,
 ) : SimpleToolWindowPanel(true, true), Disposable {
 
     init {
@@ -41,14 +42,14 @@ class RemoteFileSystemPanel(
 
     }
 
-    private class MyDataProvider(private val fsTree: RemoteFileSystemTree) : DataProvider {
+    private class MyDataProvider(private val fsTree: FileSystemTree) : DataProvider {
         override fun getData(dataId: String): Any? {
-            return if (CommonDataKeys.NAVIGATABLE.`is`(dataId)) {
-                val file = fsTree.getSelectedFile() ?: return null
-                OpenFileDescriptor(fsTree.project, file, 0)
-            } else if (CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId)) {
-                val file = fsTree.getSelectedFile() ?: return null
-                arrayOf(OpenFileDescriptor(fsTree.project, file, 0))
+            return if (FileSystemTree.DATA_KEY.`is`(dataId)) {
+                fsTree
+            } else if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) {
+                fsTree.selectedFile
+            } else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId)) {
+                fsTree.selectedFiles
             } else {
                 null
             }

@@ -1,11 +1,14 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
 import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import java.awt.EventQueue
 
 @Service
 class FileProjectionStateService {
@@ -16,6 +19,10 @@ class FileProjectionStateService {
         CommandProcessor.getInstance().executeCommand(project, {
             object : Task.Modal(project, "Uploading File", true) {
                 override fun run(indicator: ProgressIndicator) {
+                    thisLogger().assertTrue(
+                        !EventQueue.isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode,
+                        "Must not be executed on Event Dispatch Thread"
+                    )
                     if (remoteFile.isWritable) {
                         val fs = remoteFile.fileSystem as RemoteFileSystem
                         // open a temp file and upload new content into it
@@ -39,7 +46,6 @@ class FileProjectionStateService {
                         // we have to remove the original file and then do rename
                         fs.removeFile(remoteFile)
                         fs.renameTempFile(remoteFile)
-
                     }
                 }
             }.queue()

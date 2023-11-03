@@ -2,8 +2,6 @@ package com.github.ikorennoy.remotefileviewer.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileChooser.FileSystemTree
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
@@ -13,14 +11,9 @@ import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.UIBundle
-import org.apache.pdfbox.util.filetypedetector.FileType
 
 class NewFileAction :
     DumbAwareAction(ActionsBundle.messagePointer("action.FileChooser.NewFile.text"), AllIcons.FileTypes.AddAny) {
-
-    override fun getActionUpdateThread(): ActionUpdateThread {
-        return ActionUpdateThread.BGT
-    }
 
     override fun actionPerformed(e: AnActionEvent) {
         val fsTree = e.getData(FileSystemTree.DATA_KEY) ?: return
@@ -67,15 +60,5 @@ class NewFileAction :
             }
             return
         }
-    }
-
-    override fun update(e: AnActionEvent) {
-        val fsTree = e.getData(FileSystemTree.DATA_KEY) ?: return
-        var parent = fsTree.newFileParent ?: return
-        if (!parent.isDirectory) {
-            parent = parent.parent
-        }
-        e.presentation.setVisible(true)
-        e.presentation.isEnabled = parent.isWritable
     }
 }

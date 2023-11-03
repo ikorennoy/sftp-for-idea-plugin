@@ -5,14 +5,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.connection.channel.direct.Session
 import net.schmizz.sshj.sftp.SFTPClient
+import java.awt.EventQueue
 import java.io.IOException
 import java.util.concurrent.locks.ReentrantLock
 
@@ -110,39 +111,46 @@ class RemoteConnectionManager {
     private fun tryConnect(host: String, port: Int, username: String, password: CharArray) {
         val project = ProjectManager.getInstance().defaultProject // todo find a way to get current project
         var failReason: Exception? = null
-        ProgressManager.getInstance().run(object : Task.Modal(project, "Connecting to: ${username}@${host}:${port}", false) {
-            override fun run(indicator: ProgressIndicator) {
-                indicator.isIndeterminate = true
-                val client = SSHClient()
-                try {
-                    client.useCompression()
-                    client.loadKnownHosts()
-                    client.connect(host, port)
-                    client.authPassword(username, password)
-                    this@RemoteConnectionManager.client = client
-                } catch (ex: IOException) {
-                    try {
-                        client.close()
-                    } catch (_: IOException) {
+        CommandProcessor.getInstance()
+            .executeCommand(project, {
+                object : Task.Modal(project, "Connecting to: ${username}@${host}:${port}", false) {
+                    override fun run(indicator: ProgressIndicator) {
+                        thisLogger().assertTrue(
+                            !EventQueue.isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode,
+                            "Must not be executed on Event Dispatch Thread"
+                        )
+                        indicator.isIndeterminate = true
+                        val client = SSHClient()
+                        try {
+                            client.useCompression()
+                            client.loadKnownHosts()
+                            client.connect(host, port)
+                            client.authPassword(username, password)
+                            this@RemoteConnectionManager.client = client
+                        } catch (ex: IOException) {
+                            try {
+                                client.close()
+                            } catch (_: IOException) {
+                            }
+                            failReason = ex
+                        }
                     }
-                    failReason = ex
-                }
-            }
 
-            override fun onFinished() {
-                reportError()
-            }
+                    override fun onFinished() {
+                        reportError()
+                    }
 
-            private fun reportError() {
-                if (failReason != null) {
-                    Messages.showMessageDialog(
-                        "Cannot not connect to ${username}@${host}:${port}\n ${failReason?.javaClass}",
-                        "Error",
-                        Messages.getErrorIcon()
-                    )
-                }
-            }
-        })
+                    private fun reportError() {
+                        if (failReason != null) {
+                            Messages.showMessageDialog(
+                                "Cannot not connect to ${username}@${host}:${port}\n ${failReason?.javaClass}",
+                                "Error",
+                                Messages.getErrorIcon()
+                            )
+                        }
+                    }
+                }.queue()
+            }, "Connecting to Remote", null)
 //        CommandProcessor.getInstance().executeCommand(project, {
 //            object : Task.Modal(project, "Connecting to: ${username}@${host}:${port}", false) {
 //                override fun run(indicator: ProgressIndicator) {
