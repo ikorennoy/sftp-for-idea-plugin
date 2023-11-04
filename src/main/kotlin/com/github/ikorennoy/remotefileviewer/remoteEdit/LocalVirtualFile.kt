@@ -98,7 +98,6 @@ class LocalVirtualFile(
     }
 
     override fun getInputStream(): InputStream {
-        println("GET INPUT STREAM")
         return localTempFile.inputStream()
     }
 }

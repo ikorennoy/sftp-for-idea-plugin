@@ -34,6 +34,9 @@
 
         <editorNotificationProvider
                 implementation="com.github.ikorennoy.remotefileviewer.remoteEdit.RemoteEditEditorPanelProvider"/>
+        <notificationGroup
+                displayType="BALLOON"
+                id="Remote Operations Notifications"/>
     </extensions>
 
 

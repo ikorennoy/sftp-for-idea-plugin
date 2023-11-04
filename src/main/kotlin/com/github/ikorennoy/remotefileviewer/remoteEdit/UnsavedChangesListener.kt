@@ -30,9 +30,7 @@ class UnsavedChangesListener: FileEditorManagerListener.Before {
                     syncService.uploadFileToRemote(source.project, file)
                 }
             }
-            ProcessIOExecutorService.INSTANCE.execute {
-                file.delete(this)
-            }
+
         }
     }
 }

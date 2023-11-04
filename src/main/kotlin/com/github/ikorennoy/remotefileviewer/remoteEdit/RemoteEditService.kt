@@ -2,10 +2,12 @@ package com.github.ikorennoy.remotefileviewer.remoteEdit
 
 import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
 import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteOperationsNotifier
 import com.github.ikorennoy.remotefileviewer.tree.RemoteFileSystemTree
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -53,7 +55,7 @@ class RemoteEditService {
     fun uploadFileToRemote(project: Project, localTempFile: LocalVirtualFile) {
         val remoteFile = localTempFile.remoteFile
         CommandProcessor.getInstance().executeCommand(project, {
-            object : Task.Modal(project, "Uploading File", true) {
+            object : Task.Backgroundable(project, "Uploading file", true) {
                 override fun run(indicator: ProgressIndicator) {
                     if (remoteFile.isWritable) {
                         val fs = remoteFile.fileSystem as RemoteFileSystem
@@ -61,7 +63,7 @@ class RemoteEditService {
                         val (tmpFileOutStream, tmpFileName) = fs.openTempFile(remoteFile)
 
                         val size = localTempFile.length.toDouble()
-                        val buffer = ByteArray(1024)
+                        val buffer = ByteArray(1)
                         tmpFileOutStream.use { remoteFileOs ->
                             localTempFile.inputStream.use { localFileIs ->
                                 var writtenTotal = 0.0
@@ -79,6 +81,8 @@ class RemoteEditService {
                         // we have to remove the original file and then do rename
                         fs.removeFile(remoteFile)
                         fs.renameTempFile(tmpFileName, remoteFile.path)
+                        val notifications = project.service<RemoteOperationsNotifier>()
+                        notifications.notifyFileUploaded()
                     }
                 }
             }.queue()

@@ -94,9 +94,9 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
                         update()
                     }
                 } catch (_: IOException) {
+
                 }
             }
-
         }, "Delete", null)
     }
 
