@@ -53,13 +53,12 @@ class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
         val remoteFileSystemTree = RemoteFileSystemTree(project)
         val remoteFileSystemPanel = RemoteFileSystemPanel(remoteFileSystemTree)
 
-
         val toolWindowContent = ContentFactory.getInstance().createContent(remoteFileSystemPanel, null, false)
         toolWindow.contentManager.addContent(toolWindowContent)
 
         ApplicationManager.getApplication().messageBus.connect()
             .subscribe(RemoteConnectionListener.TOPIC, object : RemoteConnectionListener {
-                override fun connectionEstablished() {
+                override fun updateTree() {
                     ApplicationManager.getApplication().invokeLater {
                         remoteFileSystemTree.update()
                     }

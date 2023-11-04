@@ -19,16 +19,12 @@ class FileProjectionStateService {
         CommandProcessor.getInstance().executeCommand(project, {
             object : Task.Modal(project, "Uploading File", true) {
                 override fun run(indicator: ProgressIndicator) {
-                    thisLogger().assertTrue(
-                        !EventQueue.isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode,
-                        "Must not be executed on Event Dispatch Thread"
-                    )
                     if (remoteFile.isWritable) {
                         val fs = remoteFile.fileSystem as RemoteFileSystem
                         // open a temp file and upload new content into it
                         val remoteTempFile = fs.openTempFile(remoteFile)
                         val size = localFileProjection.length.toDouble()
-                        val buffer = ByteArray(localFileProjection.length.toInt().coerceAtMost(1024))
+                        val buffer = ByteArray(1024)
                         remoteTempFile.use { remoteFileOs ->
                             localFileProjection.inputStream.use { localFileIs ->
                                 var writtenTotal = 0.0

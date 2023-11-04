@@ -23,7 +23,7 @@ class RemoteFileTreeStructure(
 
     override fun getRootElement(): Any {
         val ops = service<RemoteOperations>()
-        return if (!ops.initialized()) {
+        return if (!ops.isInitializedAndConnected()) {
             dummyRoot
         } else {
             val conf = service<RemoteFileViewerSettingsState>()

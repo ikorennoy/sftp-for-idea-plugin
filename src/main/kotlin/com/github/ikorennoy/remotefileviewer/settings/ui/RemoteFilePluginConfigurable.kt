@@ -26,7 +26,7 @@ class RemoteFilePluginConfigurable : Configurable {
         settingsComponent.saveState()
         val clientService = service<RemoteOperations>()
         if (clientService.init()) {
-            ApplicationManager.getApplication().messageBus.syncPublisher(RemoteConnectionListener.TOPIC).connectionEstablished()
+            ApplicationManager.getApplication().messageBus.syncPublisher(RemoteConnectionListener.TOPIC).updateTree()
         }
     }
 

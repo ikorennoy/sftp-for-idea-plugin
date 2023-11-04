@@ -22,7 +22,7 @@ class EditRemoteFileTask(
                 override fun run(indicator: ProgressIndicator) {
                     val selectedFile = tree.getSelectedFile() as? RemoteVirtualFile ?: return
                     val fileSize = selectedFile.length.toDouble()
-                    val buffer = ByteArray(selectedFile.length.toInt().coerceAtMost(1024))
+                    val buffer = ByteArray(1024)
                     val byteArrayOutputStream = ByteArrayOutputStream()
                     selectedFile.inputStream.use {
                         var read = it.read(buffer)

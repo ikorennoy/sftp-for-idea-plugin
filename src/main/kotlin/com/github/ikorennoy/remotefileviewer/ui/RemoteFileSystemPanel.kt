@@ -30,6 +30,8 @@ class RemoteFileSystemPanel(
     private fun createToolbarPanel(): JPanel {
         val toolbarGroup = DefaultActionGroup()
         toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.ShowSshConfiguration"))
+        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.UpdateTree"))
+        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.Disconnect"))
 
         val actionToolbar = ActionManager.getInstance().createActionToolbar("FVToolbar", toolbarGroup, true)
         actionToolbar.targetComponent = this

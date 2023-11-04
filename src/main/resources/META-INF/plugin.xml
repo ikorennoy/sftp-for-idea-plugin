@@ -55,5 +55,10 @@
                 use-shortcut-of="SaveAll"/>
         <action id="RemoteFileSystem.ShowSshConfiguration"
                 class="com.github.ikorennoy.remotefileviewer.actions.ShowSettingsAction"/>
+        <action id="RemoteFileSystem.UpdateTree"
+                class="com.github.ikorennoy.remotefileviewer.actions.UpdateTreeAction"
+                use-shortcut-of="Refresh"/>
+        <action id="RemoteFileSystem.Disconnect"
+                class="com.github.ikorennoy.remotefileviewer.actions.DisconnectAction"/>
     </actions>
 </idea-plugin>

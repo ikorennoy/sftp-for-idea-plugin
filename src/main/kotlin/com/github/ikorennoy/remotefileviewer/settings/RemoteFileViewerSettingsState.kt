@@ -36,7 +36,7 @@ class RemoteFileViewerSettingsState :
         }
 
     var password: CharArray
-        get() = state.password
+        get() = state.password.clone()
         set(value) {
             state.password = value
         }

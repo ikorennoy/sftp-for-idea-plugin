@@ -31,9 +31,26 @@ class RemoteOperations {
 
     private val lock = ReentrantLock()
 
-    fun initialized(): Boolean {
+    fun isInitializedAndConnected(): Boolean {
         val currentClient = client ?: return false
         return currentClient.isConnected && currentClient.isAuthenticated
+    }
+
+    fun disconnect() {
+        assertNotEdt()
+        try {
+            lock.lock()
+            val sft = sftpClient ?: return
+            sft.close()
+            val ssh = client ?: throw IllegalStateException("Sfp client is not null, but ssh is null")
+            ssh.close()
+            sftpClient = null
+            client = null
+        } catch (ex: IOException) {
+            ex.printStackTrace()
+        } finally {
+            lock.unlock()
+        }
     }
 
     /**

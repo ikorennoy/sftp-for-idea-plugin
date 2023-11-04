@@ -10,6 +10,6 @@ class DummyNode: ValidateableNode {
      * Valid until the service is initialized
      */
     override fun isValid(): Boolean {
-        return !service<RemoteOperations>().initialized()
+        return !service<RemoteOperations>().isInitializedAndConnected()
     }
 }

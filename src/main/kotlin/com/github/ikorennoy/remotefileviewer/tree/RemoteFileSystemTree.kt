@@ -71,10 +71,7 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
         return null
     }
 
-    fun createNewDirectory(
-        parentDirectory: VirtualFile,
-        newDirectoryName: String
-    ) {
+    fun createNewDirectory(parentDirectory: VirtualFile, newDirectoryName: String) {
         CommandProcessor.getInstance().executeCommand(project, {
             ProcessIOExecutorService.INSTANCE.execute {
                 try {
@@ -88,9 +85,7 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
         }, UIBundle.message("file.chooser.create.new.folder.command.name"), null)
     }
 
-    fun deleteFile(
-        fileToDelete: VirtualFile
-    ) {
+    fun deleteFile(fileToDelete: VirtualFile) {
         CommandProcessor.getInstance().executeCommand(project, {
             ProcessIOExecutorService.INSTANCE.execute {
                 try {
@@ -105,10 +100,7 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
         }, "Delete", null)
     }
 
-    fun createNewFile(
-        parentDirectory: VirtualFile,
-        newFileName: String
-    ) {
+    fun createNewFile(parentDirectory: VirtualFile, newFileName: String) {
         CommandProcessor.getInstance().executeCommand(
             project, {
                 ProcessIOExecutorService.INSTANCE.execute {
