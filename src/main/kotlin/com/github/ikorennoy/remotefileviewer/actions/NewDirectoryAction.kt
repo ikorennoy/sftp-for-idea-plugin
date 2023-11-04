@@ -19,20 +19,26 @@ class NewDirectoryAction :
             parent = parent.parent
         }
 
-        val newFolderName = Messages.showInputDialog(
-            UIBundle.message("create.new.folder.enter.new.folder.name.prompt.text"),
-            UIBundle.message("new.folder.dialog.title"),
-            Messages.getQuestionIcon(),
-        ) ?: return
+        var newDirectoryName: String
+        while (true) {
+            newDirectoryName = Messages.showInputDialog(
+                UIBundle.message("create.new.folder.enter.new.folder.name.prompt.text"),
+                UIBundle.message("new.folder.dialog.title"),
+                Messages.getQuestionIcon(),
+            ) ?: return
 
-        val failReason = fsTree.createNewDirectory(parent, newFolderName)
-        if (failReason != null) {
-            Messages.showMessageDialog(
-                UIBundle.message(
-                    "create.new.folder.could.not.create.folder.error.message",
-                    newFolderName
-                ), UIBundle.message("error.dialog.title"), Messages.getErrorIcon()
-            )
+            newDirectoryName = newDirectoryName.trim()
+
+            if (newDirectoryName.isEmpty()) {
+                Messages.showMessageDialog(
+                    UIBundle.message("create.new.folder.folder.name.cannot.be.empty.error.message"),
+                    UIBundle.message("error.dialog.title"),
+                    Messages.getErrorIcon()
+                )
+                continue
+            }
+            fsTree.createNewDirectory(parent, newDirectoryName)
+            break
         }
     }
 }

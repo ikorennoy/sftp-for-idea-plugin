@@ -27,7 +27,7 @@ class NewFileAction :
                 Messages.getQuestionIcon()
             )
             if (name == null) {
-                return
+                break
             }
             name = name.trim()
             if (name.isEmpty()) {
@@ -38,17 +38,8 @@ class NewFileAction :
                 )
                 continue
             }
-            val failReason = fsTree.createNewFile(parent, name)
-            if (failReason != null) {
-                Messages.showMessageDialog(
-                    UIBundle.message(
-                        "create.new.file.could.not.create.file.error.message",
-                        name
-                    ), UIBundle.message("error.dialog.title"), Messages.getErrorIcon()
-                )
-                continue
-            }
-            return
+            fsTree.createNewFile(parent, name)
+            break
         }
     }
 }

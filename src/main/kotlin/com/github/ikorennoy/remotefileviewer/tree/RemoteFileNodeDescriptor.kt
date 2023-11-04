@@ -9,15 +9,14 @@ class RemoteFileNodeDescriptor(
     project: Project,
     parentDescriptor: NodeDescriptor<*>?,
     private val element: VirtualFile,
-    private val icon: Icon,
-    private val name: String,
+    icon: Icon,
+    name: String,
 ) : NodeDescriptor<VirtualFile>(project, parentDescriptor) {
 
     init {
         myName = name
         setIcon(icon)
     }
-
 
     override fun update(): Boolean {
         var updated = false

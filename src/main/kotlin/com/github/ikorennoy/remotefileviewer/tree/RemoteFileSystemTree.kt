@@ -74,62 +74,54 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
     fun createNewDirectory(
         parentDirectory: VirtualFile,
         newDirectoryName: String
-    ): Exception? {
-        var failReason: Exception? = null
+    ) {
         CommandProcessor.getInstance().executeCommand(project, {
-            try {
-                ProcessIOExecutorService.INSTANCE.execute {
+            ProcessIOExecutorService.INSTANCE.execute {
+                try {
                     val file = parentDirectory.createChildDirectory(this, newDirectoryName)
                     ApplicationManager.getApplication().invokeLater {
                         updateAndSelect(file)
                     }
+                } catch (_: IOException) {
                 }
-            } catch (e: IOException) {
-                failReason = e
             }
         }, UIBundle.message("file.chooser.create.new.folder.command.name"), null)
-        return failReason
     }
 
     fun deleteFile(
         fileToDelete: VirtualFile
-    ): Exception? {
-        var failReason: Exception? = null
+    ) {
         CommandProcessor.getInstance().executeCommand(project, {
-            try {
-                ProcessIOExecutorService.INSTANCE.execute {
+            ProcessIOExecutorService.INSTANCE.execute {
+                try {
                     fileToDelete.delete(this)
+                    ApplicationManager.getApplication().invokeLater {
+                        update()
+                    }
+                } catch (_: IOException) {
                 }
-                ApplicationManager.getApplication().invokeLater {
-                    update()
-                }
-            } catch (ex: IOException) {
-                failReason = ex
             }
+
         }, "Delete", null)
-        return failReason
     }
 
     fun createNewFile(
         parentDirectory: VirtualFile,
         newFileName: String
-    ): Exception? {
-        var failReason: Exception? = null
+    ) {
         CommandProcessor.getInstance().executeCommand(
             project, {
-                try {
-                    ProcessIOExecutorService.INSTANCE.execute {
+                ProcessIOExecutorService.INSTANCE.execute {
+                    try {
                         val file = parentDirectory.createChildData(this, newFileName)
                         ApplicationManager.getApplication().invokeLater {
                             updateAndSelect(file)
                         }
+                    } catch (_: IOException) {
                     }
-                } catch (e: IOException) {
-                    failReason = e
                 }
             }, UIBundle.message("file.chooser.create.new.file.command.name"), null
         )
-        return failReason
     }
 
     fun update() {

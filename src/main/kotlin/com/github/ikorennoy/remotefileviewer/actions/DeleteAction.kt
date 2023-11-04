@@ -25,8 +25,7 @@ class DeleteAction :
             CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()
         )
         if (returnValue != Messages.OK) return
-
-        val failReason = fsTree.deleteFile(fileToDelete)
+        fsTree.deleteFile(fileToDelete)
     }
 
     private fun createConfirmationMessage(file: VirtualFile): String {
