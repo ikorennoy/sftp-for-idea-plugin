@@ -239,7 +239,7 @@ internal class RemoteFileInputStream(private val remoteFile: RemoteFile) : Input
     override fun skip(n: Long): Long {
         val fileLength: Long = remoteFile.length()
         val previousFileOffset = fileOffset
-        fileOffset = min((fileOffset + n).toDouble(), fileLength.toDouble()).toLong()
+        fileOffset = min((fileOffset + n), fileLength)
         return fileOffset - previousFileOffset
     }
 
