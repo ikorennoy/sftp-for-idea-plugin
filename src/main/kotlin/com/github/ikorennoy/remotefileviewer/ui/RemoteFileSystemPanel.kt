@@ -19,7 +19,7 @@ import javax.swing.JPanel
 //  we should show full configuration page
 class RemoteFileSystemPanel(
     tree: RemoteFileSystemTree,
-) : SimpleToolWindowPanel(true, true), Disposable {
+) : SimpleToolWindowPanel(true, true) {
 
     init {
         toolbar = createToolbarPanel()
@@ -34,10 +34,6 @@ class RemoteFileSystemPanel(
         val actionToolbar = ActionManager.getInstance().createActionToolbar("FVToolbar", toolbarGroup, true)
         actionToolbar.targetComponent = this
         return JBUI.Panels.simplePanel(actionToolbar.component)
-    }
-
-    override fun dispose() {
-
     }
 
     private class MyDataProvider(private val fsTree: RemoteFileSystemTree) : DataProvider {

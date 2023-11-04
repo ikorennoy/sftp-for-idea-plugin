@@ -7,7 +7,7 @@ import com.intellij.openapi.components.service
 class DummyNode: ValidateableNode {
 
     /**
-     * Valid until the service initialized
+     * Valid until the service is initialized
      */
     override fun isValid(): Boolean {
         return !service<RemoteOperations>().initialized()

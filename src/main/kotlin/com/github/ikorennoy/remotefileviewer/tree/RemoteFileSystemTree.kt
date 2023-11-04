@@ -32,18 +32,14 @@ import javax.swing.tree.TreeSelectionModel
 
 class RemoteFileSystemTree(val project: Project) : Disposable {
 
-    private val fileChooserDescriptor: FileChooserDescriptor
     private val treeModel: StructureTreeModel<RemoteFileTreeStructure>
     private val asyncTreeModel: AsyncTreeModel
 
     val tree: JTree
 
     init {
-        fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
-        fileChooserDescriptor.isShowFileSystemRoots = false
-        fileChooserDescriptor.withTreeRootVisible(false)
-        val remoteTreeStructure = RemoteFileTreeStructure(project, fileChooserDescriptor)
-        treeModel = StructureTreeModel(remoteTreeStructure, this)
+        val remoteTreeStructure = RemoteFileTreeStructure(project)
+        treeModel = StructureTreeModel(remoteTreeStructure, FileComparator.getInstance(), this)
         asyncTreeModel = AsyncTreeModel(treeModel, this)
         tree = Tree(asyncTreeModel)
         TreeSpeedSearch(tree)
@@ -74,8 +70,7 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
     fun getNewFileParent(): VirtualFile? {
         val selected = getSelectedFile()
         if (selected != null) return selected
-        val roots: List<VirtualFile> = fileChooserDescriptor.roots
-        return if (roots.size == 1) roots[0] else null
+        return null
     }
 
     fun createNewFile(
@@ -98,6 +93,13 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
             }, UIBundle.message("file.chooser.create.new.file.command.name"), null
         )
         return failReason[0]
+    }
+
+    fun invalidate() {
+        treeModel.invalidateAsync()
+    }
+
+    override fun dispose() {
     }
 
     private fun updateAndSelect(file: VirtualFile) {
@@ -139,13 +141,6 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
         group.add(delete)
         group.addSeparator()
         return group
-    }
-
-    override fun dispose() {
-    }
-
-    fun invalidate() {
-        treeModel.invalidateAsync()
     }
 
     companion object {

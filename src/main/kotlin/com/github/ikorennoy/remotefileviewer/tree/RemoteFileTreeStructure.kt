@@ -5,15 +5,18 @@ import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsSt
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.tree.LeafState
+import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
+import javax.swing.Icon
 
 class RemoteFileTreeStructure(
     private val project: Project,
-    private val fileChooserDescriptor: FileChooserDescriptor,
 ) : AbstractTreeStructure() {
 
     private val dummyRoot = DummyNode()
@@ -51,6 +54,7 @@ class RemoteFileTreeStructure(
                     icon = PlatformIcons.FOLDER_ICON
                     myName = "SFTP"
                 }
+
                 override fun update(): Boolean {
                     return false
                 }
@@ -62,8 +66,8 @@ class RemoteFileTreeStructure(
             }
         }
         if (element !is VirtualFile) throw IllegalArgumentException("element is not file")
-        val icon = fileChooserDescriptor.getIcon(element)
-        val name = fileChooserDescriptor.getName(element)
+        val icon = getIcon(element)
+        val name = element.presentableName
         return RemoteFileNodeDescriptor(project, parentDescriptor, element, icon, name)
     }
 
@@ -97,4 +101,17 @@ class RemoteFileTreeStructure(
             false
         }
     }
+
+    fun getIcon(file: VirtualFile): Icon {
+        return dressIcon(file, IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null))
+    }
+
+    private fun dressIcon(file: VirtualFile, baseIcon: Icon): Icon {
+        return if (file.isValid && file.`is`(VFileProperty.SYMLINK)) {
+            LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON)
+        } else {
+            baseIcon
+        }
+    }
+
 }
