@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.tree
 
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
 
 class FileNode(
     private val file: RemoteVirtualFile,

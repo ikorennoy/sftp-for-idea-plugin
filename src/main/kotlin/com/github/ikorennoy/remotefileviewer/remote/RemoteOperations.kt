@@ -1,7 +1,5 @@
 package com.github.ikorennoy.remotefileviewer.remote
 
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
@@ -17,11 +15,14 @@ import net.schmizz.sshj.sftp.*
 import java.awt.EventQueue
 import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStream
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.min
 
 @Service
 class RemoteOperations {
+
+    private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
 
     @Volatile
     private var sftpClient: SFTPClient? = null
@@ -90,9 +91,8 @@ class RemoteOperations {
         assertNotEdt()
         return try {
             val client = getSftpClient()
-            val remoteFs = RemoteFileSystem.getInstance()
             client.ls(remotePath.getPath())
-                .map { RemoteVirtualFile(it, remoteFs) }
+                .map { RemoteVirtualFile(it) }
                 .toTypedArray()
         } catch (ex: SFTPException) {
             ApplicationManager.getApplication().invokeLater {
@@ -125,7 +125,6 @@ class RemoteOperations {
         assertNotEdt()
         return try {
             val client = getSftpClient()
-            val fs = RemoteFileSystem.getInstance()
             val components = getPathComponents(remotePath)
             if (components.parent == "") {
                 null
@@ -134,7 +133,7 @@ class RemoteOperations {
                     RemoteResourceInfo(
                         getPathComponents(components.parent),
                         client.stat(components.parent)
-                    ), fs
+                    )
                 )
 
             }
@@ -153,8 +152,7 @@ class RemoteOperations {
         assertNotEdt()
         return try {
             val client = getSftpClient()
-            val fs = RemoteFileSystem.getInstance()
-            RemoteVirtualFile(RemoteResourceInfo(getPathComponents(path), client.stat(path)), fs)
+            RemoteVirtualFile(RemoteResourceInfo(getPathComponents(path), client.stat(path)))
         } catch (ex: SFTPException) {
             ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
@@ -212,9 +210,7 @@ class RemoteOperations {
             val newFilePath = newFile.path
             newFile.close()
             RemoteVirtualFile(
-                RemoteResourceInfo(getPathComponents(newFilePath), client.stat(newFilePath)),
-                RemoteFileSystem.getInstance()
-            )
+                RemoteResourceInfo(getPathComponents(newFilePath), client.stat(newFilePath)))
         } catch (ex: SFTPException) {
             ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
@@ -235,9 +231,7 @@ class RemoteOperations {
             client.mkdir(newDirPath)
             val newDirStat = client.stat(newDirPath)
             RemoteVirtualFile(
-                RemoteResourceInfo(getPathComponents(newDirPath), newDirStat),
-                RemoteFileSystem.getInstance()
-            )
+                RemoteResourceInfo(getPathComponents(newDirPath), newDirStat))
         } catch (ex: SFTPException) {
             ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
@@ -349,6 +343,10 @@ class RemoteOperations {
             }, "Connecting...", null)
     }
 
+    fun fileOutputStream(remoteVirtualFile: String): OutputStream {
+        return RemoteFileOutputStream(getSftpClient().open(remoteVirtualFile, writeOperationOpenFlags))
+    }
+
 }
 
 internal class RemoteFileInputStream(private val remoteFile: RemoteFile) : InputStream() {
@@ -391,6 +389,26 @@ internal class RemoteFileInputStream(private val remoteFile: RemoteFile) : Input
             }
         }
         return read
+    }
+
+    override fun close() {
+        remoteFile.close()
+    }
+}
+
+internal class RemoteFileOutputStream(private val remoteFile: RemoteFile) : OutputStream() {
+
+    private val b = ByteArray(1)
+    private var fileOffset: Long = 0
+
+    override fun write(w: Int) {
+        b[0] = w.toByte()
+        write(b, 0, 1)
+    }
+
+    override fun write(buf: ByteArray, off: Int, len: Int) {
+        remoteFile.write(fileOffset, buf, off, len)
+        fileOffset += len.toLong()
     }
 
     override fun close() {

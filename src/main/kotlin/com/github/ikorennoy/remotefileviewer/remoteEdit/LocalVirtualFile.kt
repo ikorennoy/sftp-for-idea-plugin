@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.BinaryLightVirtualFile

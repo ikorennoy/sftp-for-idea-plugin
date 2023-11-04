@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.tree
 
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
 import com.github.ikorennoy.remotefileviewer.remote.RemoteOperations
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
 import com.intellij.ide.util.treeView.AbstractTreeStructure
@@ -9,11 +9,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VFileProperty
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.IconManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.tree.LeafState
-import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
 import javax.swing.Icon
 

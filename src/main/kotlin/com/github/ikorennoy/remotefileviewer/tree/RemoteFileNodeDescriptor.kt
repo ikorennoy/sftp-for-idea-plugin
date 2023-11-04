@@ -1,9 +1,8 @@
 package com.github.ikorennoy.remotefileviewer.tree
 
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.Icon
 
 class RemoteFileNodeDescriptor(

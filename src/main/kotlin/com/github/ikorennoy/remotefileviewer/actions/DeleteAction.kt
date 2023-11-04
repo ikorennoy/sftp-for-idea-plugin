@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.actions
 
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
 import com.github.ikorennoy.remotefileviewer.tree.RemoteFileSystemTree
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
 
 class DeleteAction :

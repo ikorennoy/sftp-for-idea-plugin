@@ -1,7 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteOperations
+import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
 import com.github.ikorennoy.remotefileviewer.remote.RemoteOperationsNotifier
 import com.github.ikorennoy.remotefileviewer.tree.RemoteFileSystemTree
 import com.intellij.openapi.application.ApplicationManager
@@ -58,9 +58,8 @@ class RemoteEditService {
             object : Task.Backgroundable(project, "Uploading file", true) {
                 override fun run(indicator: ProgressIndicator) {
                     if (remoteFile.isWritable()) {
-                        val fs = remoteFile.getFileSystem()
                         // open a temp file and upload new content into it
-                        val (tmpFileOutStream, tmpFileName) = fs.openTempFile(remoteFile)
+                        val (tmpFileOutStream, tmpFileName) = remoteFile.openTempFile()
 
                         val size = localTempFile.length.toDouble()
                         val buffer = ByteArray(1)
@@ -79,8 +78,10 @@ class RemoteEditService {
                         }
                         // because most sftp implementations don't support atomic rename
                         // we have to remove the original file and then do rename
-                        fs.removeFile(remoteFile)
-                        fs.renameTempFile(tmpFileName, remoteFile.getPath())
+
+                        val ops = service<RemoteOperations>()
+                        remoteFile.delete()
+                        ops.rename(tmpFileName, remoteFile.getPath())
                         val notifications = project.service<RemoteOperationsNotifier>()
                         notifications.notifyFileUploaded()
                     }

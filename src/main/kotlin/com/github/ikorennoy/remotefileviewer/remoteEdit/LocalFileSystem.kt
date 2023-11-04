@@ -1,7 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
@@ -20,9 +19,7 @@ class LocalFileSystem : VirtualFileSystem() {
     }
 
     fun wrapIntoTempFile(originalFile: RemoteVirtualFile, content: File): LocalVirtualFile {
-        val fs = originalFile.getFileSystem()
-        val components = fs.getComponents(originalFile.getPath())
-
+        val components = originalFile.getPathComponents()
         val file = LocalVirtualFile(components.name, this, components.path, originalFile, content)
         openedFiles[components.path] = file
         return file

@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.tree
 
-import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
 import com.github.ikorennoy.remotefileviewer.remoteEdit.EditRemoteFileTask
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
@@ -89,7 +89,7 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
         CommandProcessor.getInstance().executeCommand(project, {
             ProcessIOExecutorService.INSTANCE.execute {
                 try {
-                    fileToDelete.delete(this)
+                    fileToDelete.delete()
                     ApplicationManager.getApplication().invokeLater {
                         update()
                     }
