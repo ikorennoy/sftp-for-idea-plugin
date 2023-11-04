@@ -2,10 +2,12 @@ package com.github.ikorennoy.remotefileviewer.remoteEdit
 
 import com.github.ikorennoy.remotefileviewer.filesystem.RemoteFileSystem
 import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSystem
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 private const val PROTOCOL = "remoteFileViewerLocalFs"
@@ -17,7 +19,7 @@ class LocalFileSystem : VirtualFileSystem() {
         return PROTOCOL
     }
 
-    fun createNewFile(originalFile: RemoteVirtualFile, content: ByteArray): LocalVirtualFile {
+    fun wrapIntoTempFile(originalFile: RemoteVirtualFile, content: File): LocalVirtualFile {
         val fs = originalFile.fileSystem as RemoteFileSystem
         val components = fs.getComponents(originalFile.path)
 
@@ -47,7 +49,9 @@ class LocalFileSystem : VirtualFileSystem() {
     }
 
     override fun deleteFile(requestor: Any?, file: VirtualFile) {
-        throw UnsupportedOperationException("deleteFile is not supported")
+        if (file is LocalVirtualFile) {
+            FileUtil.delete(file.localTempFile)
+        }
     }
 
     override fun moveFile(requestor: Any?, file: VirtualFile, newParent: VirtualFile) {

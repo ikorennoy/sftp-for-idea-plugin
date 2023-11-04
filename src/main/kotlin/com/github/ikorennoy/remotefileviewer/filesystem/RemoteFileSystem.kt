@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import net.schmizz.sshj.sftp.*
 import java.io.InputStream
@@ -102,9 +101,10 @@ class RemoteFileSystem : VirtualFileSystem() {
         return service<RemoteOperations>().getSftpClient()
     }
 
-    fun openTempFile(forFile: RemoteVirtualFile): OutputStream {
+    fun openTempFile(forFile: RemoteVirtualFile): Pair<OutputStream, String> {
         val client = getSftpClient()
-        return RemoteFileOutputStream(client.open(getTmpName(forFile), writeOperationOpenFlags))
+        val tmpName = getTmpName(forFile)
+        return RemoteFileOutputStream(client.open(tmpName, writeOperationOpenFlags)) to tmpName
     }
 
     // we don't want to rebuild file tree
@@ -116,9 +116,22 @@ class RemoteFileSystem : VirtualFileSystem() {
         }
     }
 
-    fun renameTempFile(forFile: RemoteVirtualFile) {
+    fun renameTempFile(fromFile: String, toFile: String) {
         val client = getSftpClient()
-        client.rename(getTmpName(forFile), forFile.path)
+        client.rename(fromFile, toFile)
+    }
+
+    private fun getTmpName(file: RemoteVirtualFile): String {
+        val client = getSftpClient()
+        var i = 0
+        var name = "/tmp/${file.name}.tmp"
+        while (true) {
+            if (client.statExistence(name) == null) {
+                return name
+            }
+            name = "/tmp/${file.name}-${i}.tmp"
+            i++
+        }
     }
 
     override fun renameFile(requestor: Any?, vFile: VirtualFile, newName: String) {
@@ -141,10 +154,6 @@ class RemoteFileSystem : VirtualFileSystem() {
         const val PROTOCOL = "remoteFileSysSftp"
 
         private val myInstance: RemoteFileSystem by lazy { RemoteFileSystem() }
-
-        private fun getTmpName(file: RemoteVirtualFile): String {
-            return "/tmp/${file.name}.tmp"
-        }
 
         fun getInstance(): RemoteFileSystem {
             return myInstance

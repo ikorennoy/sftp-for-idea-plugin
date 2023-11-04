@@ -10,7 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 
-class UploadCurrentFileProjection : DumbAwareAction({ "Upload Current Remote File" }, AllIcons.Actions.MenuSaveall) {
+class UploadCurrentEditedFile : DumbAwareAction({ "Upload Current Remote File" }, AllIcons.Actions.MenuSaveall) {
 
     override fun getActionUpdateThread(): ActionUpdateThread {
         return ActionUpdateThread.BGT

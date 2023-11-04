@@ -51,7 +51,7 @@
                 class="com.github.ikorennoy.remotefileviewer.actions.DeleteAction"
                 use-shortcut-of="$Delete"/>
         <action id="RemoteFileSystem.UploadCurrentFileProjection"
-                class="com.github.ikorennoy.remotefileviewer.actions.UploadCurrentFileProjection"
+                class="com.github.ikorennoy.remotefileviewer.actions.UploadCurrentEditedFile"
                 use-shortcut-of="SaveAll"/>
         <action id="RemoteFileSystem.ShowSshConfiguration"
                 class="com.github.ikorennoy.remotefileviewer.actions.ShowSettingsAction"/>

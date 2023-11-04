@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.BinaryLightVirtualFile
 import com.intellij.util.LocalTimeCounter
+import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -13,10 +14,9 @@ class LocalVirtualFile(
     private val fileSystem: VirtualFileSystem,
     private val path: String,
     val remoteFile: RemoteVirtualFile,
-    private val content: ByteArray
+    val localTempFile: File
 ) : VirtualFile() {
 
-    private val delegateFile: BinaryLightVirtualFile = BinaryLightVirtualFile(name, content)
     private val modificationTimestamp: Long = LocalTimeCounter.currentTime()
 
     private val parent: VirtualFile = object : BinaryLightVirtualFile("") {
@@ -70,15 +70,16 @@ class LocalVirtualFile(
     }
 
     override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): OutputStream {
-        return delegateFile.getOutputStream(requestor)
+        println("GET OUTPUT STREAM")
+        return localTempFile.outputStream()
     }
 
     override fun contentsToByteArray(): ByteArray {
-        return delegateFile.contentsToByteArray()
+        return localTempFile.readBytes()
     }
 
     override fun getTimeStamp(): Long {
-        return delegateFile.timeStamp
+        return this.modificationTimestamp
     }
 
     override fun getModificationStamp(): Long {
@@ -86,7 +87,7 @@ class LocalVirtualFile(
     }
 
     override fun getLength(): Long {
-        return delegateFile.length
+        return localTempFile.length()
     }
 
     override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {
@@ -94,6 +95,7 @@ class LocalVirtualFile(
     }
 
     override fun getInputStream(): InputStream {
-        return delegateFile.inputStream
+        println("GET INPUT STREAM")
+        return localTempFile.inputStream()
     }
 }
