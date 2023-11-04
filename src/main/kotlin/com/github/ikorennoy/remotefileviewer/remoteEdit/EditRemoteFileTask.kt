@@ -12,6 +12,6 @@ class EditRemoteFileTask(
 
     override fun run() {
         val remoteEditService = service<RemoteEditService>()
-        remoteEditService.downloadFile(project, tree)
+        remoteEditService.downloadAndOpenFile(project, tree)
     }
 }

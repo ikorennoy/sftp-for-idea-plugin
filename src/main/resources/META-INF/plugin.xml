@@ -19,7 +19,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.ikorennoy.remotefileviewer.ui.FileViewerWindowsFactory" id="Remote Files"
                     anchor="right" doNotActivateOnStart="true"/>
-        <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.remoteEdit.LocalFileSystem"
+        <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.remoteEdit.TempVirtualFileSystem"
                            key="remoteFileViewerLocalFs" physical="false"/>
 
         <!--        <editorNotificationProvider-->

@@ -11,22 +11,23 @@ import java.util.concurrent.ConcurrentHashMap
 
 private const val PROTOCOL = "remoteFileViewerLocalFs"
 
-class LocalFileSystem : VirtualFileSystem() {
-    private val openedFiles = ConcurrentHashMap<String, LocalVirtualFile>()
+class TempVirtualFileSystem : VirtualFileSystem() {
+
+    private val downloadedFiles = ConcurrentHashMap<String, TempVirtualFile>()
 
     override fun getProtocol(): String {
         return PROTOCOL
     }
 
-    fun wrapIntoTempFile(originalFile: RemoteVirtualFile, content: File): LocalVirtualFile {
+    fun wrapIntoTempFile(originalFile: RemoteVirtualFile, content: File): TempVirtualFile {
         val components = originalFile.getPathComponents()
-        val file = LocalVirtualFile(components.name, this, components.path, originalFile, content)
-        openedFiles[components.path] = file
+        val file = TempVirtualFile(components.name, this, components.path, originalFile, content)
+        downloadedFiles[components.path] = file
         return file
     }
 
     override fun findFileByPath(path: String): VirtualFile? {
-        return openedFiles[path]
+        return downloadedFiles[path]
     }
 
     override fun refresh(asynchronous: Boolean) {
@@ -46,7 +47,7 @@ class LocalFileSystem : VirtualFileSystem() {
     }
 
     public override fun deleteFile(requestor: Any?, file: VirtualFile) {
-        if (file is LocalVirtualFile) {
+        if (file is TempVirtualFile) {
             FileUtil.delete(file.localTempFile)
         }
     }
@@ -76,8 +77,8 @@ class LocalFileSystem : VirtualFileSystem() {
     }
 
     companion object {
-        fun getInstance(): LocalFileSystem {
-            return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as LocalFileSystem
+        fun getInstance(): TempVirtualFileSystem {
+            return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as TempVirtualFileSystem
         }
     }
 }

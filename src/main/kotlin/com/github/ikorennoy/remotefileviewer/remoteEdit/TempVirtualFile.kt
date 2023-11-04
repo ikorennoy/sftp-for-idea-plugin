@@ -9,9 +9,9 @@ import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 
-class LocalVirtualFile(
+class TempVirtualFile(
     private val name: String,
-    private val fileSystem: LocalFileSystem,
+    private val fileSystem: TempVirtualFileSystem,
     private val path: String,
     val remoteFile: RemoteVirtualFile,
     val localTempFile: File
@@ -21,7 +21,7 @@ class LocalVirtualFile(
 
     private val parent: VirtualFile = object : BinaryLightVirtualFile("") {
         override fun getFileSystem(): VirtualFileSystem {
-            return this@LocalVirtualFile.fileSystem
+            return this@TempVirtualFile.fileSystem
         }
 
         override fun isWritable(): Boolean {
@@ -33,7 +33,7 @@ class LocalVirtualFile(
         }
 
         override fun getChildren(): Array<VirtualFile> {
-            return arrayOf(this@LocalVirtualFile)
+            return arrayOf(this@TempVirtualFile)
         }
     }
 

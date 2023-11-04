@@ -50,7 +50,7 @@ class RemoteEditEditorPanel(
             val documentManager = FileDocumentManager.getInstance()
             val files = FileEditorManager.getInstance(project).selectedFiles
             for (file in files) {
-                if (file is LocalVirtualFile) {
+                if (file is TempVirtualFile) {
                     val document = documentManager.getCachedDocument(file)
                     if (document != null) {
                         documentManager.saveDocument(document)

@@ -126,7 +126,7 @@ class RemoteVirtualFile(
         var i = 0
         var name = "/tmp/${getName()}.tmp"
         while (true) {
-            if (client.exists(name)) {
+            if (!client.exists(name)) {
                 return name
             }
             name = "/tmp/${getName()}-${i}.tmp"

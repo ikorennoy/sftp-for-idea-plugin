@@ -2,7 +2,7 @@ package com.github.ikorennoy.remotefileviewer.ui
 
 import com.github.ikorennoy.remotefileviewer.remote.RemoteConnectionListener
 import com.github.ikorennoy.remotefileviewer.remote.RemoteOperations
-import com.github.ikorennoy.remotefileviewer.remoteEdit.UnsavedChangesListener
+import com.github.ikorennoy.remotefileviewer.remoteEdit.TemporaryFilesEditorManagerListener
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
 import com.github.ikorennoy.remotefileviewer.tree.RemoteFileSystemTree
 import com.intellij.openapi.application.ApplicationManager
@@ -63,8 +63,8 @@ class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
     }
 
     private fun subscribeOnEditorManagerEvents(project: Project) {
-        val unsavedChangesListener = UnsavedChangesListener()
-        project.messageBus.connect().subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, unsavedChangesListener)
+        val temporaryFilesEditorManagerListener = TemporaryFilesEditorManagerListener()
+        project.messageBus.connect().subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, temporaryFilesEditorManagerListener)
     }
 
     private fun subscribeOnConnectionStatusUpdated(fsTree: RemoteFileSystemTree) {

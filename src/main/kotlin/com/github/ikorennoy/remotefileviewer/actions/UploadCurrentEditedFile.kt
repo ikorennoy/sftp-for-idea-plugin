@@ -1,7 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.actions
 
 import com.github.ikorennoy.remotefileviewer.remoteEdit.RemoteEditService
-import com.github.ikorennoy.remotefileviewer.remoteEdit.LocalVirtualFile
+import com.github.ikorennoy.remotefileviewer.remoteEdit.TempVirtualFile
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -21,7 +21,7 @@ class UploadCurrentEditedFile : DumbAwareAction({ "Upload Current Remote File" }
         if (project != null) {
             val files = FileEditorManager.getInstance(project).selectedFiles
             for (file in files) {
-                if (file is LocalVirtualFile) {
+                if (file is TempVirtualFile) {
                     e.presentation.isEnabled = true
                     return
                 }
@@ -35,7 +35,7 @@ class UploadCurrentEditedFile : DumbAwareAction({ "Upload Current Remote File" }
         val documentManager = FileDocumentManager.getInstance()
         val files = FileEditorManager.getInstance(project).selectedFiles
         for (file in files) {
-            if (file is LocalVirtualFile) {
+            if (file is TempVirtualFile) {
                 val document = documentManager.getCachedDocument(file)
                 if (document != null) {
                     documentManager.saveDocument(document)
