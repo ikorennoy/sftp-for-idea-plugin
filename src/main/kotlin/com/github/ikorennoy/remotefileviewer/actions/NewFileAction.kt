@@ -1,13 +1,9 @@
 package com.github.ikorennoy.remotefileviewer.actions
 
+import com.github.ikorennoy.remotefileviewer.tree.RemoteFileSystemTree
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.fileChooser.FileSystemTree
-import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
-import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.fileTypes.PlainTextFileType
-import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.UIBundle
@@ -16,8 +12,8 @@ class NewFileAction :
     DumbAwareAction(ActionsBundle.messagePointer("action.FileChooser.NewFile.text"), AllIcons.FileTypes.AddAny) {
 
     override fun actionPerformed(e: AnActionEvent) {
-        val fsTree = e.getData(FileSystemTree.DATA_KEY) ?: return
-        var parent = fsTree.newFileParent ?: return
+        val fsTree = e.getData(RemoteFileSystemTree.DATA_KEY) ?: return
+        var parent = fsTree.getNewFileParent() ?: return
 
         if (!parent.isDirectory) {
            parent = parent.parent
@@ -42,13 +38,7 @@ class NewFileAction :
                 )
                 continue
             }
-            var type = FileTypeManager.getInstance().getFileTypeByFileName(name)
-            // we need this because the code in FileSystemTreeImpl for UnknownFileType creates a filename with '.' at the end
-            if (type == UnknownFileType.INSTANCE) {
-                type = PlainTextFileType.INSTANCE
-            }
-            val failReason =
-                (fsTree as FileSystemTreeImpl).createNewFile(parent, name, type, null)
+            val failReason = fsTree.createNewFile(parent, name)
             if (failReason != null) {
                 Messages.showMessageDialog(
                     UIBundle.message(

@@ -12,9 +12,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
-import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.*
 import java.awt.EventQueue
@@ -33,8 +30,6 @@ class RemoteOperations {
     private var client: SSHClient? = null
 
     private val lock = ReentrantLock()
-
-    private val scope = CoroutineScope(SupervisorJob())
 
     fun initialized(): Boolean {
         val currentClient = client ?: return false
@@ -74,16 +69,16 @@ class RemoteOperations {
         }
     }
 
-    fun getChildren(remotePath: String): Array<RemoteVirtualFile> {
+    fun getChildren(remotePath: RemoteVirtualFile): Array<RemoteVirtualFile> {
         assertNotEdt()
         return try {
             val client = getSftpClient()
             val remoteFs = RemoteFileSystem.getInstance()
-            client.ls(remotePath)
+            client.ls(remotePath.path)
                 .map { RemoteVirtualFile(it, remoteFs) }
                 .toTypedArray()
         } catch (ex: SFTPException) {
-            UIUtil.invokeLaterIfNeeded {
+            ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
                     "Can't open a directory '${remotePath}' ${ex.message}",
                     "Error"
@@ -99,7 +94,7 @@ class RemoteOperations {
             val client = getSftpClient()
             client.statExistence(remotePath) != null
         } catch (ex: SFTPException) {
-            UIUtil.invokeLaterIfNeeded {
+            ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
                     "Can't execute an operation '${remotePath}' ${ex.message}",
                     "Error"
@@ -118,10 +113,16 @@ class RemoteOperations {
             if (components.parent == "") {
                 null
             } else {
-                RemoteVirtualFile(RemoteResourceInfo(components, client.stat(remotePath)), fs)
+                RemoteVirtualFile(
+                    RemoteResourceInfo(
+                        getPathComponents(components.parent),
+                        client.stat(components.parent)
+                    ), fs
+                )
+
             }
         } catch (ex: SFTPException) {
-            UIUtil.invokeLaterIfNeeded {
+            ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
                     "Can't get a parent for '${remotePath}' ${ex.message}",
                     "Error"
@@ -138,7 +139,7 @@ class RemoteOperations {
             val fs = RemoteFileSystem.getInstance()
             RemoteVirtualFile(RemoteResourceInfo(getPathComponents(path), client.stat(path)), fs)
         } catch (ex: SFTPException) {
-            UIUtil.invokeLaterIfNeeded {
+            ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
                     "Can't find a file for path '${path}' ${ex.message}",
                     "Error"
@@ -161,7 +162,7 @@ class RemoteOperations {
                 client.rm(file.path)
             }
         } catch (ex: SFTPException) {
-            UIUtil.invokeLaterIfNeeded {
+            ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
                     "Can't remove a $entity with path '${file.path}' ${ex.message}",
                     "Error"
@@ -176,7 +177,7 @@ class RemoteOperations {
             val client = getSftpClient()
             client.rename(fromPath, toPath)
         } catch (ex: SFTPException) {
-            UIUtil.invokeLaterIfNeeded {
+            ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
                     "Can't rename a file with path '${fromPath}' to path '${toPath}' ${ex.message}",
                     "Error"
@@ -193,9 +194,12 @@ class RemoteOperations {
             val newFile = client.open("$realPath/$newFileName", setOf(OpenMode.CREAT, OpenMode.TRUNC))
             val newFilePath = newFile.path
             newFile.close()
-            RemoteVirtualFile(RemoteResourceInfo(getPathComponents(newFilePath), client.stat(newFilePath)), RemoteFileSystem.getInstance())
+            RemoteVirtualFile(
+                RemoteResourceInfo(getPathComponents(newFilePath), client.stat(newFilePath)),
+                RemoteFileSystem.getInstance()
+            )
         } catch (ex: SFTPException) {
-            UIUtil.invokeLaterIfNeeded {
+            ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
                     "Can't create new file in '${parent.path}' ${ex.message}",
                     "Error"
@@ -213,9 +217,12 @@ class RemoteOperations {
             val newDirPath = "$parentDirCanonicalPath/$newDirName"
             client.mkdir(newDirPath)
             val newDirStat = client.stat(newDirPath)
-            RemoteVirtualFile(RemoteResourceInfo(getPathComponents(newDirPath), newDirStat), RemoteFileSystem.getInstance())
+            RemoteVirtualFile(
+                RemoteResourceInfo(getPathComponents(newDirPath), newDirStat),
+                RemoteFileSystem.getInstance()
+            )
         } catch (ex: SFTPException) {
-            UIUtil.invokeLaterIfNeeded {
+            ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
                     "Can't create new directory in '${parent.path}' ${ex.message}",
                     "Error"
@@ -235,11 +242,11 @@ class RemoteOperations {
         }
     }
 
-    fun getFileAttributes(file: RemoteVirtualFile): FileAttributes {
+    fun getFileAttributes(file: String): FileAttributes {
         assertNotEdt()
         return try {
             val client = getSftpClient()
-            client.stat(file.path)
+            client.stat(file)
         } catch (ex: SFTPException) {
             throw ex
         }

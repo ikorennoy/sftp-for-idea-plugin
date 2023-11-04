@@ -7,13 +7,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import net.schmizz.sshj.sftp.*
 import java.io.InputStream
 import java.io.OutputStream
-import java.lang.IllegalArgumentException
+import java.util.concurrent.ConcurrentHashMap
 import javax.naming.OperationNotSupportedException
 
 // todo check that I can read and edit symlink/hardlink file
@@ -22,9 +21,10 @@ class RemoteFileSystem : VirtualFileSystem() {
 
     private val topic = ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES)
     private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
+    private val openedFiles: Map<String, VirtualFile> = ConcurrentHashMap()
 
     fun getChildren(file: RemoteVirtualFile): Array<RemoteVirtualFile> {
-        return getRemoteOperations().getChildren(file.path)
+        return getRemoteOperations().getChildren(file)
     }
 
     fun exists(file: VirtualFile): Boolean {
@@ -65,11 +65,7 @@ class RemoteFileSystem : VirtualFileSystem() {
     override fun createChildFile(requestor: Any?, vDir: VirtualFile, fileName: String): VirtualFile {
         if (vDir !is RemoteVirtualFile) throw IllegalArgumentException("Wrong VirtualFile: $vDir")
         val operations = getRemoteOperations()
-        val event = listOf(VFileCreateEvent(requestor, vDir, fileName, false, null, null, false, emptyArray()))
-        topic.before(event)
-        val result = operations.createChildFile(vDir, fileName)
-        topic.after(event)
-        return result
+        return operations.createChildFile(vDir, fileName)
     }
 
     override fun createChildDirectory(requestor: Any?, vDir: VirtualFile, dirName: String): VirtualFile {
@@ -95,7 +91,7 @@ class RemoteFileSystem : VirtualFileSystem() {
     }
 
     fun getFileAttributes(file: RemoteVirtualFile): FileAttributes {
-        return getRemoteOperations().getFileAttributes(file)
+        return getRemoteOperations().getFileAttributes(file.path)
     }
 
     fun getComponents(path: String): PathComponents {
@@ -148,12 +144,14 @@ class RemoteFileSystem : VirtualFileSystem() {
     companion object {
         const val PROTOCOL = "remoteFileSysSftp"
 
+        private val myInstance: RemoteFileSystem by lazy { RemoteFileSystem() }
+
         private fun getTmpName(file: RemoteVirtualFile): String {
             return "/tmp/${file.name}.tmp"
         }
 
         fun getInstance(): RemoteFileSystem {
-            return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as RemoteFileSystem
+            return myInstance
         }
     }
 }
