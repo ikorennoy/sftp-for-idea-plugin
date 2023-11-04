@@ -47,6 +47,6 @@ class UpdateTreeAction: DumbAwareAction({"Update Tree"}, AllIcons.Actions.Refres
                 connManager.init()
             }
         }
-        ApplicationManager.getApplication().messageBus.syncPublisher(RemoteConnectionListener.TOPIC).updateTree()
+        ApplicationManager.getApplication().messageBus.syncPublisher(RemoteConnectionListener.TOPIC).connectionStatusChanged()
     }
 }

@@ -12,5 +12,5 @@ interface RemoteConnectionListener: EventListener {
         )
     }
 
-    fun updateTree()
+    fun connectionStatusChanged()
 }

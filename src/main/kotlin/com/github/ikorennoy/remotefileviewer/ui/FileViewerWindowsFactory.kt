@@ -70,7 +70,7 @@ class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
     private fun subscribeOnConnectionStatusUpdated(fsTree: RemoteFileSystemTree) {
         ApplicationManager.getApplication().messageBus.connect()
             .subscribe(RemoteConnectionListener.TOPIC, object : RemoteConnectionListener {
-                override fun updateTree() {
+                override fun connectionStatusChanged() {
                     ApplicationManager.getApplication().invokeLater {
                         fsTree.update()
                     }

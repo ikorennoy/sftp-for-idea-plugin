@@ -15,7 +15,7 @@ class DisconnectAction : DumbAwareAction({ "Disconnect" }, AllIcons.CodeWithMe.C
         ProcessIOExecutorService.INSTANCE.execute {
             service<RemoteOperations>().disconnect()
             ApplicationManager.getApplication().messageBus.syncPublisher(RemoteConnectionListener.TOPIC)
-                .updateTree()
+                .connectionStatusChanged()
         }
     }
 }
