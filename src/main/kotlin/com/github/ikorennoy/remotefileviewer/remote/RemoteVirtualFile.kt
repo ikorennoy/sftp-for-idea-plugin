@@ -13,7 +13,6 @@ class RemoteVirtualFile(
     private val remoteFile: RemoteResourceInfo,
 ) {
 
-
     fun getName(): String = remoteFile.name
 
     private val myParent: RemoteVirtualFile? by lazy { getRemoteOperations().getParent(getPath()) }
