@@ -22,7 +22,7 @@ internal class FileComparator : Comparator<NodeDescriptor<*>> {
     private fun getWeight(nodeDescriptor: NodeDescriptor<*>): Int {
         if (nodeDescriptor is RemoteFileNodeDescriptor) {
             val element = nodeDescriptor.element
-            return if (element.isDirectory) {
+            return if (element.isDirectory()) {
                 0
             } else {
                 1

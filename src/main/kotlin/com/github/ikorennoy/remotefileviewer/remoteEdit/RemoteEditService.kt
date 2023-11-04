@@ -22,16 +22,16 @@ class RemoteEditService {
             object : Task.Modal(project, "Downloading File", true) {
                 override fun run(indicator: ProgressIndicator) {
                     val remoteFileToEdit = tree.getSelectedFile() as? RemoteVirtualFile ?: return
-                    val remoteFileSize = remoteFileToEdit.length.toDouble()
+                    val remoteFileSize = remoteFileToEdit.getLength().toDouble()
                     val buffer = ByteArray(1024)
 
-                    val localTempFile = FileUtil.createTempFile(remoteFileToEdit.name, ".tmp", false)
+                    val localTempFile = FileUtil.createTempFile(remoteFileToEdit.getName(), ".tmp", false)
 
                     localTempFile.outputStream().use { localFileOutputStream ->
-                        remoteFileToEdit.inputStream.use { remoteFileInputStream ->
+                        remoteFileToEdit.getInputStream().use { remoteFileInputStream ->
                             var read = remoteFileInputStream.read(buffer)
                             var readTotal = read
-                            indicator.text = remoteFileToEdit.path
+                            indicator.text = remoteFileToEdit.getPath()
                             while (read != -1) {
                                 localFileOutputStream.write(buffer, 0, read)
                                 indicator.checkCanceled()
@@ -57,8 +57,8 @@ class RemoteEditService {
         CommandProcessor.getInstance().executeCommand(project, {
             object : Task.Backgroundable(project, "Uploading file", true) {
                 override fun run(indicator: ProgressIndicator) {
-                    if (remoteFile.isWritable) {
-                        val fs = remoteFile.fileSystem as RemoteFileSystem
+                    if (remoteFile.isWritable()) {
+                        val fs = remoteFile.getFileSystem()
                         // open a temp file and upload new content into it
                         val (tmpFileOutStream, tmpFileName) = fs.openTempFile(remoteFile)
 
@@ -80,7 +80,7 @@ class RemoteEditService {
                         // because most sftp implementations don't support atomic rename
                         // we have to remove the original file and then do rename
                         fs.removeFile(remoteFile)
-                        fs.renameTempFile(tmpFileName, remoteFile.path)
+                        fs.renameTempFile(tmpFileName, remoteFile.getPath())
                         val notifications = project.service<RemoteOperationsNotifier>()
                         notifications.notifyFileUploaded()
                     }

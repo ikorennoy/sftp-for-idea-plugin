@@ -20,8 +20,8 @@ class LocalFileSystem : VirtualFileSystem() {
     }
 
     fun wrapIntoTempFile(originalFile: RemoteVirtualFile, content: File): LocalVirtualFile {
-        val fs = originalFile.fileSystem as RemoteFileSystem
-        val components = fs.getComponents(originalFile.path)
+        val fs = originalFile.getFileSystem()
+        val components = fs.getComponents(originalFile.getPath())
 
         val file = LocalVirtualFile(components.name, this, components.path, originalFile, content)
         openedFiles[components.path] = file

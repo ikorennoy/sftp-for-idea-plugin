@@ -1,92 +1,51 @@
 package com.github.ikorennoy.remotefileviewer.filesystem
 
 import com.github.ikorennoy.remotefileviewer.remote.RemoteOperations
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileListener
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import net.schmizz.sshj.sftp.*
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.concurrent.ConcurrentHashMap
-import javax.naming.OperationNotSupportedException
 
 // todo check that I can read and edit symlink/hardlink file
 //  check that I can correctly identify symlink dir
-class RemoteFileSystem : VirtualFileSystem() {
+class RemoteFileSystem {
 
-    private val topic = ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES)
     private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
-    private val openedFiles: Map<String, VirtualFile> = ConcurrentHashMap()
 
     fun getChildren(file: RemoteVirtualFile): Array<RemoteVirtualFile> {
         return getRemoteOperations().getChildren(file)
     }
 
-    fun exists(file: VirtualFile): Boolean {
-        return getRemoteOperations().exists(file.path)
+    fun getParent(file: RemoteVirtualFile): RemoteVirtualFile? {
+        return  getRemoteOperations().getParent(file.getPath())
     }
 
-    fun getParent(file: RemoteVirtualFile): VirtualFile? {
-        return  getRemoteOperations().getParent(file.path)
-    }
-
-    override fun getProtocol(): String = PROTOCOL
-
-    override fun findFileByPath(path: String): VirtualFile? {
-        return getRemoteOperations().findFileByPath(path)
-    }
-
-    override fun refreshAndFindFileByPath(path: String): VirtualFile? {
-        return findFileByPath(path)
-    }
-
-    public override fun deleteFile(requestor: Any?, vFile: VirtualFile) {
-        if (vFile !is RemoteVirtualFile) return
+    fun deleteFile(vFile: RemoteVirtualFile) {
         getRemoteOperations().remove(vFile)
     }
 
-    override fun moveFile(requestor: Any?, vFile: VirtualFile, newParent: VirtualFile) {
-        val operations = getRemoteOperations()
-        val moveEvent = listOf(VFileMoveEvent(requestor, vFile, newParent))
-        topic.before(moveEvent)
-        operations.rename(vFile.path, newParent.path)
-        topic.after(moveEvent)
-    }
-
-    override fun createChildFile(requestor: Any?, vDir: VirtualFile, fileName: String): VirtualFile {
-        if (vDir !is RemoteVirtualFile) throw IllegalArgumentException("Wrong VirtualFile: $vDir")
+    fun createChildFile(vDir: RemoteVirtualFile, fileName: String): RemoteVirtualFile {
         val operations = getRemoteOperations()
         return operations.createChildFile(vDir, fileName)
     }
 
-    override fun createChildDirectory(requestor: Any?, vDir: VirtualFile, dirName: String): VirtualFile {
-        if (vDir !is RemoteVirtualFile) throw IllegalArgumentException("Wrong VirtualFile $vDir")
+    fun createChildDirectory(vDir: RemoteVirtualFile, dirName: String): RemoteVirtualFile {
         return getRemoteOperations().createChildDirectory(vDir, dirName)
     }
 
-    override fun copyFile(
-        requestor: Any?,
-        virtualFile: VirtualFile,
-        newParent: VirtualFile,
-        copyName: String
-    ): VirtualFile {
-        throw OperationNotSupportedException("copy")
-    }
 
-    override fun isReadOnly(): Boolean {
+    fun isReadOnly(): Boolean {
         return false
     }
+
+
 
     fun fileInputStream(file: RemoteVirtualFile): InputStream {
         return getRemoteOperations().fileInputStream(file)
     }
 
     fun getFileAttributes(file: RemoteVirtualFile): FileAttributes {
-        return getRemoteOperations().getFileAttributes(file.path)
+        return getRemoteOperations().getFileAttributes(file.getPath())
     }
 
     fun getComponents(path: String): PathComponents {
@@ -111,8 +70,8 @@ class RemoteFileSystem : VirtualFileSystem() {
     // the operation is used only to transfer file to remote
     fun removeFile(file: RemoteVirtualFile) {
         val client = getSftpClient()
-        if (!file.isDirectory) {
-            client.rm(file.path)
+        if (!file.isDirectory()) {
+            client.rm(file.getPath())
         }
     }
 
@@ -124,35 +83,17 @@ class RemoteFileSystem : VirtualFileSystem() {
     private fun getTmpName(file: RemoteVirtualFile): String {
         val client = getSftpClient()
         var i = 0
-        var name = "/tmp/${file.name}.tmp"
+        var name = "/tmp/${file.getName()}.tmp"
         while (true) {
             if (client.statExistence(name) == null) {
                 return name
             }
-            name = "/tmp/${file.name}-${i}.tmp"
+            name = "/tmp/${file.getName()}-${i}.tmp"
             i++
         }
     }
 
-    override fun renameFile(requestor: Any?, vFile: VirtualFile, newName: String) {
-        throw UnsupportedOperationException("renameFile")
-    }
-
-    override fun addVirtualFileListener(listener: VirtualFileListener) {
-
-    }
-
-    override fun removeVirtualFileListener(listener: VirtualFileListener) {
-    }
-
-
-    override fun refresh(asynchronous: Boolean) {
-    }
-
-
     companion object {
-        const val PROTOCOL = "remoteFileSysSftp"
-
         private val myInstance: RemoteFileSystem by lazy { RemoteFileSystem() }
 
         fun getInstance(): RemoteFileSystem {

@@ -15,8 +15,8 @@ class NewDirectoryAction :
         val fsTree = e.getData(RemoteFileSystemTree.DATA_KEY) ?: return
         var parent = fsTree.getNewFileParent() ?: return
 
-        if (!parent.isDirectory) {
-            parent = parent.parent
+        if (!parent.isDirectory()) {
+            parent = parent.getParent() ?: return
         }
 
         var newDirectoryName: String

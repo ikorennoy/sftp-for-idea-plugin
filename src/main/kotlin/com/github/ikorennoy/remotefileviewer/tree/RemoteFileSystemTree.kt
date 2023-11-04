@@ -1,5 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.tree
 
+import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
 import com.github.ikorennoy.remotefileviewer.remoteEdit.EditRemoteFileTask
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
@@ -9,7 +10,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.TreeSpeedSearch
@@ -60,22 +60,22 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
         }.installOn(tree)
     }
 
-    fun getSelectedFile(): VirtualFile? {
+    fun getSelectedFile(): RemoteVirtualFile? {
         val treePath = tree.selectionPath ?: return null
         return getTargetPath(treePath)
     }
 
-    fun getNewFileParent(): VirtualFile? {
+    fun getNewFileParent(): RemoteVirtualFile? {
         val selected = getSelectedFile()
         if (selected != null) return selected
         return null
     }
 
-    fun createNewDirectory(parentDirectory: VirtualFile, newDirectoryName: String) {
+    fun createNewDirectory(parentDirectory: RemoteVirtualFile, newDirectoryName: String) {
         CommandProcessor.getInstance().executeCommand(project, {
             ProcessIOExecutorService.INSTANCE.execute {
                 try {
-                    val file = parentDirectory.createChildDirectory(this, newDirectoryName)
+                    val file = parentDirectory.createChildDirectory(newDirectoryName)
                     ApplicationManager.getApplication().invokeLater {
                         updateAndSelect(file)
                     }
@@ -85,7 +85,7 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
         }, UIBundle.message("file.chooser.create.new.folder.command.name"), null)
     }
 
-    fun deleteFile(fileToDelete: VirtualFile) {
+    fun deleteFile(fileToDelete: RemoteVirtualFile) {
         CommandProcessor.getInstance().executeCommand(project, {
             ProcessIOExecutorService.INSTANCE.execute {
                 try {
@@ -100,12 +100,12 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
         }, "Delete", null)
     }
 
-    fun createNewFile(parentDirectory: VirtualFile, newFileName: String) {
+    fun createNewFile(parentDirectory: RemoteVirtualFile, newFileName: String) {
         CommandProcessor.getInstance().executeCommand(
             project, {
                 ProcessIOExecutorService.INSTANCE.execute {
                     try {
-                        val file = parentDirectory.createChildData(this, newFileName)
+                        val file = parentDirectory.createChildData(newFileName)
                         ApplicationManager.getApplication().invokeLater {
                             updateAndSelect(file)
                         }
@@ -123,7 +123,7 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
     override fun dispose() {
     }
 
-    private fun updateAndSelect(file: VirtualFile) {
+    private fun updateAndSelect(file: RemoteVirtualFile) {
         treeModel.invalidateAsync().thenRun {
             treeModel.select(file, tree) {}
         }
@@ -144,7 +144,7 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
         }
     }
 
-    private fun getTargetPath(treePath: TreePath): VirtualFile? {
+    private fun getTargetPath(treePath: TreePath): RemoteVirtualFile? {
         val userObject = (treePath.lastPathComponent as DefaultMutableTreeNode).userObject
         return if (userObject is RemoteFileNodeDescriptor) {
             userObject.element

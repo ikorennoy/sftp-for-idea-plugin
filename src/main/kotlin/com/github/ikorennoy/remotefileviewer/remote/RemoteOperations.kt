@@ -91,7 +91,7 @@ class RemoteOperations {
         return try {
             val client = getSftpClient()
             val remoteFs = RemoteFileSystem.getInstance()
-            client.ls(remotePath.path)
+            client.ls(remotePath.getPath())
                 .map { RemoteVirtualFile(it, remoteFs) }
                 .toTypedArray()
         } catch (ex: SFTPException) {
@@ -171,17 +171,17 @@ class RemoteOperations {
         var entity: String? = null
         try {
             val client = getSftpClient()
-            if (file.isDirectory) {
+            if (file.isDirectory()) {
                 entity = "directory"
-                client.rmdir(file.path)
+                client.rmdir(file.getPath())
             } else {
                 entity = "file"
-                client.rm(file.path)
+                client.rm(file.getPath())
             }
         } catch (ex: SFTPException) {
             ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
-                    "Can't remove a $entity with the path '${file.path}' ${ex.message}",
+                    "Can't remove a $entity with the path '${file.getPath()}' ${ex.message}",
                     "Error"
                 )
             }
@@ -207,7 +207,7 @@ class RemoteOperations {
         assertNotEdt()
         return try {
             val client = getSftpClient()
-            val realPath = client.canonicalize(parent.path)
+            val realPath = client.canonicalize(parent.getPath())
             val newFile = client.open("$realPath/$newFileName", setOf(OpenMode.CREAT, OpenMode.TRUNC))
             val newFilePath = newFile.path
             newFile.close()
@@ -218,7 +218,7 @@ class RemoteOperations {
         } catch (ex: SFTPException) {
             ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
-                    "Can't create new file in '${parent.path}' ${ex.message}",
+                    "Can't create new file in '${parent.getPath()}' ${ex.message}",
                     "Error"
                 )
             }
@@ -230,7 +230,7 @@ class RemoteOperations {
         assertNotEdt()
         return try {
             val client = getSftpClient()
-            val parentDirCanonicalPath = client.canonicalize(parent.path)
+            val parentDirCanonicalPath = client.canonicalize(parent.getPath())
             val newDirPath = "$parentDirCanonicalPath/$newDirName"
             client.mkdir(newDirPath)
             val newDirStat = client.stat(newDirPath)
@@ -241,7 +241,7 @@ class RemoteOperations {
         } catch (ex: SFTPException) {
             ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
-                    "Can't create new directory in '${parent.path}' ${ex.message}",
+                    "Can't create new directory in '${parent.getPath()}' ${ex.message}",
                     "Error"
                 )
             }
@@ -253,7 +253,7 @@ class RemoteOperations {
         assertNotEdt()
         return try {
             val client = getSftpClient()
-            RemoteFileInputStream(client.open(file.path))
+            RemoteFileInputStream(client.open(file.getPath()))
         } catch (ex: SFTPException) {
             throw ex
         }

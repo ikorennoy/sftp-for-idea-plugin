@@ -1,5 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.actions
 
+import com.github.ikorennoy.remotefileviewer.filesystem.RemoteVirtualFile
 import com.github.ikorennoy.remotefileviewer.tree.RemoteFileSystemTree
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
@@ -30,8 +31,8 @@ class DeleteAction :
         fsTree.deleteFile(fileToDelete)
     }
 
-    private fun createConfirmationMessage(file: VirtualFile): String {
-        return if (file.isDirectory) {
+    private fun createConfirmationMessage(file: RemoteVirtualFile): String {
+        return if (file.isDirectory()) {
             UIBundle.message(
                 "are.you.sure.you.want.to.delete.selected.folder.confirmation.message",
                 file.getName()
