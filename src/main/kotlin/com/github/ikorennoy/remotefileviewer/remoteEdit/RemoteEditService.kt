@@ -50,8 +50,8 @@ class RemoteEditService {
         }, "Downloading File", null)
     }
 
-    fun uploadFileToRemote(project: Project, localFileProjection: LocalVirtualFile) {
-        val remoteFile = localFileProjection.remoteFile
+    fun uploadFileToRemote(project: Project, localTempFile: LocalVirtualFile) {
+        val remoteFile = localTempFile.remoteFile
         CommandProcessor.getInstance().executeCommand(project, {
             object : Task.Modal(project, "Uploading File", true) {
                 override fun run(indicator: ProgressIndicator) {
@@ -60,10 +60,10 @@ class RemoteEditService {
                         // open a temp file and upload new content into it
                         val (tmpFileOutStream, tmpFileName) = fs.openTempFile(remoteFile)
 
-                        val size = localFileProjection.length.toDouble()
+                        val size = localTempFile.length.toDouble()
                         val buffer = ByteArray(1024)
                         tmpFileOutStream.use { remoteFileOs ->
-                            localFileProjection.inputStream.use { localFileIs ->
+                            localTempFile.inputStream.use { localFileIs ->
                                 var writtenTotal = 0.0
                                 var readFromLocal = localFileIs.read(buffer)
                                 while (readFromLocal != -1) {

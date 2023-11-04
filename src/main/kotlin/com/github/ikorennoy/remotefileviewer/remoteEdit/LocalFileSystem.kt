@@ -48,7 +48,7 @@ class LocalFileSystem : VirtualFileSystem() {
 
     }
 
-    override fun deleteFile(requestor: Any?, file: VirtualFile) {
+    public override fun deleteFile(requestor: Any?, file: VirtualFile) {
         if (file is LocalVirtualFile) {
             FileUtil.delete(file.localTempFile)
         }

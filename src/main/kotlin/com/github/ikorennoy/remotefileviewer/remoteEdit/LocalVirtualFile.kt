@@ -11,7 +11,7 @@ import java.io.OutputStream
 
 class LocalVirtualFile(
     private val name: String,
-    private val fileSystem: VirtualFileSystem,
+    private val fileSystem: LocalFileSystem,
     private val path: String,
     val remoteFile: RemoteVirtualFile,
     val localTempFile: File
@@ -70,7 +70,6 @@ class LocalVirtualFile(
     }
 
     override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): OutputStream {
-        println("GET OUTPUT STREAM")
         return localTempFile.outputStream()
     }
 
@@ -92,6 +91,10 @@ class LocalVirtualFile(
 
     override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {
         postRunnable?.run()
+    }
+
+    override fun delete(requestor: Any?) {
+        fileSystem.deleteFile(requestor, this)
     }
 
     override fun getInputStream(): InputStream {

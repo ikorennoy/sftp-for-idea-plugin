@@ -21,7 +21,9 @@ class DeleteAction :
         val confirmationMessage = createConfirmationMessage(fileToDelete)
 
         val returnValue = Messages.showOkCancelDialog(
-            confirmationMessage, UIBundle.message("delete.dialog.title"), ApplicationBundle.message("button.delete"),
+            confirmationMessage,
+            UIBundle.message("delete.dialog.title"),
+            ApplicationBundle.message("button.delete"),
             CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()
         )
         if (returnValue != Messages.OK) return
