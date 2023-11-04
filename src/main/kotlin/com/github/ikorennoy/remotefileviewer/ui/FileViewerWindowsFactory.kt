@@ -61,7 +61,7 @@ class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
             .subscribe(RemoteConnectionListener.TOPIC, object : RemoteConnectionListener {
                 override fun connectionEstablished() {
                     ApplicationManager.getApplication().invokeLater {
-                        remoteFileSystemTree.invalidate()
+                        remoteFileSystemTree.update()
                     }
                 }
             })

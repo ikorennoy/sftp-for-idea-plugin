@@ -45,13 +45,9 @@ class RemoteFileSystem : VirtualFileSystem() {
         return findFileByPath(path)
     }
 
-    override fun deleteFile(requestor: Any?, vFile: VirtualFile) {
+    public override fun deleteFile(requestor: Any?, vFile: VirtualFile) {
         if (vFile !is RemoteVirtualFile) return
-        val operations = getRemoteOperations()
-        val event = listOf(VFileDeleteEvent(requestor, vFile, false))
-        topic.before(event)
-        operations.remove(vFile)
-        topic.after(event)
+        getRemoteOperations().remove(vFile)
     }
 
     override fun moveFile(requestor: Any?, vFile: VirtualFile, newParent: VirtualFile) {

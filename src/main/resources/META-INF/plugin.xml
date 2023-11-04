@@ -41,11 +41,15 @@
         <group id="RemoteFileSystemPopup">
             <action id="RemoteFileSystem.ShowCreate"
                     class="com.github.ikorennoy.remotefileviewer.actions.ShowCreateAction"
-                    use-shortcut-of="NewDir"
-            />
+                    use-shortcut-of="NewFile"/>
         </group>
         <action id="RemoteFileSystem.NewFileAction"
                 class="com.github.ikorennoy.remotefileviewer.actions.NewFileAction"/>
+        <action id="RemoteFileSystem.NewDirectoryAction"
+                class="com.github.ikorennoy.remotefileviewer.actions.NewDirectoryAction"/>
+        <action id="RemoteFileSystem.Delete"
+                class="com.github.ikorennoy.remotefileviewer.actions.DeleteAction"
+                use-shortcut-of="$Delete"/>
         <action id="RemoteFileSystem.UploadCurrentFileProjection"
                 class="com.github.ikorennoy.remotefileviewer.actions.UploadCurrentFileProjection"
                 use-shortcut-of="SaveAll"/>

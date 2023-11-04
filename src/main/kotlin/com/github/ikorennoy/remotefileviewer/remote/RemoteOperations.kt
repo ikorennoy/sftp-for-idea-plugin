@@ -164,7 +164,7 @@ class RemoteOperations {
         } catch (ex: SFTPException) {
             ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
-                    "Can't remove a $entity with path '${file.path}' ${ex.message}",
+                    "Can't remove a $entity with the path '${file.path}' ${ex.message}",
                     "Error"
                 )
             }

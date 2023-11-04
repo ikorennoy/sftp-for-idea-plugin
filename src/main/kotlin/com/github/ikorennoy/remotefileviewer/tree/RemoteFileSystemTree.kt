@@ -8,8 +8,6 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.DoubleClickListener
@@ -73,11 +71,50 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
         return null
     }
 
+    fun createNewDirectory(
+        parentDirectory: VirtualFile,
+        newDirectoryName: String
+    ): Exception? {
+        var failReason: Exception? = null
+        CommandProcessor.getInstance().executeCommand(project, {
+            try {
+                ProcessIOExecutorService.INSTANCE.execute {
+                    val file = parentDirectory.createChildDirectory(this, newDirectoryName)
+                    ApplicationManager.getApplication().invokeLater {
+                        updateAndSelect(file)
+                    }
+                }
+            } catch (e: IOException) {
+                failReason = e
+            }
+        }, UIBundle.message("file.chooser.create.new.folder.command.name"), null)
+        return failReason
+    }
+
+    fun deleteFile(
+        fileToDelete: VirtualFile
+    ): Exception? {
+        var failReason: Exception? = null
+        CommandProcessor.getInstance().executeCommand(project, {
+            try {
+                ProcessIOExecutorService.INSTANCE.execute {
+                    fileToDelete.delete(this)
+                }
+                ApplicationManager.getApplication().invokeLater {
+                    update()
+                }
+            } catch (ex: IOException) {
+                failReason = ex
+            }
+        }, "Delete", null)
+        return failReason
+    }
+
     fun createNewFile(
         parentDirectory: VirtualFile,
         newFileName: String
     ): Exception? {
-        val failReason = arrayOf<Exception?>(null)
+        var failReason: Exception? = null
         CommandProcessor.getInstance().executeCommand(
             project, {
                 try {
@@ -88,14 +125,14 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
                         }
                     }
                 } catch (e: IOException) {
-                    failReason[0] = e
+                    failReason = e
                 }
             }, UIBundle.message("file.chooser.create.new.file.command.name"), null
         )
-        return failReason[0]
+        return failReason
     }
 
-    fun invalidate() {
+    fun update() {
         treeModel.invalidateAsync()
     }
 
@@ -134,7 +171,7 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
 
     private fun createActionGroup(): DefaultActionGroup {
         val showCreate = ActionManager.getInstance().getAction("RemoteFileSystem.ShowCreate")
-        val delete = ActionManager.getInstance().getAction("FileChooser.Delete")
+        val delete = ActionManager.getInstance().getAction("RemoteFileSystem.Delete")
         val group = DefaultActionGroup()
         group.add(showCreate)
         group.addSeparator()

@@ -28,6 +28,10 @@ class RemoteVirtualFile(
         }
     }
 
+    override fun delete(requestor: Any?) {
+        fs.deleteFile(requestor, this)
+    }
+
     override fun getFileSystem(): VirtualFileSystem {
         return fs
     }
