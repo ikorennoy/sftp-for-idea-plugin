@@ -10,13 +10,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.awt.FlowLayout
 
-class ProjectionFileEditorPanel(
-    private val file: LocalVirtualFile,
+class RemoteEditEditorPanel(
+    private val file: VirtualFile,
     private val editor: FileEditor
 ) : EditorNotificationPanel(editor, getToolbarBackground(), null, Status.Info) {
 
@@ -54,7 +55,7 @@ class ProjectionFileEditorPanel(
                     if (document != null) {
                         documentManager.saveDocument(document)
                     }
-                    val syncService = service<FileProjectionStateService>()
+                    val syncService = service<RemoteEditService>()
                     syncService.uploadFileToRemote(project, file)
                 }
             }

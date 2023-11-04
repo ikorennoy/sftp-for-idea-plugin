@@ -33,7 +33,7 @@
         />
 
         <editorNotificationProvider
-                implementation="com.github.ikorennoy.remotefileviewer.remoteEdit.ProjectionFileEditorPanelProvider"/>
+                implementation="com.github.ikorennoy.remotefileviewer.remoteEdit.RemoteEditEditorPanelProvider"/>
     </extensions>
 
 

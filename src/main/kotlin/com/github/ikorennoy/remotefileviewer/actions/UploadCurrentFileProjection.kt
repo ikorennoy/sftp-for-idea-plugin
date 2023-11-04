@@ -1,12 +1,10 @@
 package com.github.ikorennoy.remotefileviewer.actions
 
-import com.github.ikorennoy.remotefileviewer.remoteEdit.FileProjectionStateService
+import com.github.ikorennoy.remotefileviewer.remoteEdit.RemoteEditService
 import com.github.ikorennoy.remotefileviewer.remoteEdit.LocalVirtualFile
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -42,7 +40,7 @@ class UploadCurrentFileProjection : DumbAwareAction({ "Upload Current Remote Fil
                 if (document != null) {
                     documentManager.saveDocument(document)
                 }
-                val syncService = service<FileProjectionStateService>()
+                val syncService = service<RemoteEditService>()
                 syncService.uploadFileToRemote(project, file)
             }
         }

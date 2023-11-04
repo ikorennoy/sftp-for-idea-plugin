@@ -7,7 +7,7 @@ import com.intellij.ui.EditorNotificationProvider
 import java.util.function.Function
 import javax.swing.JComponent
 
-class ProjectionFileEditorPanelProvider : EditorNotificationProvider {
+class RemoteEditEditorPanelProvider : EditorNotificationProvider {
 
     override fun collectNotificationData(
         project: Project,
@@ -15,7 +15,7 @@ class ProjectionFileEditorPanelProvider : EditorNotificationProvider {
     ): Function<in FileEditor, out JComponent?> {
         return Function<FileEditor, JComponent?> {
             if (file is LocalVirtualFile) {
-                ProjectionFileEditorPanel(file, it)
+                RemoteEditEditorPanel(file, it)
             } else {
                 null
             }

@@ -36,23 +36,6 @@ class RemoteOperations {
         return currentClient.isConnected && currentClient.isAuthenticated
     }
 
-    fun disconnect() {
-        assertNotEdt()
-        try {
-            lock.lock()
-            val sft = sftpClient ?: return
-            sft.close()
-            val ssh = client ?: throw IllegalStateException("Sfp client is not null, but ssh is null")
-            ssh.close()
-            sftpClient = null
-            client = null
-        } catch (ex: IOException) {
-            ex.printStackTrace()
-        } finally {
-            lock.unlock()
-        }
-    }
-
     /**
      * Ensures that the client is connected and authenticated
      */
@@ -81,6 +64,23 @@ class RemoteOperations {
                 sftpClient = newSftpClient
                 true
             }
+        } finally {
+            lock.unlock()
+        }
+    }
+
+    fun disconnect() {
+        assertNotEdt()
+        try {
+            lock.lock()
+            val sft = sftpClient ?: return
+            val ssh = client ?: throw IllegalStateException("Sfp client is not null, but ssh is null")
+            sft.close()
+            ssh.close()
+            sftpClient = null
+            client = null
+        } catch (ex: IOException) {
+            ex.printStackTrace()
         } finally {
             lock.unlock()
         }

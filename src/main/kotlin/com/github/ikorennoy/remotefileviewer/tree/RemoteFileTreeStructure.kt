@@ -113,5 +113,4 @@ class RemoteFileTreeStructure(
             baseIcon
         }
     }
-
 }
