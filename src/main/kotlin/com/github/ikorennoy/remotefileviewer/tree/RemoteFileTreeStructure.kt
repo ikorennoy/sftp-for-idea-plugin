@@ -1,8 +1,10 @@
 package com.github.ikorennoy.remotefileviewer.tree
 
-import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
 import com.github.ikorennoy.remotefileviewer.remote.RemoteOperations
+import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
+import com.github.ikorennoy.remotefileviewer.utils.Er
+import com.github.ikorennoy.remotefileviewer.utils.Ok
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.components.service
@@ -33,13 +35,16 @@ class RemoteFileTreeStructure(
 
     override fun getChildElements(element: Any): Array<RemoteVirtualFile> {
         return if (element is RemoteVirtualFile) {
-            element.getChildren()
+            when (val res = element.getChildren()) {
+                is Ok -> res.value
+                is Er -> emptyArray()
+            }
         } else {
             emptyArray()
         }
     }
 
-    override fun getParentElement(element: Any): Any? {
+    override fun getParentElement(element: Any): RemoteVirtualFile? {
         return if (element is RemoteVirtualFile) {
             element.getParent()
         } else {
@@ -49,22 +54,12 @@ class RemoteFileTreeStructure(
 
     override fun createDescriptor(element: Any, parentDescriptor: NodeDescriptor<*>?): NodeDescriptor<*> {
         if (element is DummyNode) {
-            return object : NodeDescriptor<Any>(project, parentDescriptor) {
-                init {
-                    icon = PlatformIcons.FOLDER_ICON
-                    myName = "SFTP"
-                }
-
-                override fun update(): Boolean {
-                    return false
-                }
-
-                override fun getElement(): Any {
-                    return dummyRoot
-                }
-
-            }
+            return element.getNodeDescriptor(project, parentDescriptor)
         }
+        if (element is ErrorNode) {
+            return element.getDescriptor(project, parentDescriptor)
+        }
+
         if (element !is RemoteVirtualFile) throw IllegalArgumentException("element is not file")
         val icon = getIcon(element)
         val name = element.getPresentableName()
@@ -102,7 +97,7 @@ class RemoteFileTreeStructure(
         }
     }
 
-    fun getIcon(file: RemoteVirtualFile): Icon {
+    private fun getIcon(file: RemoteVirtualFile): Icon {
         val icon = if (file.isDirectory()) {
             IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
         } else {

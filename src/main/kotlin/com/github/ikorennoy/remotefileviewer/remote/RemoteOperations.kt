@@ -1,5 +1,8 @@
 package com.github.ikorennoy.remotefileviewer.remote
 
+import com.github.ikorennoy.remotefileviewer.utils.Er
+import com.github.ikorennoy.remotefileviewer.utils.Ok
+import com.github.ikorennoy.remotefileviewer.utils.Outcome
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -20,6 +23,9 @@ class RemoteOperations {
         return connectionHolder.isInitializedAndConnected()
     }
 
+    private val sftpClientNew: SFTPClient
+        get() = connectionHolder.getSftpClient()
+
     /**
      * Ensures that the client is connected and authenticated
      */
@@ -32,21 +38,14 @@ class RemoteOperations {
         connectionHolder.disconnect()
     }
 
-    fun getChildren(remotePath: RemoteVirtualFile): Array<RemoteVirtualFile> {
+    fun getChildren(remotePath: String): Outcome<Array<RemoteVirtualFile>> {
         assertNotEdt()
         return try {
-            val client = getSftpClient()
-            client.ls(remotePath.getPath())
+            Ok(sftpClientNew.ls(remotePath)
                 .map { RemoteVirtualFile(it) }
-                .toTypedArray()
+                .toTypedArray())
         } catch (ex: SFTPException) {
-            ApplicationManager.getApplication().invokeLater {
-                Messages.showErrorDialog(
-                    "Can't open a directory '${remotePath}' ${ex.message}",
-                    "Error"
-                )
-            }
-            emptyArray()
+            Er(ex)
         }
     }
 
@@ -80,7 +79,6 @@ class RemoteOperations {
                         client.stat(components.parent)
                     )
                 )
-
             }
         } catch (ex: SFTPException) {
             ApplicationManager.getApplication().invokeLater {
@@ -155,7 +153,8 @@ class RemoteOperations {
             val newFilePath = newFile.path
             newFile.close()
             RemoteVirtualFile(
-                RemoteResourceInfo(getPathComponents(newFilePath), client.stat(newFilePath)))
+                RemoteResourceInfo(getPathComponents(newFilePath), client.stat(newFilePath))
+            )
         } catch (ex: SFTPException) {
             ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
@@ -176,7 +175,8 @@ class RemoteOperations {
             client.mkdir(newDirPath)
             val newDirStat = client.stat(newDirPath)
             RemoteVirtualFile(
-                RemoteResourceInfo(getPathComponents(newDirPath), newDirStat))
+                RemoteResourceInfo(getPathComponents(newDirPath), newDirStat)
+            )
         } catch (ex: SFTPException) {
             ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
