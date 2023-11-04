@@ -24,8 +24,8 @@ internal class ConnectionHolder {
 
 
     fun isInitializedAndConnected(): Boolean {
-        val currentClient = client ?: return false
-        return currentClient.isConnected && currentClient.isAuthenticated
+        val localClient = client ?: return false
+        return localClient.isConnected && localClient.isAuthenticated
     }
 
     fun disconnect() {

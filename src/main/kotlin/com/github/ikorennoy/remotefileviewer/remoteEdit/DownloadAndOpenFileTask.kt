@@ -25,11 +25,13 @@ class DownloadAndOpenFileTask(
         val toOpen = if (possibleLocalTempFile != null) {
             OpenFileDescriptor(project, possibleLocalTempFile)
         } else {
+            val remoteFileInputStream = remoteFileToEdit.getInputStream() ?: return
 
             val buffer = ByteArray(1024)
             val localTempFile = FileUtil.createTempFile(remoteFileToEdit.getName(), ".tmp", false)
+
             localTempFile.outputStream().use { localFileOutputStream ->
-                remoteFileToEdit.getInputStream().use { remoteFileInputStream ->
+                remoteFileInputStream.use { remoteFileInputStream ->
                     var read = remoteFileInputStream.read(buffer)
                     var readTotal = read
                     indicator.text = remoteFileToEdit.getPath()
@@ -42,9 +44,8 @@ class DownloadAndOpenFileTask(
                     }
                 }
             }
-            val localTempVirtualFile =
-                tempFs.wrapIntoTempFile(remoteFileToEdit, localTempFile)
 
+            val localTempVirtualFile = tempFs.wrapIntoTempFile(remoteFileToEdit, localTempFile)
             OpenFileDescriptor(project, localTempVirtualFile)
         }
 

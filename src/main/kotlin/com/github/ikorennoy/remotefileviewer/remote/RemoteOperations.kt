@@ -5,26 +5,28 @@ import com.github.ikorennoy.remotefileviewer.utils.Ok
 import com.github.ikorennoy.remotefileviewer.utils.Outcome
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import net.schmizz.sshj.sftp.*
 import java.awt.EventQueue
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import kotlin.math.min
 
-@Service
-class RemoteOperations {
+@Service(Service.Level.PROJECT)
+class RemoteOperations(private val project: Project) {
 
     private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
     private val connectionHolder = ConnectionHolder()
 
-    fun isInitializedAndConnected(): Boolean {
-        return connectionHolder.isInitializedAndConnected()
-    }
-
-    private val sftpClientNew: SFTPClient
+    private val sftpClient: SFTPClient
         get() = connectionHolder.getSftpClient()
+
+    private val notifier: RemoteOperationsNotifier
+        get() = project.service()
 
     /**
      * Ensures that the client is connected and authenticated
@@ -33,18 +35,23 @@ class RemoteOperations {
         return connectionHolder.connect()
     }
 
-    fun disconnect() {
+    fun close() {
         assertNotEdt()
         connectionHolder.disconnect()
     }
 
-    fun getChildren(remotePath: String): Outcome<Array<RemoteVirtualFile>> {
+    fun isInitializedAndConnected(): Boolean {
+        return connectionHolder.isInitializedAndConnected()
+    }
+
+    fun getChildren(remotePath: String): Outcome<Array<RemoteFileInformation>> {
         assertNotEdt()
         return try {
-            Ok(sftpClientNew.ls(remotePath)
-                .map { RemoteVirtualFile(it) }
+            Ok(sftpClient.ls(remotePath)
+                .map { RemoteFileInformation(it, project) }
                 .toTypedArray())
         } catch (ex: SFTPException) {
+            notifier.cannotLoadChildren(ex)
             Er(ex)
         }
     }
@@ -52,8 +59,7 @@ class RemoteOperations {
     fun exists(remotePath: String): Boolean {
         assertNotEdt()
         return try {
-            val client = getSftpClient()
-            client.statExistence(remotePath) != null
+            sftpClient.statExistence(remotePath) != null
         } catch (ex: SFTPException) {
             ApplicationManager.getApplication().invokeLater {
                 Messages.showErrorDialog(
@@ -65,53 +71,37 @@ class RemoteOperations {
         }
     }
 
-    fun getParent(remotePath: String): RemoteVirtualFile? {
+    fun getParent(remotePath: String): RemoteFileInformation? {
         assertNotEdt()
         return try {
-            val client = getSftpClient()
             val components = getPathComponents(remotePath)
             if (components.parent == "") {
                 null
             } else {
-                RemoteVirtualFile(
-                    RemoteResourceInfo(
-                        getPathComponents(components.parent),
-                        client.stat(components.parent)
-                    )
+                RemoteFileInformation(
+                    RemoteResourceInfo(getPathComponents(components.parent), sftpClient.stat(components.parent)),
+                    project,
                 )
             }
         } catch (ex: SFTPException) {
-            ApplicationManager.getApplication().invokeLater {
-                Messages.showErrorDialog(
-                    "Can't get a parent for '${remotePath}' ${ex.message}",
-                    "Error"
-                )
-            }
             null
         }
     }
 
-    fun findFileByPath(path: String): RemoteVirtualFile? {
+    fun findFileByPath(path: String): RemoteFileInformation? {
         assertNotEdt()
         return try {
-            val client = getSftpClient()
-            RemoteVirtualFile(RemoteResourceInfo(getPathComponents(path), client.stat(path)))
+            RemoteFileInformation(RemoteResourceInfo(getPathComponents(path), sftpClient.stat(path)), project)
         } catch (ex: SFTPException) {
-            ApplicationManager.getApplication().invokeLater {
-                Messages.showErrorDialog(
-                    "Can't find a file for path '${path}' ${ex.message}",
-                    "Error"
-                )
-            }
             null
         }
     }
 
-    fun remove(file: RemoteVirtualFile) {
+    fun remove(file: RemoteFileInformation) {
         assertNotEdt()
         var entity: String? = null
         try {
-            val client = getSftpClient()
+            val client = sftpClient
             if (file.isDirectory()) {
                 entity = "directory"
                 client.rmdir(file.getPath())
@@ -120,98 +110,102 @@ class RemoteOperations {
                 client.rm(file.getPath())
             }
         } catch (ex: SFTPException) {
-            ApplicationManager.getApplication().invokeLater {
-                Messages.showErrorDialog(
-                    "Can't remove a $entity with the path '${file.getPath()}' ${ex.message}",
-                    "Error"
-                )
-            }
+            notifier.cannotDelete(file, ex, entity ?: "")
         }
     }
 
     fun rename(fromPath: String, toPath: String) {
         assertNotEdt()
         try {
-            val client = getSftpClient()
-            client.rename(fromPath, toPath)
+            sftpClient.rename(fromPath, toPath)
         } catch (ex: SFTPException) {
-            ApplicationManager.getApplication().invokeLater {
-                Messages.showErrorDialog(
-                    "Can't rename a file with path '${fromPath}' to path '${toPath}' ${ex.message}",
-                    "Error"
-                )
-            }
+            notifier.cannotRename(fromPath, toPath, ex)
         }
     }
 
-    fun createChildFile(parent: RemoteVirtualFile, newFileName: String): RemoteVirtualFile {
+    fun createChildFile(parent: RemoteFileInformation, newFileName: String): RemoteFileInformation? {
         assertNotEdt()
+        var newFileFullPath: String? = null
         return try {
-            val client = getSftpClient()
-            val realPath = client.canonicalize(parent.getPath())
-            val newFile = client.open("$realPath/$newFileName", setOf(OpenMode.CREAT, OpenMode.TRUNC))
+            val client = sftpClient
+            val realParentPath = client.canonicalize(parent.getPath())
+            newFileFullPath = computeNewPath(realParentPath, newFileName)
+            val newFile = client.open(newFileFullPath, setOf(OpenMode.CREAT, OpenMode.TRUNC))
             val newFilePath = newFile.path
             newFile.close()
-            RemoteVirtualFile(
-                RemoteResourceInfo(getPathComponents(newFilePath), client.stat(newFilePath))
+            RemoteFileInformation(
+                RemoteResourceInfo(getPathComponents(newFilePath), client.stat(newFilePath)),
+                project,
             )
         } catch (ex: SFTPException) {
-            ApplicationManager.getApplication().invokeLater {
-                Messages.showErrorDialog(
-                    "Can't create new file in '${parent.getPath()}' ${ex.message}",
-                    "Error"
-                )
-            }
-            throw ex
+            notifier.cannotCreateChildFile(newFileFullPath ?: newFileName, ex)
+            return null
         }
     }
 
-    fun createChildDirectory(parent: RemoteVirtualFile, newDirName: String): RemoteVirtualFile {
+    fun createChildDirectory(parent: RemoteFileInformation, newDirName: String): RemoteFileInformation? {
         assertNotEdt()
+        var newDirPathFullPath: String? = null
         return try {
-            val client = getSftpClient()
-            val parentDirCanonicalPath = client.canonicalize(parent.getPath())
-            val newDirPath = "$parentDirCanonicalPath/$newDirName"
-            client.mkdir(newDirPath)
-            val newDirStat = client.stat(newDirPath)
-            RemoteVirtualFile(
-                RemoteResourceInfo(getPathComponents(newDirPath), newDirStat)
+            val client = sftpClient
+            val realParentPath = client.canonicalize(parent.getPath())
+            newDirPathFullPath = computeNewPath(realParentPath, newDirName)
+            client.mkdir(newDirPathFullPath)
+            val newDirStat = client.stat(newDirPathFullPath)
+            RemoteFileInformation(
+                RemoteResourceInfo(getPathComponents(newDirPathFullPath), newDirStat),
+                project
             )
         } catch (ex: SFTPException) {
-            ApplicationManager.getApplication().invokeLater {
-                Messages.showErrorDialog(
-                    "Can't create new directory in '${parent.getPath()}' ${ex.message}",
-                    "Error"
-                )
-            }
-            throw ex
+            notifier.cannotCreateChildDirectory(newDirPathFullPath ?: newDirName, ex)
+            return null
         }
     }
 
-    fun fileInputStream(file: RemoteVirtualFile): InputStream {
+    fun fileInputStream(filePath: String): InputStream? {
         assertNotEdt()
         return try {
-            val client = getSftpClient()
-            RemoteFileInputStream(client.open(file.getPath()))
+            RemoteFileInputStream(sftpClient.open(filePath))
         } catch (ex: SFTPException) {
-            throw ex
+            notifier.cannotOpenFile(filePath, ex)
+            return null
         }
     }
 
-    fun getFileAttributes(file: String): FileAttributes {
+    fun fileOutputStream(filePath: String): OutputStream? {
         assertNotEdt()
         return try {
-            val client = getSftpClient()
-            client.stat(file)
+            RemoteFileOutputStream(sftpClient.open(filePath, writeOperationOpenFlags))
         } catch (ex: SFTPException) {
+            notifier.cannotOpenFile(filePath, ex)
+            null
+        }
+    }
+
+    fun getFileAttributes(file: String): FileAttributes? {
+        assertNotEdt()
+        return try {
+            sftpClient.stat(file)
+        } catch (ex: SFTPException) {
+            return null
+        }
+    }
+
+    private fun getPathComponents(path: String): PathComponents {
+        assertNotEdt()
+        return try {
+            sftpClient.sftpEngine.pathHelper.getComponents(path)
+        } catch (ex: IOException) {
             throw ex
         }
     }
 
-    fun getPathComponents(path: String): PathComponents {
-        assertNotEdt()
-        val sftp = getSftpClient()
-        return sftp.sftpEngine.pathHelper.getComponents(path)
+    private fun computeNewPath(parentPath: String, newName: String): String {
+        return if (parentPath == "/") {
+            "$parentPath$newName"
+        } else {
+            "$parentPath/$newName"
+        }
     }
 
     private fun assertNotEdt() {
@@ -220,17 +214,6 @@ class RemoteOperations {
             "Must not be executed on Event Dispatch Thread"
         )
     }
-
-
-    fun fileOutputStream(remoteVirtualFile: String): OutputStream {
-        return RemoteFileOutputStream(getSftpClient().open(remoteVirtualFile, writeOperationOpenFlags))
-    }
-
-
-    private fun getSftpClient(): SFTPClient {
-        return connectionHolder.getSftpClient()
-    }
-
 }
 
 internal class RemoteFileInputStream(private val remoteFile: RemoteFile) : InputStream() {
@@ -281,7 +264,6 @@ internal class RemoteFileInputStream(private val remoteFile: RemoteFile) : Input
 }
 
 internal class RemoteFileOutputStream(private val remoteFile: RemoteFile) : OutputStream() {
-
     private val b = ByteArray(1)
     private var fileOffset: Long = 0
 

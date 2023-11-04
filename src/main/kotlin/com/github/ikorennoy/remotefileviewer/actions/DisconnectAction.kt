@@ -12,8 +12,9 @@ import com.intellij.openapi.project.DumbAwareAction
 class DisconnectAction : DumbAwareAction({ "Disconnect" }, AllIcons.CodeWithMe.CwmTerminate) {
 
     override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project ?: return
         ProcessIOExecutorService.INSTANCE.execute {
-            service<RemoteOperations>().disconnect()
+            project.service<RemoteOperations>().close()
             ApplicationManager.getApplication().messageBus.syncPublisher(RemoteConnectionListener.TOPIC)
                 .connectionStatusChanged()
         }

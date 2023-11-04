@@ -48,7 +48,7 @@ class FileViewerWindowsFactory : ToolWindowFactory, DumbAware {
         }
 
         if (tryConnect) {
-            val connManager = service<RemoteOperations>()
+            val connManager = project.service<RemoteOperations>()
             connManager.init()
         }
 

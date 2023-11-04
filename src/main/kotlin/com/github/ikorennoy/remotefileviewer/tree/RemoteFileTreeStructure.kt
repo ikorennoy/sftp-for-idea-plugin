@@ -1,7 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.tree
 
 import com.github.ikorennoy.remotefileviewer.remote.RemoteOperations
-import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteFileInformation
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
 import com.github.ikorennoy.remotefileviewer.utils.Er
 import com.github.ikorennoy.remotefileviewer.utils.Ok
@@ -21,10 +21,10 @@ class RemoteFileTreeStructure(
     private val project: Project,
 ) : AbstractTreeStructure() {
 
-    private val dummyRoot = DummyNode()
+    private val dummyRoot = DummyNode(project)
 
     override fun getRootElement(): Any {
-        val ops = service<RemoteOperations>()
+        val ops = project.service<RemoteOperations>()
         return if (!ops.isInitializedAndConnected()) {
             dummyRoot
         } else {
@@ -33,8 +33,8 @@ class RemoteFileTreeStructure(
         }
     }
 
-    override fun getChildElements(element: Any): Array<RemoteVirtualFile> {
-        return if (element is RemoteVirtualFile) {
+    override fun getChildElements(element: Any): Array<RemoteFileInformation> {
+        return if (element is RemoteFileInformation) {
             when (val res = element.getChildren()) {
                 is Ok -> res.value
                 is Er -> emptyArray()
@@ -44,8 +44,8 @@ class RemoteFileTreeStructure(
         }
     }
 
-    override fun getParentElement(element: Any): RemoteVirtualFile? {
-        return if (element is RemoteVirtualFile) {
+    override fun getParentElement(element: Any): RemoteFileInformation? {
+        return if (element is RemoteFileInformation) {
             element.getParent()
         } else {
             null
@@ -60,7 +60,7 @@ class RemoteFileTreeStructure(
             return element.getDescriptor(project, parentDescriptor)
         }
 
-        if (element !is RemoteVirtualFile) throw IllegalArgumentException("element is not file")
+        if (element !is RemoteFileInformation) throw IllegalArgumentException("element is not file")
         val icon = getIcon(element)
         val name = element.getPresentableName()
         return RemoteFileNodeDescriptor(project, parentDescriptor, element, icon, name)
@@ -78,7 +78,7 @@ class RemoteFileTreeStructure(
     }
 
     override fun getLeafState(element: Any): LeafState {
-        return if (element is RemoteVirtualFile) {
+        return if (element is RemoteFileInformation) {
             if (element.isDirectory()) {
                 LeafState.NEVER
             } else {
@@ -90,14 +90,14 @@ class RemoteFileTreeStructure(
     }
 
     override fun isAlwaysLeaf(element: Any): Boolean {
-        return if (element is RemoteVirtualFile) {
+        return if (element is RemoteFileInformation) {
             element.isDirectory()
         } else {
             false
         }
     }
 
-    private fun getIcon(file: RemoteVirtualFile): Icon {
+    private fun getIcon(file: RemoteFileInformation): Icon {
         val icon = if (file.isDirectory()) {
             IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
         } else {
@@ -106,7 +106,7 @@ class RemoteFileTreeStructure(
         return dressIcon(file, icon)
     }
 
-    private fun dressIcon(file: RemoteVirtualFile, baseIcon: Icon): Icon {
+    private fun dressIcon(file: RemoteFileInformation, baseIcon: Icon): Icon {
         return if (file.isValid() && file.`is`(VFileProperty.SYMLINK)) {
             LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON)
         } else {

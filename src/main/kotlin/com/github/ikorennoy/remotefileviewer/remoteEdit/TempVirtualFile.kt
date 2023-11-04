@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
-import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteFileInformation
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.BinaryLightVirtualFile
@@ -13,7 +13,7 @@ class TempVirtualFile(
     private val name: String,
     private val fileSystem: TempVirtualFileSystem,
     private val path: String,
-    val remoteFile: RemoteVirtualFile,
+    val remoteFile: RemoteFileInformation,
     val localTempFile: File
 ) : VirtualFile() {
 

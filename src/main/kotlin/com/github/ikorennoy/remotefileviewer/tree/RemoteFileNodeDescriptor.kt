@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.tree
 
-import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteFileInformation
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
@@ -8,10 +8,10 @@ import javax.swing.Icon
 class RemoteFileNodeDescriptor(
     project: Project,
     parentDescriptor: NodeDescriptor<*>?,
-    private val element: RemoteVirtualFile,
+    private val element: RemoteFileInformation,
     icon: Icon,
     name: String,
-) : NodeDescriptor<RemoteVirtualFile>(project, parentDescriptor) {
+) : NodeDescriptor<RemoteFileInformation>(project, parentDescriptor) {
 
     init {
         myName = name
@@ -30,7 +30,7 @@ class RemoteFileNodeDescriptor(
         return updated
     }
 
-    override fun getElement(): RemoteVirtualFile {
+    override fun getElement(): RemoteFileInformation {
         return element
     }
 }

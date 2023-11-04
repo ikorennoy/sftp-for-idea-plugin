@@ -7,13 +7,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformIcons
 
-class DummyNode: ValidateableNode {
+class DummyNode(private val project: Project) : ValidateableNode {
 
     /**
      * Valid until the service is initialized
      */
     override fun isValid(): Boolean {
-        return !service<RemoteOperations>().isInitializedAndConnected()
+        return !project.service<RemoteOperations>().isInitializedAndConnected()
     }
 
     fun getNodeDescriptor(project: Project, parentDescriptor: NodeDescriptor<*>?): NodeDescriptor<Any> {
@@ -22,6 +22,7 @@ class DummyNode: ValidateableNode {
                 icon = PlatformIcons.FOLDER_ICON
                 myName = "SFTP"
             }
+
             override fun update(): Boolean {
                 return false
             }

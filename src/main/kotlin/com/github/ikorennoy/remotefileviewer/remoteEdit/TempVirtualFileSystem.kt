@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
-import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteFileInformation
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
@@ -19,10 +19,9 @@ class TempVirtualFileSystem : VirtualFileSystem() {
         return PROTOCOL
     }
 
-    fun wrapIntoTempFile(originalFile: RemoteVirtualFile, content: File): TempVirtualFile {
-        val components = originalFile.getPathComponents()
-        val file = TempVirtualFile(components.name, this, components.path, originalFile, content)
-        downloadedFiles[components.path] = file
+    fun wrapIntoTempFile(originalFile: RemoteFileInformation, content: File): TempVirtualFile {
+        val file = TempVirtualFile(originalFile.getName(), this, originalFile.getPath(), originalFile, content)
+        downloadedFiles[originalFile.getPath()] = file
         return file
     }
 

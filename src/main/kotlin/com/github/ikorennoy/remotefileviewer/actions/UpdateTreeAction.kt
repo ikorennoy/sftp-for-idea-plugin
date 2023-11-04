@@ -14,12 +14,12 @@ import com.intellij.openapi.ui.Messages
 class UpdateTreeAction: DumbAwareAction({"Update Tree"}, AllIcons.Actions.Refresh) {
 
     override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project ?: return
         val configuration = service<RemoteFileViewerSettingsState>()
-        val connManager = service<RemoteOperations>()
-        val project = e.project
+        val remoteOperations = project.service<RemoteOperations>()
         var tryConnect = true
 
-        if (!connManager.isInitializedAndConnected()) {
+        if (!remoteOperations.isInitializedAndConnected()) {
             if (configuration.isNotValid()) {
                 // show full configuration dialogue
                 ShowSettingsUtil.getInstance().showSettingsDialog(
@@ -44,7 +44,7 @@ class UpdateTreeAction: DumbAwareAction({"Update Tree"}, AllIcons.Actions.Refres
                 }
             }
             if (tryConnect) {
-                connManager.init()
+                remoteOperations.init()
             }
         }
         ApplicationManager.getApplication().messageBus.syncPublisher(RemoteConnectionListener.TOPIC).connectionStatusChanged()

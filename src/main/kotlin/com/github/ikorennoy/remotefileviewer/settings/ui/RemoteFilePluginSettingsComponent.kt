@@ -61,18 +61,18 @@ class RemoteFilePluginSettingsComponent {
                     .widthGroup("CredentialsLabel")
                 cell(passwordField)
             }
-            row {
-                var icon: Cell<JLabel>? = null
-                button("Test Connection") {
-                    saveState()
-                    val clientService = service<RemoteOperations>()
-                    if (clientService.init()) {
-                        icon?.visible(true)
-                    }
-                }
-                icon = icon(AllIcons.Actions.Commit)
-                icon.visible(false)
-            }
+//            row {
+//                var icon: Cell<JLabel>? = null
+//                button("Test Connection") {
+//                    saveState()
+//                    val clientService = service<RemoteOperations>()
+//                    if (clientService.init()) {
+//                        icon?.visible(true)
+//                    }
+//                }
+//                icon = icon(AllIcons.Actions.Commit)
+//                icon.visible(false)
+//            }
         }
     }
 

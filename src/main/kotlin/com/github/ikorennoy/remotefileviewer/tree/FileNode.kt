@@ -1,10 +1,10 @@
 package com.github.ikorennoy.remotefileviewer.tree
 
-import com.github.ikorennoy.remotefileviewer.remote.RemoteVirtualFile
+import com.github.ikorennoy.remotefileviewer.remote.RemoteFileInformation
 import com.github.ikorennoy.remotefileviewer.utils.Er
 import com.github.ikorennoy.remotefileviewer.utils.Ok
 
-class FileNode(val file: RemoteVirtualFile) {
+class FileNode(val file: RemoteFileInformation) {
 
     fun getChildren(): Array<FileNode> {
         return when (val children = file.getChildren()) {
@@ -17,7 +17,7 @@ class FileNode(val file: RemoteVirtualFile) {
         return file.getParent()?.toFileNode()
     }
 
-    private fun RemoteVirtualFile.toFileNode(): FileNode {
+    private fun RemoteFileInformation.toFileNode(): FileNode {
         return FileNode(this)
     }
 
