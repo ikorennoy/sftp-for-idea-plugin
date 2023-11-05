@@ -82,8 +82,7 @@ internal class ConnectionHolder : Disposable {
             ssh.close()
             sftpClient = null
             client = null
-        } catch (ex: IOException) {
-            thisLogger().error("Error while disconnecting", ex)
+        } catch (_: IOException) {
         } finally {
             lock.unlock()
         }
@@ -105,7 +104,6 @@ internal class ConnectionHolder : Disposable {
             thisClient.authPassword(username, password)
             this@ConnectionHolder.client = thisClient
         } catch (ex: IOException) {
-            thisLogger().error("Error while connecting", ex)
             failReason = ex
             try {
                 thisClient.close()

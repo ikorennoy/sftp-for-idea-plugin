@@ -76,13 +76,12 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                 var loadingIcon: Cell<JLabel>? = null
                 var errorLink: Cell<ActionLink>? = null
                 var possibleError: Exception? = null
-
-
                 button(RemoteFileAccessBundle.message("settings.RemoteFileAccess.testConnectionButton.text")) {
                     errorLink?.visible(false)
                     errorIcon?.visible(false)
                     okIcon?.visible(false)
                     loadingIcon?.visible(true)
+
                     saveState()
 
                     val clientService = RemoteOperations.getInstance(project)
@@ -124,7 +123,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                 state.port.toString() != portField.text ||
                 state.root != rootField.text ||
                 state.username != usernameField.text ||
-                passwordField.password.isNotEmpty()
+                !state.password.contentEquals(passwordField.password)
     }
 
     fun getPreferredFocusedComponent(): JComponent {
