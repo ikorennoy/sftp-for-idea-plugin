@@ -1,10 +1,8 @@
 package com.github.ikorennoy.remotefileviewer.tree
 
-import com.github.ikorennoy.remotefileviewer.remote.RemoteOperations
 import com.github.ikorennoy.remotefileviewer.remote.RemoteFileInformation
+import com.github.ikorennoy.remotefileviewer.remote.RemoteOperations
 import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
-import com.github.ikorennoy.remotefileviewer.utils.Er
-import com.github.ikorennoy.remotefileviewer.utils.Ok
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.components.service
@@ -35,10 +33,7 @@ class RemoteFileTreeStructure(
 
     override fun getChildElements(element: Any): Array<RemoteFileInformation> {
         return if (element is RemoteFileInformation) {
-            when (val res = element.getChildren()) {
-                is Ok -> res.value
-                is Er -> emptyArray()
-            }
+            element.getChildren()
         } else {
             emptyArray()
         }

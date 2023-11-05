@@ -1,11 +1,9 @@
 package com.github.ikorennoy.remotefileviewer.remote
 
-import com.github.ikorennoy.remotefileviewer.utils.Outcome
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VFileProperty
 import net.schmizz.sshj.sftp.FileMode
-import net.schmizz.sshj.sftp.PathComponents
 import net.schmizz.sshj.sftp.RemoteResourceInfo
 import java.io.InputStream
 import java.io.OutputStream
@@ -16,7 +14,7 @@ class RemoteFileInformation(
 ) {
 
     private val myParent: RemoteFileInformation? by lazy { getRemoteOperations().getParent(getPath()) }
-    private val myChildren: Outcome<Array<RemoteFileInformation>> by lazy { getRemoteOperations().getChildren(getPath()) }
+    private val myChildren: Array<RemoteFileInformation> by lazy { getRemoteOperations().getChildren(getPath()) }
     private val isDir: Boolean by lazy {
         if (remoteFile.attributes.type == FileMode.Type.SYMLINK) {
             val originalAttrs = getRemoteOperations().getFileAttributes(getPath())
@@ -70,7 +68,7 @@ class RemoteFileInformation(
         return remoteFile.hashCode()
     }
 
-    fun getChildren(): Outcome<Array<RemoteFileInformation>> {
+    fun getChildren(): Array<RemoteFileInformation> {
         return myChildren
     }
 

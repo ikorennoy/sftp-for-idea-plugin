@@ -1,8 +1,5 @@
 package com.github.ikorennoy.remotefileviewer.remote
 
-import com.github.ikorennoy.remotefileviewer.utils.Er
-import com.github.ikorennoy.remotefileviewer.utils.Ok
-import com.github.ikorennoy.remotefileviewer.utils.Outcome
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -44,15 +41,15 @@ class RemoteOperations(private val project: Project) {
         return connectionHolder.isInitializedAndConnected()
     }
 
-    fun getChildren(remotePath: String): Outcome<Array<RemoteFileInformation>> {
+    fun getChildren(remotePath: String): Array<RemoteFileInformation> {
         assertNotEdt()
         return try {
-            Ok(sftpClient.ls(remotePath)
+            sftpClient.ls(remotePath)
                 .map { RemoteFileInformation(it, project) }
-                .toTypedArray())
+                .toTypedArray()
         } catch (ex: SFTPException) {
             notifier.cannotLoadChildren(ex)
-            Er(ex)
+            emptyArray()
         }
     }
 
