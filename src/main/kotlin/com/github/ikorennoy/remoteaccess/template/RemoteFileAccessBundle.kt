@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
 @NonNls
-private const val BUNDLE = "messages.RemoteFileViewer"
+private const val BUNDLE = "messages.RemoteFileAccess"
 
 object RemoteFileAccessBundle : DynamicBundle(BUNDLE) {
 

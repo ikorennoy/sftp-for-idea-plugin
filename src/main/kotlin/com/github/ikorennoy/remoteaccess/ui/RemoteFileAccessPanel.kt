@@ -18,29 +18,29 @@ class RemoteFileAccessPanel(
     init {
         toolbar = createToolbarPanel()
         setContent(ScrollPaneFactory.createScrollPane(tree.tree))
-        addDataProvider(MyDataProvider(tree))
+        addDataProvider(RemoteFileSystemTreeDataProvider(tree))
     }
 
     private fun createToolbarPanel(): JPanel {
         val toolbarGroup = DefaultActionGroup()
-        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.UpdateTree"))
-        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.Disconnect"))
+        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileAccess.UpdateTree"))
+        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileAccess.Disconnect"))
         toolbarGroup.addSeparator()
 
         toolbarGroup.add(
             CommonActionsManager.getInstance().createCollapseAllAction(DefaultTreeExpander(tree.tree), this)
         )
-        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.SelectOpenedFile"))
+        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileAccess.SelectOpenedFile"))
 
         toolbarGroup.addSeparator()
-        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.ShowSshConfiguration"))
+        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileAccess.ShowSshConfiguration"))
 
-        val actionToolbar = ActionManager.getInstance().createActionToolbar("FVToolbar", toolbarGroup, true)
+        val actionToolbar = ActionManager.getInstance().createActionToolbar("RemoteFileAccessToolbar", toolbarGroup, true)
         actionToolbar.targetComponent = this
         return JBUI.Panels.simplePanel(actionToolbar.component)
     }
 
-    private class MyDataProvider(private val fsTree: RemoteFileSystemTree) : DataProvider {
+    private class RemoteFileSystemTreeDataProvider(private val fsTree: RemoteFileSystemTree) : DataProvider {
         override fun getData(dataId: String): Any? {
             return if (RemoteFileSystemTree.DATA_KEY.`is`(dataId)) {
                 fsTree

@@ -54,7 +54,6 @@ class RemoteFileAccessSettingsState :
     // if connection is not established we keep to asking for password enter on every attempt, that's the limitation
     // it's avoidable by a checkbox, but I decided to omit it for now for simplicity
 
-
     fun isNotValid(): Boolean {
         return host.isEmpty() || username.isEmpty() || root.isEmpty()
     }

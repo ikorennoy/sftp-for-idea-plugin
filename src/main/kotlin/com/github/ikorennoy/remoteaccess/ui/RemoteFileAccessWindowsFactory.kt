@@ -3,6 +3,7 @@ package com.github.ikorennoy.remoteaccess.ui
 import com.github.ikorennoy.remoteaccess.operations.ConnectionListener
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.edit.TemporaryFilesEditorManagerListener
+import com.github.ikorennoy.remoteaccess.prepareConfiguration
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.github.ikorennoy.remoteaccess.tree.RemoteFileSystemTree
 import com.intellij.openapi.application.ApplicationManager
@@ -20,32 +21,7 @@ class RemoteFileAccessWindowsFactory : ToolWindowFactory, DumbAware {
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         // first try to connect on window open
-        val configuration = service<RemoteFileAccessSettingsState>()
-        var tryConnect = true
-
-        if (configuration.isNotValid()) {
-            // show full configuration dialogue
-            ShowSettingsUtil.getInstance().showSettingsDialog(
-                project,
-                "com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
-            )
-            tryConnect = !configuration.isNotValid() // user cancelled settings dialog
-        } else {
-            if (configuration.password.isEmpty()) {
-                // show password prompt dialogue
-                val password = Messages.showPasswordDialog(
-                    "Enter a password:",
-                    "Connecting to: ${configuration.username}@${configuration.host}:${configuration.port}",
-                )
-
-                if (password != null) {
-                    configuration.password = password.toCharArray()
-                } else {
-                    // it means user cancelled password enter dialog
-                    tryConnect = false
-                }
-            }
-        }
+        val tryConnect = prepareConfiguration(project)
 
         if (tryConnect) {
             val connManager = project.service<RemoteOperations>()

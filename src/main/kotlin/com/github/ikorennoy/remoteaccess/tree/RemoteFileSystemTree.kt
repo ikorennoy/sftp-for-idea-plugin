@@ -156,8 +156,8 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
     }
 
     private fun createActionGroup(): DefaultActionGroup {
-        val showCreate = ActionManager.getInstance().getAction("RemoteFileSystem.ShowCreate")
-        val delete = ActionManager.getInstance().getAction("RemoteFileSystem.Delete")
+        val showCreate = ActionManager.getInstance().getAction("RemoteFileAccess.ShowCreate")
+        val delete = ActionManager.getInstance().getAction("RemoteFileAccess.Delete")
         val group = DefaultActionGroup()
         group.add(showCreate)
         group.addSeparator()

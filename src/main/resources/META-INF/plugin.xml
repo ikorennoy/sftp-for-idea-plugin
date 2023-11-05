@@ -1,20 +1,13 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
-    <id>com.github.ikorennoy.remote-file-viewer</id>
+    <id>com.github.ikorennoy.remote-file-access</id>
 
-    <name>Remote File Viewer</name>
-
-    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <name>Remote File Access</name>
     <vendor email="korennoy.ilya@gmail.com">Ilya Korennoy</vendor>
-
-    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
-         Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
-         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
 
     <depends>com.intellij.modules.platform</depends>
 
-    <resource-bundle>messages.RemoteFileViewer</resource-bundle>
+    <resource-bundle>messages.RemoteFileAccess</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.ikorennoy.remoteaccess.ui.RemoteFileAccessWindowsFactory" id="Remote Files"
@@ -22,15 +15,11 @@
         <virtualFileSystem implementationClass="com.github.ikorennoy.remoteaccess.edit.TempVirtualFileSystem"
                            key="remoteFileViewerLocalFs" physical="false"/>
 
-        <!--        <editorNotificationProvider-->
-        <!--                implementation="com.github.ikorennoy.remoteaccess.edit.ProjectionFileEditorPanelProvider"/>-->
-
         <applicationConfigurable
                 parentId="tools"
                 instance="com.github.ikorennoy.remoteaccess.settings.ui.RemoteFileAccessConfigurable"
                 id="com.github.ikorennoy.remoteaccess.settings.ui.RemoteFileAccessConfigurable"
-                displayName="SSH Configuration"
-        />
+                displayName="SSH Configuration"/>
 
         <editorNotificationProvider
                 implementation="com.github.ikorennoy.remoteaccess.edit.RemoteEditEditorPanelProvider"/>
@@ -39,28 +28,26 @@
                 id="Remote Operations Notifications"/>
     </extensions>
 
-
     <actions>
-        <group id="RemoteFileSystemPopup">
-            <action id="RemoteFileSystem.ShowCreate"
-                    class="com.github.ikorennoy.remoteaccess.actions.ShowCreateAction"
-                    use-shortcut-of="NewFile"/>
-        </group>
-        <action id="RemoteFileSystem.NewFileAction"
+
+        <action id="RemoteFileAccess.ShowCreate"
+                class="com.github.ikorennoy.remoteaccess.actions.ShowCreateAction"
+                use-shortcut-of="NewFile"/>
+        <action id="RemoteFileAccess.NewFileAction"
                 class="com.github.ikorennoy.remoteaccess.actions.NewFileAction"/>
-        <action id="RemoteFileSystem.NewDirectoryAction"
+        <action id="RemoteFileAccess.NewDirectoryAction"
                 class="com.github.ikorennoy.remoteaccess.actions.NewDirectoryAction"/>
-        <action id="RemoteFileSystem.Delete"
+        <action id="RemoteFileAccess.Delete"
                 class="com.github.ikorennoy.remoteaccess.actions.DeleteAction"
                 use-shortcut-of="$Delete"/>
-        <action id="RemoteFileSystem.ShowSshConfiguration"
+        <action id="RemoteFileAccess.ShowSshConfiguration"
                 class="com.github.ikorennoy.remoteaccess.actions.ShowSettingsAction"/>
-        <action id="RemoteFileSystem.UpdateTree"
+        <action id="RemoteFileAccess.UpdateTree"
                 class="com.github.ikorennoy.remoteaccess.actions.UpdateTreeAction"
                 use-shortcut-of="Refresh"/>
-        <action id="RemoteFileSystem.Disconnect"
+        <action id="RemoteFileAccess.Disconnect"
                 class="com.github.ikorennoy.remoteaccess.actions.DisconnectAction"/>
-        <action id="RemoteFileSystem.SelectOpenedFile"
+        <action id="RemoteFileAccess.SelectOpenedFile"
                 class="com.github.ikorennoy.remoteaccess.actions.SelectOpenedFileAction"/>
     </actions>
 </idea-plugin>

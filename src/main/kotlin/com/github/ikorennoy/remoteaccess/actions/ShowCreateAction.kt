@@ -11,8 +11,8 @@ class ShowCreateAction : DumbAwareAction(
 ) {
 
     override fun actionPerformed(e: AnActionEvent) {
-        val newFile = ActionManager.getInstance().getAction("RemoteFileSystem.NewFileAction")
-        val newFolder = ActionManager.getInstance().getAction("RemoteFileSystem.NewDirectoryAction")
+        val newFile = ActionManager.getInstance().getAction("RemoteFileAccess.NewFileAction")
+        val newFolder = ActionManager.getInstance().getAction("RemoteFileAccess.NewDirectoryAction")
         val group = DefaultActionGroup(newFile, newFolder)
         JBPopupFactory.getInstance()
             .createActionGroupPopup(
