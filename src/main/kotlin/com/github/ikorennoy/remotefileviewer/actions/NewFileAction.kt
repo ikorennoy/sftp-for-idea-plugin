@@ -8,15 +8,17 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.UIBundle
 
-class NewFileAction :
-    DumbAwareAction(ActionsBundle.messagePointer("action.FileChooser.NewFile.text"), AllIcons.FileTypes.AddAny) {
+class NewFileAction : DumbAwareAction(
+    ActionsBundle.messagePointer("action.FileChooser.NewFile.text"),
+    AllIcons.FileTypes.AddAny
+) {
 
     override fun actionPerformed(e: AnActionEvent) {
         val fsTree = e.getData(RemoteFileSystemTree.DATA_KEY) ?: return
         var parent = fsTree.getNewFileParent() ?: return
 
         if (!parent.isDirectory()) {
-           parent = parent.getParent() ?: return
+            parent = parent.getParent() ?: return
         }
 
         var name: String?

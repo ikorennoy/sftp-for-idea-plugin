@@ -61,6 +61,6 @@
         <action id="RemoteFileSystem.Disconnect"
                 class="com.github.ikorennoy.remotefileviewer.actions.DisconnectAction"/>
         <action id="RemoteFileSystem.SelectOpenedFile"
-                class="com.github.ikorennoy.remotefileviewer.actions.SelectOpenedFile"/>
+                class="com.github.ikorennoy.remotefileviewer.actions.SelectOpenedFileAction"/>
     </actions>
 </idea-plugin>

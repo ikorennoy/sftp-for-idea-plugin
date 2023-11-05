@@ -11,8 +11,10 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.UIBundle
 
-class DeleteAction :
-    DumbAwareAction(ActionsBundle.messagePointer("action.FileChooser.Delete.text"), AllIcons.Actions.Cancel) {
+class DeleteAction : DumbAwareAction(
+    ActionsBundle.messagePointer("action.FileChooser.Delete.text"),
+    AllIcons.Actions.Cancel
+) {
 
     override fun actionPerformed(e: AnActionEvent) {
         val fsTree = e.getData(RemoteFileSystemTree.DATA_KEY) ?: return
@@ -43,5 +45,4 @@ class DeleteAction :
             )
         }
     }
-
 }

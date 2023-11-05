@@ -13,13 +13,6 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
 
-// todo add update for this panel
-//  check why not all files opening
-//  prob add new create dir action
-//  check that everything works with 'bind mounts'
-//  start writing tests
-//  fix a case when configuration is corrupted (like wrong host and etc), but only password prompt is shown, after firs unsuccessful attempt
-//  we should show full configuration page
 class RemoteFileSystemPanel(
     private val tree: RemoteFileSystemTree,
 ) : SimpleToolWindowPanel(true, true) {
@@ -36,7 +29,9 @@ class RemoteFileSystemPanel(
         toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.Disconnect"))
         toolbarGroup.addSeparator()
 
-        toolbarGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(DefaultTreeExpander(tree.tree), this))
+        toolbarGroup.add(
+            CommonActionsManager.getInstance().createCollapseAllAction(DefaultTreeExpander(tree.tree), this)
+        )
         toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.SelectOpenedFile"))
 
         toolbarGroup.addSeparator()

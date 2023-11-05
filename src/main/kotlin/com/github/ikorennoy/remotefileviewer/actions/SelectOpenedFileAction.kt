@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 
-class SelectOpenedFile : DumbAwareAction(
+class SelectOpenedFileAction : DumbAwareAction(
     ActionsBundle.messagePointer("action.SelectOpenedFileInProjectView.text"),
     AllIcons.General.Locate
 ) {

@@ -9,7 +9,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 
-class DisconnectAction : DumbAwareAction({ "Disconnect" }, AllIcons.CodeWithMe.CwmTerminate) {
+class DisconnectAction : DumbAwareAction(
+    { "Disconnect" },
+    AllIcons.CodeWithMe.CwmTerminate
+) {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return

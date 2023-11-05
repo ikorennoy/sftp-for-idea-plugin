@@ -8,8 +8,10 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.UIBundle
 
-class NewDirectoryAction :
-    DumbAwareAction(ActionsBundle.messagePointer("action.FileChooser.NewFolder.text"), AllIcons.Actions.NewFolder) {
+class NewDirectoryAction : DumbAwareAction(
+    ActionsBundle.messagePointer("action.FileChooser.NewFolder.text"),
+    AllIcons.Actions.NewFolder
+) {
 
     override fun actionPerformed(e: AnActionEvent) {
         val fsTree = e.getData(RemoteFileSystemTree.DATA_KEY) ?: return

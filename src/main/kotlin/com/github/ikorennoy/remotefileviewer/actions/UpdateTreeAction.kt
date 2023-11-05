@@ -11,7 +11,10 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 
-class UpdateTreeAction: DumbAwareAction({"Update Tree"}, AllIcons.Actions.Refresh) {
+class UpdateTreeAction : DumbAwareAction(
+    { "Update Tree" },
+    AllIcons.Actions.Refresh
+) {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
@@ -47,6 +50,7 @@ class UpdateTreeAction: DumbAwareAction({"Update Tree"}, AllIcons.Actions.Refres
                 remoteOperations.init()
             }
         }
-        ApplicationManager.getApplication().messageBus.syncPublisher(RemoteConnectionListener.TOPIC).connectionStatusChanged()
+        ApplicationManager.getApplication().messageBus.syncPublisher(RemoteConnectionListener.TOPIC)
+            .connectionStatusChanged()
     }
 }
