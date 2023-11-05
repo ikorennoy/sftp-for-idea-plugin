@@ -1,10 +1,17 @@
 package com.github.ikorennoy.remoteaccess
 
+import com.github.ikorennoy.remoteaccess.operations.ConnectionListener
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+
+fun notifyRebuildTree() {
+    ApplicationManager.getApplication().messageBus.syncPublisher(ConnectionListener.TOPIC)
+        .connectionStatusChanged()
+}
 
 fun prepareConfiguration(project: Project): Boolean {
     // first try to connect on window open

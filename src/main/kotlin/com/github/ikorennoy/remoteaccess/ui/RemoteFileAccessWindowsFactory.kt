@@ -25,9 +25,8 @@ class RemoteFileAccessWindowsFactory : ToolWindowFactory, DumbAware {
 
         if (tryConnect) {
             val connManager = project.service<RemoteOperations>()
-            connManager.init()
+            connManager.initWithModalDialogue(project)
         }
-
 
         val remoteFileAccessPanel = RemoteFileAccessPanel(project)
         val remoteFileSystemTree = remoteFileAccessPanel.tree

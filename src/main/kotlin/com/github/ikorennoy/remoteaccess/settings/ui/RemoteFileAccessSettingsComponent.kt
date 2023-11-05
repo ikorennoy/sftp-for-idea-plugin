@@ -1,19 +1,35 @@
 package com.github.ikorennoy.remoteaccess.settings.ui
 
+import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.COLUMNS_TINY
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 
 // todo add validation
-class RemoteFileAccessSettingsComponent {
+class RemoteFileAccessSettingsComponent(private val project: Project) {
     private val state = service<RemoteFileAccessSettingsState>()
 
     private val hostField = ExtendableTextField(COLUMNS_MEDIUM)
@@ -55,18 +71,44 @@ class RemoteFileAccessSettingsComponent {
                     .widthGroup("CredentialsLabel")
                 cell(passwordField)
             }
-//            row {
-//                var icon: Cell<JLabel>? = null
-//                button("Test Connection") {
-//                    saveState()
-//                    val clientService = service<RemoteOperations>()
-//                    if (clientService.init()) {
-//                        icon?.visible(true)
-//                    }
-//                }
-//                icon = icon(AllIcons.Actions.Commit)
-//                icon.visible(false)
-//            }
+            row {
+                var errorIcon: Cell<JLabel>? = null
+                var okIcon: Cell<JLabel>? = null
+                var loadingIcon: Cell<JLabel>? = null
+                var errorLink: Cell<ActionLink>? = null
+                var possibleError: Exception? = null
+
+
+                button("Test Connection") {
+                    errorLink?.visible(false)
+                    errorIcon?.visible(false)
+                    okIcon?.visible(false)
+                    loadingIcon?.visible(true)
+                    saveState()
+
+                    val clientService = project.service<RemoteOperations>()
+                    // try connect
+
+                    ProgressManager.getInstance().submitIOTask(EmptyProgressIndicator()) {
+                        clientService.initSilently()
+                    }.handleOnEdt(ModalityState.defaultModalityState()) { possibleConnectionError, _ ->
+                        loadingIcon?.visible(false)
+                        if (possibleConnectionError == null) {
+                            okIcon?.visible(true)
+                        } else {
+                            possibleError = possibleConnectionError
+                            errorIcon?.visible(true)
+                            errorLink?.visible(true)
+                        }
+                    }
+                }
+                loadingIcon = icon(AnimatedIcon.Default.INSTANCE).visible(false)
+                errorIcon = icon(AllIcons.CodeWithMe.CwmTerminate).visible(false)
+                okIcon = icon(AllIcons.Actions.Commit).visible(false)
+                errorLink = link("Details") {
+                    showErrorDetailsBalloon(possibleError, errorLink!!.component)
+                }.visible(false)
+            }
         }
     }
 
@@ -96,5 +138,19 @@ class RemoteFileAccessSettingsComponent {
         } else {
             passwordField
         }
+    }
+
+    private fun showErrorDetailsBalloon(possibleError: Exception?, component: JComponent) {
+        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
+            possibleError?.message ?: "Unknown Error",
+            MessageType.ERROR,
+            null
+        ).setShowCallout(false)
+            .setHideOnClickOutside(true)
+            .setHideOnAction(true)
+            .setHideOnFrameResize(true)
+            .setHideOnKeyOutside(true)
+            .createBalloon()
+            .show(RelativePoint.getSouthEastOf(component), Balloon.Position.above)
     }
 }

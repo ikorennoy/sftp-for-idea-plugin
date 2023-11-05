@@ -1,18 +1,19 @@
 package com.github.ikorennoy.remoteaccess.operations
 
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
-import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.ui.Messages
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
 import java.io.IOException
 import java.util.concurrent.locks.ReentrantLock
 
-internal class ConnectionHolder {
+// connection and blocking socket operations timeout
+internal const val TIMEOUT_MILLISECONDS = 10000
+
+@Service
+internal class ConnectionHolder : Disposable {
 
     @Volatile
     private var sftpClient: SFTPClient? = null
@@ -22,10 +23,50 @@ internal class ConnectionHolder {
 
     private val lock = ReentrantLock()
 
-
     fun isInitializedAndConnected(): Boolean {
         val localClient = client ?: return false
         return localClient.isConnected && localClient.isAuthenticated
+    }
+
+    fun connect(): Exception? {
+        var localClient = sftpClient
+
+        if (localClient != null) {
+            return null
+        }
+        try {
+            lock.lock()
+            localClient = sftpClient
+            if (localClient != null) {
+                return null
+            }
+
+            val configuration = service<RemoteFileAccessSettingsState>()
+
+            val failReason =
+                tryConnect(configuration.host, configuration.port, configuration.username, configuration.password)
+            val clientVal = client
+            return if (clientVal == null) {
+                // initialization is completely failed, just return false, user is notified by tryConnect
+                failReason
+            } else {
+                val newSftpClient = clientVal.newSFTPClient()
+                sftpClient = newSftpClient
+                null
+            }
+        } finally {
+            lock.unlock()
+        }
+    }
+
+    fun getSftpClient(): SFTPClient {
+        val res = sftpClient
+
+        if (res != null) {
+            return res
+        }
+
+        throw IOException("Connection is not initialized")
     }
 
     fun disconnect() {
@@ -37,62 +78,14 @@ internal class ConnectionHolder {
             ssh.close()
             sftpClient = null
             client = null
-        } catch (ex: IOException) {
-            ex.printStackTrace()
+        } catch (_: IOException) {
         } finally {
             lock.unlock()
         }
     }
 
-    fun connect(): Boolean {
-        var localClient = sftpClient
-
-        if (localClient != null) {
-            return sshClientIsOk()
-        }
-        try {
-            lock.lock()
-            localClient = sftpClient
-            if (localClient != null) {
-                return sshClientIsOk()
-            }
-
-            val configuration = service<RemoteFileAccessSettingsState>()
-
-            tryConnect(configuration.host, configuration.port, configuration.username, configuration.password)
-            val clientVal = client
-            return if (clientVal == null) {
-                // initialization is completely failed, just return false, user is notified by tryConnect
-                false
-            } else {
-                val newSftpClient = clientVal.newSFTPClient()
-                sftpClient = newSftpClient
-                true
-            }
-        } finally {
-            lock.unlock()
-        }
-    }
-
-    fun getSftpClient(): SFTPClient {
-        var res = sftpClient
-
-        if (res != null) {
-            return res
-        }
-
-        if (connect()) {
-            res = sftpClient ?: throw IllegalStateException("Can't be null after successful initialization")
-            return res
-        } else {
-            // it means one of the followings states
-            // 1. user somehow cancelled initialization, probably by clicking cancel on password prompt or in conf
-            // in that case we don't need to do anything
-            // 2. initialization is failed, in that case user is already notified by a message window
-            // 3. user has corrupted settings, but we asked only password and failed, in that case we need to open full
-            // settings and ask to fix them
-            throw IllegalStateException("Can't connect")
-        }
+    override fun dispose() {
+        disconnect()
     }
 
     private fun sshClientIsOk(): Boolean {
@@ -100,44 +93,24 @@ internal class ConnectionHolder {
         return clientVal.isConnected && clientVal.isAuthenticated
     }
 
-    private fun tryConnect(host: String, port: Int, username: String, password: CharArray) {
-        val project = ProjectManager.getInstance().defaultProject // todo find a way to get current project
+    private fun tryConnect(host: String, port: Int, username: String, password: CharArray): Exception? {
         var failReason: Exception? = null
-        CommandProcessor.getInstance()
-            .executeCommand(project, {
-                object : Task.Modal(project, "Connecting to: ${username}@${host}:${port}", false) {
-                    override fun run(indicator: ProgressIndicator) {
-                        indicator.isIndeterminate = true
-                        val client = SSHClient()
-                        try {
-                            client.useCompression()
-                            client.loadKnownHosts()
-                            client.connect(host, port)
-                            client.authPassword(username, password)
-                            this@ConnectionHolder.client = client
-                        } catch (ex: IOException) {
-                            try {
-                                client.close()
-                            } catch (_: IOException) {
-                            }
-                            failReason = ex
-                        }
-                    }
-
-                    override fun onFinished() {
-                        reportError()
-                    }
-
-                    private fun reportError() {
-                        if (failReason != null) {
-                            Messages.showMessageDialog(
-                                "Cannot not connect to ${username}@${host}:${port}\n ${failReason?.javaClass}",
-                                "Error",
-                                Messages.getErrorIcon()
-                            )
-                        }
-                    }
-                }.queue()
-            }, "Connecting...", null)
+        val thisClient = SSHClient()
+        try {
+            thisClient.connectTimeout = TIMEOUT_MILLISECONDS
+            thisClient.timeout = TIMEOUT_MILLISECONDS
+            thisClient.useCompression()
+            thisClient.loadKnownHosts()
+            thisClient.connect(host, port)
+            thisClient.authPassword(username, password)
+            this@ConnectionHolder.client = thisClient
+        } catch (ex: IOException) {
+            failReason = ex
+            try {
+                thisClient.close()
+            } catch (_: IOException) {
+            }
+        }
+        return failReason
     }
 }

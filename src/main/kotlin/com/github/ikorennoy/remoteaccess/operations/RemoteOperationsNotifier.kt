@@ -70,6 +70,14 @@ class RemoteOperationsNotifier(val project: Project) {
             ).notify(project)
     }
 
+    fun disconnect(reasonName: String, message: String) {
+        getNotificationGroup()
+            .createNotification(
+                "SSH connection is lost: $reasonName; $message",
+                NotificationType.ERROR
+            ).notify(project)
+    }
+
     private fun getNotificationGroup(): NotificationGroup {
         return NotificationGroupManager.getInstance()
             .getNotificationGroup("Remote Operations Notifications")

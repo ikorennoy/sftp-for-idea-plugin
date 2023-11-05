@@ -1,12 +1,16 @@
 package com.github.ikorennoy.remoteaccess.operations
 
-import com.intellij.openapi.Disposable
+import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.*
 import java.awt.EventQueue
 import java.io.IOException
@@ -15,10 +19,12 @@ import java.io.OutputStream
 import kotlin.math.min
 
 @Service(Service.Level.PROJECT)
-class RemoteOperations(private val project: Project): Disposable {
+class RemoteOperations(private val project: Project) {
 
     private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
-    private val connectionHolder = ConnectionHolder()
+
+    private val connectionHolder: ConnectionHolder
+        get() = service()
 
     private val sftpClient: SFTPClient
         get() = connectionHolder.getSftpClient()
@@ -29,13 +35,44 @@ class RemoteOperations(private val project: Project): Disposable {
     /**
      * Ensures that the client is connected and authenticated
      */
-    fun init(): Boolean {
+    fun initSilently(): Exception? {
+        assertNotEdt()
         return connectionHolder.connect()
     }
 
-    fun close() {
-        assertNotEdt()
-        connectionHolder.disconnect()
+    fun initWithModalDialogue(project: Project) {
+        val configuration = service<RemoteFileAccessSettingsState>()
+        val host = configuration.host
+        val port = configuration.port
+        val username = configuration.username
+        CommandProcessor.getInstance()
+            .executeCommand(project, {
+                var failReason: Exception? = null
+                object : Task.Modal(
+                    project,
+                    "Connecting to: ${username}@${host}:${port}",
+                    false
+                ) {
+                    override fun run(indicator: ProgressIndicator) {
+                        indicator.isIndeterminate = true
+                        failReason = connectionHolder.connect()
+                    }
+
+                    override fun onFinished() {
+                        reportError()
+                    }
+
+                    private fun reportError() {
+                        if (failReason != null) {
+                            Messages.showMessageDialog(
+                                "Cannot not connect to ${username}@${host}:${port}\n ${failReason?.message}",
+                                "Error",
+                                Messages.getErrorIcon()
+                            )
+                        }
+                    }
+                }.queue()
+            }, "Connecting...", null)
     }
 
     fun isInitializedAndConnected(): Boolean {
@@ -189,6 +226,11 @@ class RemoteOperations(private val project: Project): Disposable {
         }
     }
 
+    fun close() {
+        assertNotEdt()
+        connectionHolder.disconnect()
+    }
+
     private fun getPathComponents(path: String): PathComponents {
         assertNotEdt()
         return try {
@@ -211,10 +253,6 @@ class RemoteOperations(private val project: Project): Disposable {
             !EventQueue.isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode,
             "Must not be executed on Event Dispatch Thread"
         )
-    }
-
-    override fun dispose() {
-        connectionHolder.disconnect()
     }
 }
 

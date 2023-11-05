@@ -15,7 +15,7 @@
         <virtualFileSystem implementationClass="com.github.ikorennoy.remoteaccess.edit.TempVirtualFileSystem"
                            key="remoteFileViewerLocalFs" physical="false"/>
 
-        <applicationConfigurable
+        <projectConfigurable
                 parentId="tools"
                 instance="com.github.ikorennoy.remoteaccess.settings.ui.RemoteFileAccessConfigurable"
                 id="com.github.ikorennoy.remoteaccess.settings.ui.RemoteFileAccessConfigurable"
