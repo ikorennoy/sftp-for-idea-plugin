@@ -1,6 +1,8 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
 import com.github.ikorennoy.remotefileviewer.remote.RemoteFileInformation
+import com.github.ikorennoy.remotefileviewer.settings.RemoteFileViewerSettingsState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.BinaryLightVirtualFile
@@ -46,7 +48,8 @@ class TempVirtualFile(
     }
 
     override fun getPath(): String {
-        return path
+        val conf = service<RemoteFileViewerSettingsState>()
+        return "sftp://${conf.username}@${conf.host}${remoteFile.getPath()}"
     }
 
     override fun isWritable(): Boolean {

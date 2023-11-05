@@ -112,6 +112,10 @@ class RemoteFileInformation(
         return client.fileOutputStream(tmpName) to tmpName
     }
 
+    fun size(): Long {
+        return remoteFile.attributes.size
+    }
+
     private fun getTmpName(): String {
         val client = getRemoteOperations()
         var i = 0

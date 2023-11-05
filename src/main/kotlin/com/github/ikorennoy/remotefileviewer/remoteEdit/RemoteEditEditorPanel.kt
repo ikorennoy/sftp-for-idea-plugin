@@ -1,5 +1,7 @@
 package com.github.ikorennoy.remotefileviewer.remoteEdit
 
+import com.github.ikorennoy.remotefileviewer.remote.RemoteFileInformation
+import com.intellij.CommonBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -10,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.ui.JBUI
@@ -51,15 +54,28 @@ class RemoteEditEditorPanel(
             val files = FileEditorManager.getInstance(project).selectedFiles
             for (file in files) {
                 if (file is TempVirtualFile) {
-                    val document = documentManager.getCachedDocument(file)
-                    if (document != null) {
-                        documentManager.saveDocument(document)
+                    val confirmationMessage = createConfirmationMessage(file.remoteFile)
+                    val returnValue = Messages.showOkCancelDialog(
+                        confirmationMessage,
+                        "Confirmation",
+                        "Yes",
+                        CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()
+                    )
+                    if (returnValue == Messages.OK) {
+                        val document = documentManager.getCachedDocument(file)
+                        if (document != null) {
+                            documentManager.saveDocument(document)
+                        }
+                        val syncService = service<RemoteEditService>()
+                        syncService.uploadFileToRemote(project, file)
                     }
-                    val syncService = service<RemoteEditService>()
-                    syncService.uploadFileToRemote(project, file)
                 }
             }
         }
 
+        private fun createConfirmationMessage(file: RemoteFileInformation): String {
+            return """Do you want to upload "${file.getName()}"?"""
+        }
     }
+
 }

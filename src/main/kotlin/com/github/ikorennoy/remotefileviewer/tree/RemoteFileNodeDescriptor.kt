@@ -16,6 +16,7 @@ class RemoteFileNodeDescriptor(
     init {
         myName = name
         setIcon(icon)
+
     }
 
     override fun update(): Boolean {
