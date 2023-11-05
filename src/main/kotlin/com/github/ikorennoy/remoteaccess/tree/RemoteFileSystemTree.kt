@@ -90,13 +90,9 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
     fun deleteFile(fileToDelete: RemoteFileInformation) {
         CommandProcessor.getInstance().executeCommand(project, {
             ProcessIOExecutorService.INSTANCE.execute {
-                try {
-                    fileToDelete.delete()
-                    ApplicationManager.getApplication().invokeLater {
-                        update()
-                    }
-                } catch (_: IOException) {
-
+                fileToDelete.delete()
+                ApplicationManager.getApplication().invokeLater {
+                    update()
                 }
             }
         }, UIBundle.message("delete.dialog.title"), null)

@@ -14,6 +14,7 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.tree.LeafState
 import com.intellij.util.PlatformIcons
 import javax.swing.Icon
+import javax.swing.tree.DefaultMutableTreeNode
 
 class RemoteFileSystemTreeStructure(
     private val project: Project,

@@ -12,8 +12,8 @@ class RemoteFileInformation(
     private val project: Project,
 ) {
 
-    private val myParent: RemoteFileInformation? by lazy { RemoteOperations.getInstance(project).getParent(getPath()) }
-    private val myChildren: Array<RemoteFileInformation> by lazy { RemoteOperations.getInstance(project).getChildren(getPath()) }
+    private val myParent: RemoteFileInformation? by lazy { RemoteOperations.getInstance(project).getParent(this) }
+    private val myChildren: Array<RemoteFileInformation> by lazy { RemoteOperations.getInstance(project).getChildren(this) }
     private val isDir: Boolean by lazy {
         if (remoteFile.attributes.type == FileMode.Type.SYMLINK) {
             val originalAttrs = RemoteOperations.getInstance(project).getFileAttributes(getPath())
@@ -103,25 +103,25 @@ class RemoteFileInformation(
         return RemoteOperations.getInstance(project).createChildFile(this, newFileName)
     }
 
-    fun openTempFile(): Pair<OutputStream?, String> {
-        return calculateNameAndOpenTmpFile()
+    fun prepareRemoteTempFile(): RemoteFileInformation? {
+        return calculateNameForTempFile()
     }
 
-    fun size(): Long {
-        return remoteFile.attributes.size
+    fun getOutputStream(): OutputStream? {
+        return RemoteOperations.getInstance(project).fileOutputStream(this)
     }
 
-    private fun calculateNameAndOpenTmpFile(): Pair<OutputStream?, String> {
+    private fun calculateNameForTempFile(): RemoteFileInformation? {
         val client = RemoteOperations.getInstance(project)
         var attempt = 0
         var name = "/tmp/${getName()}.tmp"
         while (true) {
             if (attempt == 5) {
-                return null to ""
+                return null
             }
-            val result = client.fileOutputStream(name)
+            val result = client.createAndOpenFile(name)
             if (result != null) {
-                return result to name
+                return result
             }
             name = "/tmp/${getName()}-${attempt}.tmp"
             attempt++

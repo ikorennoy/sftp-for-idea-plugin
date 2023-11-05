@@ -102,7 +102,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                     }
                 }
                 loadingIcon = icon(AnimatedIcon.Default.INSTANCE).visible(false)
-                errorIcon = icon(AllIcons.CodeWithMe.CwmTerminate).visible(false)
+                errorIcon = icon(AllIcons.General.BalloonError).visible(false)
                 okIcon = icon(AllIcons.Actions.Commit).visible(false)
                 errorLink = link(RemoteFileAccessBundle.message("settings.RemoteFileAccess.errorDetails.link.text")) {
                     val thisErrorLink = errorLink ?: return@link

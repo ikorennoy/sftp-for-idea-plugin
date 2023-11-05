@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.*
 import java.awt.EventQueue
 import java.io.IOException
@@ -21,7 +20,8 @@ import kotlin.math.min
 @Service(Service.Level.PROJECT)
 class RemoteOperations(private val project: Project) {
 
-    private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.EXCL)
+    private val createAndOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.EXCL)
+    private val openOutputStreamFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
 
     private val connectionHolder: ConnectionHolder
         get() = ConnectionHolder.getInstance()
@@ -79,10 +79,10 @@ class RemoteOperations(private val project: Project) {
         return connectionHolder.isInitializedAndConnected()
     }
 
-    fun getChildren(remotePath: String): Array<RemoteFileInformation> {
+    fun getChildren(remoteFile: RemoteFileInformation): Array<RemoteFileInformation> {
         assertNotEdt()
         return try {
-            sftpClient.ls(remotePath)
+            sftpClient.ls(remoteFile.getPath())
                 .map { RemoteFileInformation(it, project) }
                 .toTypedArray()
         } catch (ex: SFTPException) {
@@ -91,25 +91,10 @@ class RemoteOperations(private val project: Project) {
         }
     }
 
-    fun exists(remotePath: String): Boolean {
+    fun getParent(remotePath: RemoteFileInformation): RemoteFileInformation? {
         assertNotEdt()
         return try {
-            sftpClient.statExistence(remotePath) != null
-        } catch (ex: SFTPException) {
-            ApplicationManager.getApplication().invokeLater {
-                Messages.showErrorDialog(
-                    "Can't execute an operation '${remotePath}' ${ex.message}",
-                    "Error"
-                )
-            }
-            false
-        }
-    }
-
-    fun getParent(remotePath: String): RemoteFileInformation? {
-        assertNotEdt()
-        return try {
-            val components = getPathComponents(remotePath)
+            val components = getPathComponents(remotePath.getPath())
             if (components.parent == "") {
                 null
             } else {
@@ -149,12 +134,12 @@ class RemoteOperations(private val project: Project) {
         }
     }
 
-    fun rename(fromPath: String, toPath: String) {
+    fun rename(fromPath: RemoteFileInformation, toPath: RemoteFileInformation) {
         assertNotEdt()
         try {
-            sftpClient.rename(fromPath, toPath)
+            sftpClient.rename(fromPath.getPath(), toPath.getPath())
         } catch (ex: SFTPException) {
-            notifier.cannotRename(fromPath, toPath, ex)
+            notifier.cannotRename(fromPath.getPath(), toPath.getPath(), ex)
         }
     }
 
@@ -207,10 +192,25 @@ class RemoteOperations(private val project: Project) {
         }
     }
 
-    fun fileOutputStream(filePath: String): OutputStream? {
+    fun fileOutputStream(filePath: RemoteFileInformation): OutputStream? {
         assertNotEdt()
         return try {
-            RemoteFileOutputStream(sftpClient.open(filePath, writeOperationOpenFlags))
+            RemoteFileOutputStream(sftpClient.open(filePath.getPath(), openOutputStreamFlags))
+        } catch (ex: SFTPException) {
+            null
+        }
+    }
+
+    fun createAndOpenFile(filePath: String): RemoteFileInformation? {
+        assertNotEdt()
+        return try {
+            val newFile = sftpClient.open(filePath, createAndOpenFlags)
+            val result = RemoteFileInformation(
+                RemoteResourceInfo(getPathComponents(newFile.path), newFile.fetchAttributes()),
+                project
+            )
+            newFile.close()
+            return result
         } catch (ex: SFTPException) {
             null
         }
