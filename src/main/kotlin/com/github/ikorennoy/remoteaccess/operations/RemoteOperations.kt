@@ -37,10 +37,10 @@ class RemoteOperations(private val project: Project) {
      */
     fun initSilently(): Exception? {
         assertNotEdt()
-        return connectionHolder.connect()
+        return connectionHolder.connect(project)
     }
 
-    fun initWithModalDialogue(project: Project) {
+    fun initWithModalDialogue() {
         val configuration = service<RemoteFileAccessSettingsState>()
         val host = configuration.host
         val port = configuration.port
@@ -55,7 +55,7 @@ class RemoteOperations(private val project: Project) {
                 ) {
                     override fun run(indicator: ProgressIndicator) {
                         indicator.isIndeterminate = true
-                        failReason = connectionHolder.connect()
+                        failReason = connectionHolder.connect(project)
                     }
 
                     override fun onFinished() {
@@ -86,7 +86,6 @@ class RemoteOperations(private val project: Project) {
                 .map { RemoteFileInformation(it, project) }
                 .toTypedArray()
         } catch (ex: IOException) {
-            thisLogger().error("Get children error", ex)
             notifier.cannotLoadChildren(ex)
             emptyArray()
         }
@@ -105,7 +104,6 @@ class RemoteOperations(private val project: Project) {
                 )
             }
         } catch (ex: IOException) {
-            thisLogger().error("Get parent error", ex)
             null
         }
     }
@@ -114,8 +112,7 @@ class RemoteOperations(private val project: Project) {
         assertNotEdt()
         return try {
             RemoteFileInformation(RemoteResourceInfo(getPathComponents(path), sftpClient.stat(path)), project)
-        } catch (ex: IOException) {
-            thisLogger().error("Find file by path error", ex)
+        } catch (ex: SFTPException) {
             null
         }
     }
@@ -133,7 +130,6 @@ class RemoteOperations(private val project: Project) {
                 client.rm(file.getPath())
             }
         } catch (ex: IOException) {
-            thisLogger().error("Remove error", ex)
             notifier.cannotDelete(file, ex, entity ?: "")
         }
     }
@@ -143,7 +139,6 @@ class RemoteOperations(private val project: Project) {
         try {
             sftpClient.rename(fromPath.getPath(), toPath.getPath())
         } catch (ex: IOException) {
-            thisLogger().error("Rename error", ex)
             notifier.cannotRename(fromPath.getPath(), toPath.getPath(), ex)
         }
     }
@@ -163,7 +158,6 @@ class RemoteOperations(private val project: Project) {
                 project,
             )
         } catch (ex: IOException) {
-            thisLogger().error("Create child file error", ex)
             notifier.cannotCreateChildFile(newFileFullPath ?: newFileName, ex)
             return null
         }
@@ -183,7 +177,6 @@ class RemoteOperations(private val project: Project) {
                 project
             )
         } catch (ex: IOException) {
-            thisLogger().error("Create child directory error", ex)
             notifier.cannotCreateChildDirectory(newDirPathFullPath ?: newDirName, ex)
             return null
         }
@@ -194,7 +187,6 @@ class RemoteOperations(private val project: Project) {
         return try {
             RemoteFileInputStream(sftpClient.open(filePath))
         } catch (ex: IOException) {
-            thisLogger().error("Open remote file input stream error", ex)
             notifier.cannotOpenFile(filePath, ex)
             return null
         }
@@ -205,7 +197,6 @@ class RemoteOperations(private val project: Project) {
         return try {
             RemoteFileOutputStream(sftpClient.open(filePath.getPath(), openOutputStreamFlags))
         } catch (ex: IOException) {
-            thisLogger().error("Open file output stream error", ex)
             null
         }
     }
@@ -221,7 +212,6 @@ class RemoteOperations(private val project: Project) {
             newFile.close()
             return result
         } catch (ex: IOException) {
-            thisLogger().error("Create and open file error", ex)
             null
         }
     }
@@ -231,7 +221,6 @@ class RemoteOperations(private val project: Project) {
         return try {
             sftpClient.stat(file)
         } catch (ex: IOException) {
-            thisLogger().error("Get file attributes error", ex)
             return null
         }
     }

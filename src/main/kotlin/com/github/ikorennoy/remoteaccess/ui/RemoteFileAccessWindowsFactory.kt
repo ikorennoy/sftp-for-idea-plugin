@@ -22,7 +22,7 @@ class RemoteFileAccessWindowsFactory : ToolWindowFactory, DumbAware {
 
         if (tryConnect) {
             val remoteOperations = RemoteOperations.getInstance(project)
-            remoteOperations.initWithModalDialogue(project)
+            remoteOperations.initWithModalDialogue()
         }
 
         val remoteFileAccessPanel = RemoteFileAccessPanel(project)

@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
 import java.io.IOException
@@ -29,7 +30,7 @@ internal class ConnectionHolder : Disposable {
         return localClient.isConnected && localClient.isAuthenticated
     }
 
-    fun connect(): Exception? {
+    fun connect(project: Project): Exception? {
         var localClient = sftpClient
 
         if (localClient != null) {
@@ -51,6 +52,8 @@ internal class ConnectionHolder : Disposable {
                 // initialization is completely failed, just return false, user is notified by tryConnect
                 failReason
             } else {
+                val disconnectNotifier = DisconnectNotifier(project)
+                clientVal.transport.disconnectListener = disconnectNotifier
                 val newSftpClient = clientVal.newSFTPClient()
                 sftpClient = newSftpClient
                 null

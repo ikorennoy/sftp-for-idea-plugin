@@ -24,7 +24,7 @@ class RemoteFileAccessConfigurable(private val project: Project) : Configurable 
     override fun apply() {
         settingsComponent.saveState()
         val remoteOperations = RemoteOperations.getInstance(project)
-        remoteOperations.initWithModalDialogue(project)
+        remoteOperations.initWithModalDialogue()
         notifyRebuildTree()
     }
 

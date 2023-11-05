@@ -86,8 +86,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                     saveState()
 
                     val clientService = RemoteOperations.getInstance(project)
-                    // try connect
-
+                    // try to connect
                     ProgressManager.getInstance().submitIOTask(EmptyProgressIndicator()) {
                         clientService.initSilently()
                     }.handleOnEdt(ModalityState.defaultModalityState()) { possibleConnectionError, _ ->
