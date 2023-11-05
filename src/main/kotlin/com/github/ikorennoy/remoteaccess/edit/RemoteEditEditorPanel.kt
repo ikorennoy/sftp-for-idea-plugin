@@ -1,6 +1,7 @@
 package com.github.ikorennoy.remoteaccess.edit
 
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
+import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
@@ -13,24 +14,24 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.awt.FlowLayout
 
 class RemoteEditEditorPanel(
-    private val file: VirtualFile,
-    private val editor: FileEditor
+    editor: FileEditor
 ) : EditorNotificationPanel(editor, getToolbarBackground(), null, Status.Info) {
 
     init {
         myLinksPanel.layout = FlowLayout()
         val saveAction = UploadAction()
         // todo get rid of it if it's possible
-        saveAction.registerCustomShortcutSet(ActionManager.getInstance().getAction("SaveAll").shortcutSet, editor.component)
+        saveAction.registerCustomShortcutSet(
+            ActionManager.getInstance().getAction("SaveAll").shortcutSet,
+            editor.component
+        )
         myLinksPanel.add(createButton(UploadAction()))
-
     }
 
     private fun createButton(action: AnAction): ActionButton {
@@ -42,8 +43,10 @@ class RemoteEditEditorPanel(
         return button
     }
 
-
-    private class UploadAction : DumbAwareAction({ "Upload Current Remote File" }, AllIcons.Actions.MenuSaveall) {
+    private class UploadAction : DumbAwareAction(
+        RemoteFileAccessBundle.messagePointer("action.RemoteFileAccess.upload.text"),
+        AllIcons.Actions.MenuSaveall
+    ) {
 
         override fun actionPerformed(e: AnActionEvent) {
             val project = e.project ?: return
@@ -54,8 +57,8 @@ class RemoteEditEditorPanel(
                     val confirmationMessage = createConfirmationMessage(file.remoteFile)
                     val returnValue = Messages.showOkCancelDialog(
                         confirmationMessage,
-                        "Confirmation",
-                        "Yes",
+                        RemoteFileAccessBundle.message("dialog.RemoteFileAccess.upload.confirmation.title"),
+                        RemoteFileAccessBundle.message("dialog.RemoteFileAccess.upload.confirmation.okText"),
                         CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()
                     )
                     if (returnValue == Messages.OK) {
@@ -71,8 +74,7 @@ class RemoteEditEditorPanel(
         }
 
         private fun createConfirmationMessage(file: RemoteFileInformation): String {
-            return """Do you want to upload "${file.getName()}"?"""
+            return RemoteFileAccessBundle.message("dialog.RemoteFileAccess.upload.confirmation.message", file.getName())
         }
     }
-
 }

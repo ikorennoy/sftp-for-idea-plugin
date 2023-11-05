@@ -15,7 +15,7 @@ class RemoteEditEditorPanelProvider : EditorNotificationProvider {
     ): Function<in FileEditor, out JComponent?> {
         return Function<FileEditor, JComponent?> {
             if (file is TempVirtualFile) {
-                RemoteEditEditorPanel(file, it)
+                RemoteEditEditorPanel(it)
             } else {
                 null
             }

@@ -1,5 +1,6 @@
 package com.github.ikorennoy.remoteaccess.edit
 
+import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.github.ikorennoy.remoteaccess.tree.RemoteFileSystemTree
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.application.ApplicationManager
@@ -12,7 +13,11 @@ import com.intellij.openapi.util.io.FileUtil
 class DownloadAndOpenFileTask(
     project: Project,
     private val tree: RemoteFileSystemTree,
-) : Task.Modal(project, "Downloading File", true) {
+) : Task.Modal(
+    project,
+    RemoteFileAccessBundle.message("task.RemoteFileAccess.downloadFile.text"),
+    true
+) {
 
     override fun run(indicator: ProgressIndicator) {
         val tempFs = TempVirtualFileSystem.getInstance()

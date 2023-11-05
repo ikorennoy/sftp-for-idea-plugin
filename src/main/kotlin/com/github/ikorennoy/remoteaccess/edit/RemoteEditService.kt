@@ -1,5 +1,6 @@
 package com.github.ikorennoy.remoteaccess.edit
 
+import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.github.ikorennoy.remoteaccess.tree.RemoteFileSystemTree
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
@@ -12,13 +13,13 @@ class RemoteEditService {
         val downloadAndOpen = DownloadAndOpenFileTask(project, tree)
         CommandProcessor.getInstance().executeCommand(project, {
             downloadAndOpen.queue()
-        }, "Downloading File", null)
+        }, RemoteFileAccessBundle.message("command.RemoteFileAccess.downloadAndOpenFile.name"), null)
     }
 
     fun uploadFileToRemote(project: Project, localTempFile: TempVirtualFile) {
         val upload = UploadToRemoteFileTask(project, localTempFile)
         CommandProcessor.getInstance().executeCommand(project, {
             upload.queue()
-        }, "Uploading File", null)
+        }, RemoteFileAccessBundle.message("command.RemoteFileAccess.uploadFileToRemote.name"), null)
     }
 }
