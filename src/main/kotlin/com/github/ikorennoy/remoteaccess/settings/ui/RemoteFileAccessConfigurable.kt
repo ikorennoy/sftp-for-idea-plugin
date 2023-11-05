@@ -24,7 +24,7 @@ class RemoteFileAccessConfigurable(private val project: Project) : Configurable 
         // todo draw a tree (check if init and connected and draw)
         // according to guidelines on ok and conf change I should perform an action and draw a tree
         settingsComponent.saveState()
-        val remoteOperations = project.service<RemoteOperations>()
+        val remoteOperations = RemoteOperations.getInstance(project)
         remoteOperations.initWithModalDialogue(project)
         notifyRebuildTree()
     }

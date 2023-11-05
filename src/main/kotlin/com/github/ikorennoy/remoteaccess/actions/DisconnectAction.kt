@@ -16,7 +16,7 @@ class DisconnectAction : DumbAwareAction(
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         ProcessIOExecutorService.INSTANCE.execute {
-            project.service<RemoteOperations>().close()
+            RemoteOperations.getInstance(project).close()
             notifyRebuildTree()
         }
     }

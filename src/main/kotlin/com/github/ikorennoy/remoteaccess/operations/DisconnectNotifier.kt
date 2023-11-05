@@ -9,7 +9,7 @@ class DisconnectNotifier(private val project: Project) : DisconnectListener {
 
     override fun notifyDisconnect(reason: DisconnectReason, message: String) {
         if (reason != DisconnectReason.BY_APPLICATION) {
-            project.service<RemoteOperationsNotifier>().disconnect(reason.name, message)
+            RemoteOperationsNotifier.getInstance(project).disconnect(reason.name, message)
         }
     }
 }

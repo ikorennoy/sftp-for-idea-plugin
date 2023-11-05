@@ -24,13 +24,13 @@ class RemoteOperations(private val project: Project) {
     private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
 
     private val connectionHolder: ConnectionHolder
-        get() = service()
+        get() = ConnectionHolder.getInstance()
 
     private val sftpClient: SFTPClient
         get() = connectionHolder.getSftpClient()
 
     private val notifier: RemoteOperationsNotifier
-        get() = project.service()
+        get() = RemoteOperationsNotifier.getInstance(project)
 
     /**
      * Ensures that the client is connected and authenticated
@@ -253,6 +253,10 @@ class RemoteOperations(private val project: Project) {
             !EventQueue.isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode,
             "Must not be executed on Event Dispatch Thread"
         )
+    }
+
+    companion object {
+        fun getInstance(project: Project): RemoteOperations = project.service()
     }
 }
 

@@ -13,7 +13,7 @@ class DummyNode(private val project: Project) : ValidateableNode {
      * Valid until the service is initialized
      */
     override fun isValid(): Boolean {
-        return !project.service<RemoteOperations>().isInitializedAndConnected()
+        return !RemoteOperations.getInstance(project).isInitializedAndConnected()
     }
 
     fun getNodeDescriptor(project: Project, parentDescriptor: NodeDescriptor<*>?): NodeDescriptor<Any> {

@@ -37,13 +37,13 @@ class UploadToRemoteFileTask(
 
             // because most sftp implementations don't support atomic rename
             // we have to remove the original file and then do rename
-            val ops = project.service<RemoteOperations>()
+            val ops = RemoteOperations.getInstance(project)
             // rm original file
             remoteFile.delete()
             // move a file
             ops.rename(tmpFileName, remoteFile.getPath())
 
-            val notifications = project.service<RemoteOperationsNotifier>()
+            val notifications = RemoteOperationsNotifier.getInstance(project)
             notifications.fileUploaded(remoteFile.getName())
         }
     }

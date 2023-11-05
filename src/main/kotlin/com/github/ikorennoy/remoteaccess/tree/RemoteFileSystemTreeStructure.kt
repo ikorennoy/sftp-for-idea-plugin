@@ -22,7 +22,7 @@ class RemoteFileSystemTreeStructure(
     private val dummyRoot = DummyNode(project)
 
     override fun getRootElement(): Any {
-        val ops = project.service<RemoteOperations>()
+        val ops = RemoteOperations.getInstance(project)
         return if (!ops.isInitializedAndConnected()) {
             dummyRoot
         } else {

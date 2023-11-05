@@ -15,7 +15,7 @@ class UpdateTreeAction : DumbAwareAction(
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val remoteOperations = project.service<RemoteOperations>()
+        val remoteOperations = RemoteOperations.getInstance(project)
         val tryConnect = prepareConfiguration(project)
         if (tryConnect) {
             remoteOperations.initWithModalDialogue(project)

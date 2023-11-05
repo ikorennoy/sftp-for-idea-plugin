@@ -113,4 +113,8 @@ internal class ConnectionHolder : Disposable {
         }
         return failReason
     }
+
+    companion object {
+        fun getInstance(): ConnectionHolder = service()
+    }
 }

@@ -1,6 +1,5 @@
 package com.github.ikorennoy.remoteaccess.operations
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VFileProperty
 import net.schmizz.sshj.sftp.FileMode
@@ -13,11 +12,11 @@ class RemoteFileInformation(
     private val project: Project,
 ) {
 
-    private val myParent: RemoteFileInformation? by lazy { getRemoteOperations().getParent(getPath()) }
-    private val myChildren: Array<RemoteFileInformation> by lazy { getRemoteOperations().getChildren(getPath()) }
+    private val myParent: RemoteFileInformation? by lazy { RemoteOperations.getInstance(project).getParent(getPath()) }
+    private val myChildren: Array<RemoteFileInformation> by lazy { RemoteOperations.getInstance(project).getChildren(getPath()) }
     private val isDir: Boolean by lazy {
         if (remoteFile.attributes.type == FileMode.Type.SYMLINK) {
-            val originalAttrs = getRemoteOperations().getFileAttributes(getPath())
+            val originalAttrs = RemoteOperations.getInstance(project).getFileAttributes(getPath())
             originalAttrs?.type == FileMode.Type.DIRECTORY
         } else {
             remoteFile.attributes.type == FileMode.Type.DIRECTORY
@@ -81,7 +80,7 @@ class RemoteFileInformation(
     }
 
     fun getInputStream(): InputStream? {
-        return getRemoteOperations().fileInputStream(this.getPath())
+        return RemoteOperations.getInstance(project).fileInputStream(this.getPath())
     }
 
     fun isValid(): Boolean {
@@ -93,19 +92,19 @@ class RemoteFileInformation(
     }
 
     fun delete() {
-        getRemoteOperations().remove(this)
+        RemoteOperations.getInstance(project).remove(this)
     }
 
     fun createChildDirectory(newDirectoryName: String): RemoteFileInformation? {
-        return getRemoteOperations().createChildDirectory(this, newDirectoryName)
+        return RemoteOperations.getInstance(project).createChildDirectory(this, newDirectoryName)
     }
 
     fun createChildData(newFileName: String): RemoteFileInformation? {
-        return getRemoteOperations().createChildFile(this, newFileName)
+        return RemoteOperations.getInstance(project).createChildFile(this, newFileName)
     }
 
     fun openTempFile(): Pair<OutputStream?, String> {
-        val client = getRemoteOperations()
+        val client = RemoteOperations.getInstance(project)
         val tmpName = getTmpName()
         return client.fileOutputStream(tmpName) to tmpName
     }
@@ -115,7 +114,7 @@ class RemoteFileInformation(
     }
 
     private fun getTmpName(): String {
-        val client = getRemoteOperations()
+        val client = RemoteOperations.getInstance(project)
         var i = 0
         var name = "/tmp/${getName()}.tmp"
         while (true) {
@@ -125,9 +124,5 @@ class RemoteFileInformation(
             name = "/tmp/${getName()}-${i}.tmp"
             i++
         }
-    }
-
-    private fun getRemoteOperations(): RemoteOperations {
-        return project.service()
     }
 }

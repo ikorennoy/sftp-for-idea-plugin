@@ -4,6 +4,7 @@ import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import java.io.IOException
 
@@ -81,5 +82,9 @@ class RemoteOperationsNotifier(val project: Project) {
     private fun getNotificationGroup(): NotificationGroup {
         return NotificationGroupManager.getInstance()
             .getNotificationGroup("Remote Operations Notifications")
+    }
+
+    companion object {
+        fun getInstance(project: Project): RemoteOperationsNotifier = project.service()
     }
 }

@@ -28,7 +28,6 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-// todo add validation
 class RemoteFileAccessSettingsComponent(private val project: Project) {
     private val state = service<RemoteFileAccessSettingsState>()
 
@@ -86,7 +85,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                     loadingIcon?.visible(true)
                     saveState()
 
-                    val clientService = project.service<RemoteOperations>()
+                    val clientService = RemoteOperations.getInstance(project)
                     // try connect
 
                     ProgressManager.getInstance().submitIOTask(EmptyProgressIndicator()) {
@@ -106,7 +105,8 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                 errorIcon = icon(AllIcons.CodeWithMe.CwmTerminate).visible(false)
                 okIcon = icon(AllIcons.Actions.Commit).visible(false)
                 errorLink = link("Details") {
-                    showErrorDetailsBalloon(possibleError, errorLink!!.component)
+                    val thisErrorLink = errorLink ?: return@link
+                    showErrorDetailsBalloon(possibleError, thisErrorLink.component)
                 }.visible(false)
             }
         }
