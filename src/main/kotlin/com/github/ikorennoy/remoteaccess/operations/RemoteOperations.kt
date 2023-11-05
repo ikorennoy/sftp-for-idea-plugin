@@ -1,5 +1,6 @@
 package com.github.ikorennoy.remoteaccess.operations
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -14,7 +15,7 @@ import java.io.OutputStream
 import kotlin.math.min
 
 @Service(Service.Level.PROJECT)
-class RemoteOperations(private val project: Project) {
+class RemoteOperations(private val project: Project): Disposable {
 
     private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
     private val connectionHolder = ConnectionHolder()
@@ -210,6 +211,10 @@ class RemoteOperations(private val project: Project) {
             !EventQueue.isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode,
             "Must not be executed on Event Dispatch Thread"
         )
+    }
+
+    override fun dispose() {
+        connectionHolder.disconnect()
     }
 }
 

@@ -28,11 +28,13 @@ class RemoteFileAccessWindowsFactory : ToolWindowFactory, DumbAware {
             connManager.init()
         }
 
-        val remoteFileSystemTree = RemoteFileSystemTree(project)
-        val remoteFileAccessPanel = RemoteFileAccessPanel(remoteFileSystemTree)
+
+        val remoteFileAccessPanel = RemoteFileAccessPanel(project)
+        val remoteFileSystemTree = remoteFileAccessPanel.tree
 
         val toolWindowContent = ContentFactory.getInstance().createContent(remoteFileAccessPanel, null, false)
         toolWindow.contentManager.addContent(toolWindowContent)
+        toolWindowContent.setDisposer(remoteFileAccessPanel)
 
         subscribeOnConnectionStatusUpdated(remoteFileSystemTree)
         subscribeOnEditorManagerEvents(project)

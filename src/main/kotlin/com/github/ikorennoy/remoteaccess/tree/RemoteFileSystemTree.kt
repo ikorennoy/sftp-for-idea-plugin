@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.TreeSpeedSearch
@@ -24,11 +25,12 @@ import java.io.IOException
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.KeyStroke
+import javax.swing.ToolTipManager
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
-class RemoteFileSystemTree(val project: Project) : Disposable {
+class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposable {
 
     private val treeModel: StructureTreeModel<RemoteFileSystemTreeStructure>
     private val asyncTreeModel: AsyncTreeModel
@@ -58,6 +60,7 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
                 return true
             }
         }.installOn(tree)
+        Disposer.register(parent, this)
     }
 
     fun getSelectedFile(): RemoteFileInformation? {
@@ -119,6 +122,11 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
     }
 
     override fun dispose() {
+        val myTree = tree
+        ToolTipManager.sharedInstance().unregisterComponent(myTree)
+        for (keyStroke in tree.registeredKeyStrokes) {
+            tree.unregisterKeyboardAction(keyStroke)
+        }
     }
 
     fun select(file: RemoteFileInformation) {

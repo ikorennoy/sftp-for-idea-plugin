@@ -1,6 +1,8 @@
 package com.github.ikorennoy.remoteaccess.edit
 
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener

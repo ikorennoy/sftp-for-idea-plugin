@@ -3,17 +3,21 @@ package com.github.ikorennoy.remoteaccess.ui
 import com.github.ikorennoy.remoteaccess.tree.RemoteFileSystemTree
 import com.intellij.ide.CommonActionsManager
 import com.intellij.ide.DefaultTreeExpander
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
 
 class RemoteFileAccessPanel(
-    private val tree: RemoteFileSystemTree,
-) : SimpleToolWindowPanel(true, true) {
+    project: Project,
+) : SimpleToolWindowPanel(true, true), Disposable {
+
+    val tree: RemoteFileSystemTree = RemoteFileSystemTree(project, this)
 
     init {
         toolbar = createToolbarPanel()
@@ -48,5 +52,8 @@ class RemoteFileAccessPanel(
                 null
             }
         }
+    }
+
+    override fun dispose() {
     }
 }
