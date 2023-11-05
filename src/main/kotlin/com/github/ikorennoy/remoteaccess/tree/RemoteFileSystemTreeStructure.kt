@@ -1,5 +1,7 @@
 package com.github.ikorennoy.remoteaccess.tree
 
+import com.github.ikorennoy.remoteaccess.Er
+import com.github.ikorennoy.remoteaccess.Ok
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperationsNotifier
@@ -28,12 +30,12 @@ class RemoteFileSystemTreeStructure(
             dummyRoot
         } else {
             val conf = service<RemoteFileAccessSettingsState>()
-            val newRoot = ops.findFileByPath(conf.root)
-            if (newRoot == null) {
-                RemoteOperationsNotifier.getInstance(project).cannotFindRoot(conf.root)
-                dummyRoot
-            } else {
-                newRoot
+            when (val res = ops.findFileByPath(conf.root)) {
+                is Ok -> res.value
+                is Er -> {
+                    RemoteOperationsNotifier.getInstance(project).cannotFindRoot(conf.root, res.error)
+                    dummyRoot
+                }
             }
         }
     }
@@ -106,7 +108,7 @@ class RemoteFileSystemTreeStructure(
     }
 
     private fun dressIcon(file: RemoteFileInformation, baseIcon: Icon): Icon {
-        return if (file.isValid() && file.`is`(VFileProperty.SYMLINK)) {
+        return if (file.`is`(VFileProperty.SYMLINK)) {
             LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON)
         } else {
             baseIcon

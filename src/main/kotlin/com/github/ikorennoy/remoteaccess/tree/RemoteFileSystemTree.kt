@@ -1,7 +1,11 @@
 package com.github.ikorennoy.remoteaccess.tree
 
+import com.github.ikorennoy.remoteaccess.Er
+import com.github.ikorennoy.remoteaccess.Ok
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.edit.EditRemoteFileTask
+import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
+import com.github.ikorennoy.remoteaccess.operations.RemoteOperationsNotifier
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -21,7 +25,6 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.io.IOException
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.KeyStroke
@@ -77,10 +80,17 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
     fun createNewDirectory(parentDirectory: RemoteFileInformation, newDirectoryName: String) {
         CommandProcessor.getInstance().executeCommand(project, {
             ProcessIOExecutorService.INSTANCE.execute {
-                val file = parentDirectory.createChildDirectory(newDirectoryName)
-                if (file != null) {
-                    ApplicationManager.getApplication().invokeLater {
-                        updateAndSelect(file)
+                val operations = RemoteOperations.getInstance(project)
+                when (val result = operations.createChildDirectory(parentDirectory, newDirectoryName)) {
+                    is Ok -> {
+                        ApplicationManager.getApplication().invokeLater {
+                            updateAndSelect(result.value)
+                        }
+                    }
+
+                    is Er -> {
+                        RemoteOperationsNotifier.getInstance(project)
+                            .cannotCreateChildDirectory(newDirectoryName, result.error)
                     }
                 }
             }
@@ -90,9 +100,16 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
     fun deleteFile(fileToDelete: RemoteFileInformation) {
         CommandProcessor.getInstance().executeCommand(project, {
             ProcessIOExecutorService.INSTANCE.execute {
-                fileToDelete.delete()
-                ApplicationManager.getApplication().invokeLater {
-                    update()
+                when (val res = RemoteOperations.getInstance(project).remove(fileToDelete)) {
+                    is Ok -> {
+                        ApplicationManager.getApplication().invokeLater {
+                            update()
+                        }
+                    }
+
+                    is Er -> {
+                        RemoteOperationsNotifier.getInstance(project).cannotDelete(fileToDelete, res.error, "file")
+                    }
                 }
             }
         }, UIBundle.message("delete.dialog.title"), null)
@@ -102,10 +119,17 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
         CommandProcessor.getInstance().executeCommand(
             project, {
                 ProcessIOExecutorService.INSTANCE.execute {
-                    val file = parentDirectory.createChildData(newFileName)
-                    if (file != null) {
-                        ApplicationManager.getApplication().invokeLater {
-                            updateAndSelect(file)
+                    val operations = RemoteOperations.getInstance(project)
+                    when (val result = operations.createChildFile(parentDirectory, newFileName)) {
+                        is Ok -> {
+                            ApplicationManager.getApplication().invokeLater {
+                                updateAndSelect(result.value)
+                            }
+                        }
+
+                        is Er -> {
+                            RemoteOperationsNotifier.getInstance(project)
+                                .cannotCreateChildFile(newFileName, result.error)
                         }
                     }
                 }

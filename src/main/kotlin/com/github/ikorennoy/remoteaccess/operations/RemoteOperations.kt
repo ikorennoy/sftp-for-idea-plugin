@@ -1,5 +1,8 @@
 package com.github.ikorennoy.remoteaccess.operations
 
+import com.github.ikorennoy.remoteaccess.Er
+import com.github.ikorennoy.remoteaccess.Ok
+import com.github.ikorennoy.remoteaccess.Outcome
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
@@ -79,73 +82,73 @@ class RemoteOperations(private val project: Project) {
         return connectionHolder.isInitializedAndConnected()
     }
 
-    fun getChildren(remoteFile: RemoteFileInformation): Array<RemoteFileInformation> {
+    fun getChildren(remoteFile: RemoteFileInformation): com.github.ikorennoy.remoteaccess.Outcome<Array<RemoteFileInformation>> {
         assertNotEdt()
         return try {
-            sftpClient.ls(remoteFile.getPath())
+            Ok(sftpClient.ls(remoteFile.getPath())
                 .map { RemoteFileInformation(it, project) }
-                .toTypedArray()
+                .toTypedArray())
         } catch (ex: IOException) {
-            notifier.cannotLoadChildren(ex)
-            emptyArray()
+            Er(ex)
         }
     }
 
-    fun getParent(remotePath: RemoteFileInformation): RemoteFileInformation? {
+    fun getParent(remotePath: RemoteFileInformation): Outcome<RemoteFileInformation?> {
         assertNotEdt()
         return try {
             val components = getPathComponents(remotePath.getPath())
             if (components.parent == "") {
-                null
+                Ok(null)
             } else {
-                RemoteFileInformation(
-                    RemoteResourceInfo(getPathComponents(components.parent), sftpClient.stat(components.parent)),
-                    project,
+                Ok(
+                    RemoteFileInformation(
+                        RemoteResourceInfo(getPathComponents(components.parent), sftpClient.stat(components.parent)),
+                        project,
+                    )
                 )
             }
         } catch (ex: IOException) {
-            null
+            Er(ex)
         }
     }
 
-    fun findFileByPath(path: String): RemoteFileInformation? {
+    fun findFileByPath(path: String): Outcome<RemoteFileInformation> {
         assertNotEdt()
         return try {
-            RemoteFileInformation(RemoteResourceInfo(getPathComponents(path), sftpClient.stat(path)), project)
+            Ok(RemoteFileInformation(RemoteResourceInfo(getPathComponents(path), sftpClient.stat(path)), project))
         } catch (ex: SFTPException) {
-            null
+            Er(ex)
         }
     }
 
-    fun remove(file: RemoteFileInformation) {
+    fun remove(file: RemoteFileInformation): Outcome<Unit> {
         assertNotEdt()
-        var entity: String? = null
-        try {
+        return try {
             val client = sftpClient
             if (file.isDirectory()) {
-                entity = "directory"
                 client.rmdir(file.getPath())
             } else {
-                entity = "file"
                 client.rm(file.getPath())
             }
+            Ok(Unit)
         } catch (ex: IOException) {
-            notifier.cannotDelete(file, ex, entity ?: "")
+            Er(ex)
         }
     }
 
-    fun rename(fromPath: RemoteFileInformation, toPath: RemoteFileInformation) {
+    fun rename(fromPath: RemoteFileInformation, toPath: RemoteFileInformation): Outcome<Unit> {
         assertNotEdt()
-        try {
+        return try {
             sftpClient.rename(fromPath.getPath(), toPath.getPath())
+            Ok(Unit)
         } catch (ex: IOException) {
-            notifier.cannotRename(fromPath.getPath(), toPath.getPath(), ex)
+            Er(ex)
         }
     }
 
-    fun createChildFile(parent: RemoteFileInformation, newFileName: String): RemoteFileInformation? {
+    fun createChildFile(parent: RemoteFileInformation, newFileName: String): Outcome<RemoteFileInformation> {
         assertNotEdt()
-        var newFileFullPath: String? = null
+        val newFileFullPath: String
         return try {
             val client = sftpClient
             val realParentPath = client.canonicalize(parent.getPath())
@@ -153,55 +156,56 @@ class RemoteOperations(private val project: Project) {
             val newFile = client.open(newFileFullPath, setOf(OpenMode.CREAT, OpenMode.TRUNC))
             val newFilePath = newFile.path
             newFile.close()
-            RemoteFileInformation(
-                RemoteResourceInfo(getPathComponents(newFilePath), client.stat(newFilePath)),
-                project,
+            Ok(
+                RemoteFileInformation(
+                    RemoteResourceInfo(getPathComponents(newFilePath), client.stat(newFilePath)),
+                    project,
+                )
             )
         } catch (ex: IOException) {
-            notifier.cannotCreateChildFile(newFileFullPath ?: newFileName, ex)
-            return null
+            Er(ex)
         }
     }
 
-    fun createChildDirectory(parent: RemoteFileInformation, newDirName: String): RemoteFileInformation? {
+    fun createChildDirectory(parent: RemoteFileInformation, newDirName: String): Outcome<RemoteFileInformation> {
         assertNotEdt()
-        var newDirPathFullPath: String? = null
+        val newDirPathFullPath: String
         return try {
             val client = sftpClient
             val realParentPath = client.canonicalize(parent.getPath())
             newDirPathFullPath = computeNewPath(realParentPath, newDirName)
             client.mkdir(newDirPathFullPath)
             val newDirStat = client.stat(newDirPathFullPath)
-            RemoteFileInformation(
-                RemoteResourceInfo(getPathComponents(newDirPathFullPath), newDirStat),
-                project
+            Ok(
+                RemoteFileInformation(
+                    RemoteResourceInfo(getPathComponents(newDirPathFullPath), newDirStat),
+                    project
+                )
             )
         } catch (ex: IOException) {
-            notifier.cannotCreateChildDirectory(newDirPathFullPath ?: newDirName, ex)
-            return null
+            Er(ex)
         }
     }
 
-    fun fileInputStream(filePath: String): InputStream? {
+    fun fileInputStream(filePath: RemoteFileInformation): Outcome<InputStream> {
         assertNotEdt()
         return try {
-            RemoteFileInputStream(sftpClient.open(filePath))
+            Ok(RemoteFileInputStream(sftpClient.open(filePath.getPath())))
         } catch (ex: IOException) {
-            notifier.cannotOpenFile(filePath, ex)
-            return null
+            Er(ex)
         }
     }
 
-    fun fileOutputStream(filePath: RemoteFileInformation): OutputStream? {
+    fun fileOutputStream(filePath: RemoteFileInformation): Outcome<OutputStream> {
         assertNotEdt()
         return try {
-            RemoteFileOutputStream(sftpClient.open(filePath.getPath(), openOutputStreamFlags))
+            Ok(RemoteFileOutputStream(sftpClient.open(filePath.getPath(), openOutputStreamFlags)))
         } catch (ex: IOException) {
-            null
+            Er(ex)
         }
     }
 
-    fun createAndOpenFile(filePath: String): RemoteFileInformation? {
+    fun createAndOpenFile(filePath: String): Outcome<RemoteFileInformation> {
         assertNotEdt()
         return try {
             val newFile = sftpClient.open(filePath, createAndOpenFlags)
@@ -210,9 +214,28 @@ class RemoteOperations(private val project: Project) {
                 project
             )
             newFile.close()
-            return result
+            Ok(result)
         } catch (ex: IOException) {
-            null
+            Er(ex)
+        }
+    }
+
+    fun prepareTempFile(forFile: RemoteFileInformation): Outcome<RemoteFileInformation> {
+        var attempt = 0
+        var name = "/tmp/${forFile.getName()}.tmp"
+        while (true) {
+            val result = createAndOpenFile(name)
+            when (result) {
+                is Ok -> return result
+                is Er -> {
+                    attempt++
+                    name = "/tmp/${forFile.getName()}-${attempt}.tmp"
+                }
+            }
+            // try 5 times
+            if (attempt == 4) {
+                return result
+            }
         }
     }
 

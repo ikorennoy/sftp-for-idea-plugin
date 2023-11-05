@@ -1,5 +1,7 @@
 package com.github.ikorennoy.remoteaccess.edit
 
+import com.github.ikorennoy.remoteaccess.Er
+import com.github.ikorennoy.remoteaccess.Ok
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperationsNotifier
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
@@ -18,43 +20,64 @@ class UploadToRemoteFileTask(
 
     override fun run(indicator: ProgressIndicator) {
         val remoteOriginalFile = localTempVirtualFile.remoteFile
-        if (remoteOriginalFile.isWritable()) {
-            // open a temp file and upload new content into it
-            val remoteTempFile = remoteOriginalFile.prepareRemoteTempFile()
+        val ops = RemoteOperations.getInstance(project)
+        val notifier = RemoteOperationsNotifier.getInstance(project)
+        // open a temp file and upload new content into it
+        when (val prepareRemoteTempRes = ops.prepareTempFile(remoteOriginalFile)) {
+            is Ok -> {
+                val remoteTempFile = prepareRemoteTempRes.value
+                when (val openOutStreamRes = ops.fileOutputStream(remoteTempFile)) {
+                    is Ok -> {
+                        val remoteTempFileOutStream = openOutStreamRes.value
+                        val size = localTempVirtualFile.length.toDouble()
+                        val buffer = ByteArray(4096)
+                        remoteTempFileOutStream.use { remoteFileOs ->
+                            localTempVirtualFile.inputStream.use { localFileIs ->
+                                var writtenTotal = 0.0
+                                var readFromLocal = localFileIs.read(buffer)
+                                while (readFromLocal != -1) {
+                                    indicator.checkCanceled()
+                                    remoteFileOs.write(buffer, 0, readFromLocal)
+                                    writtenTotal += readFromLocal
+                                    indicator.fraction = writtenTotal / size
+                                    readFromLocal = localFileIs.read(buffer)
+                                }
+                            }
+                        }
 
-            if (remoteTempFile != null) {
-                val remoteTempFileOutputStream = remoteTempFile.getOutputStream()
-                if (remoteTempFileOutputStream != null) {
-                    val size = localTempVirtualFile.length.toDouble()
-                    val buffer = ByteArray(4096)
-                    remoteTempFileOutputStream.use { remoteFileOs ->
-                        localTempVirtualFile.inputStream.use { localFileIs ->
-                            var writtenTotal = 0.0
-                            var readFromLocal = localFileIs.read(buffer)
-                            while (readFromLocal != -1) {
-                                indicator.checkCanceled()
-                                remoteFileOs.write(buffer, 0, readFromLocal)
-                                writtenTotal += readFromLocal
-                                indicator.fraction = writtenTotal / size
-                                readFromLocal = localFileIs.read(buffer)
+                        // because most sftp implementations don't support atomic rename
+                        // we have to remove the original file and then do rename
+                        // rm original file
+                        when (val removeResult = ops.remove(remoteOriginalFile)) {
+                            is Ok -> {
+                                // move a file
+                                when (val renameResult = ops.rename(remoteTempFile, remoteOriginalFile)) {
+                                    is Ok -> notifier.fileUploaded(remoteOriginalFile.getName())
+                                    is Er -> {
+                                        notifier.errorWhileSavingFileToRemote(
+                                            remoteOriginalFile.getName(),
+                                            renameResult.error
+                                        )
+                                        ops.remove(remoteTempFile)
+                                    }
+                                }
+                            }
+
+                            is Er -> {
+                                notifier.errorWhileSavingFileToRemote(remoteOriginalFile.getName(), removeResult.error)
+                                ops.remove(remoteTempFile)
                             }
                         }
                     }
-                    // because most sftp implementations don't support atomic rename
-                    // we have to remove the original file and then do rename
-                    val ops = RemoteOperations.getInstance(project)
-                    // rm original file
-                    remoteOriginalFile.delete()
-                    // move a file
-                    ops.rename(remoteTempFile, remoteOriginalFile)
-                    val notifications = RemoteOperationsNotifier.getInstance(project)
-                    notifications.fileUploaded(remoteOriginalFile.getName())
-                } else {
-                    RemoteOperationsNotifier.getInstance(project).cannotSaveFile(remoteOriginalFile.getPath())
+
+                    is Er -> {
+                        notifier.errorWhileSavingFileToRemote(remoteOriginalFile.getName(), openOutStreamRes.error)
+                        ops.remove(remoteTempFile)
+                    }
                 }
-            } else {
-                RemoteOperationsNotifier.getInstance(project).cannotSaveFile(remoteOriginalFile.getPath())
             }
+
+            is Er -> notifier.errorWhileSavingFileToRemote(remoteOriginalFile.getName(), prepareRemoteTempRes.error)
         }
     }
 }

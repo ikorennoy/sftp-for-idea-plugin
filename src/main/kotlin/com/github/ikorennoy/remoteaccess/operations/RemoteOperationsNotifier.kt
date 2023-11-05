@@ -21,7 +21,7 @@ class RemoteOperationsNotifier(val project: Project) {
             ).notify(project)
     }
 
-    fun cannotLoadChildren(error: IOException) {
+    fun cannotLoadChildren(error: Throwable) {
         getNotificationGroup()
             .createNotification(
                 RemoteFileAccessBundle.message(
@@ -32,7 +32,7 @@ class RemoteOperationsNotifier(val project: Project) {
             ).notify(project)
     }
 
-    fun cannotDelete(file: RemoteFileInformation, error: IOException, entity: String) {
+    fun cannotDelete(file: RemoteFileInformation, error: Throwable, entity: String) {
         getNotificationGroup()
             .createNotification(
                 RemoteFileAccessBundle.message("notification.RemoteFileAccess.cannotDelete.title"),
@@ -46,7 +46,7 @@ class RemoteOperationsNotifier(val project: Project) {
             ).notify(project)
     }
 
-    fun cannotCreateChildFile(newFile: String, error: IOException) {
+    fun cannotCreateChildFile(newFile: String, error: Throwable) {
         getNotificationGroup()
             .createNotification(
                 RemoteFileAccessBundle.message("notification.RemoteFileAccess.cannotCreateChildFile.title"),
@@ -59,7 +59,7 @@ class RemoteOperationsNotifier(val project: Project) {
             ).notify(project)
     }
 
-    fun cannotCreateChildDirectory(newDir: String, ex: IOException) {
+    fun cannotCreateChildDirectory(newDir: String, ex: Throwable) {
         getNotificationGroup()
             .createNotification(
                 RemoteFileAccessBundle.message("notification.RemoteFileAccess.cannotCreateChildDirectory.title"),
@@ -72,7 +72,7 @@ class RemoteOperationsNotifier(val project: Project) {
             ).notify(project)
     }
 
-    fun cannotOpenFile(filePath: String, ex: IOException) {
+    fun cannotOpenFile(filePath: String, ex: Throwable) {
         getNotificationGroup()
             .createNotification(
                 RemoteFileAccessBundle.message(
@@ -113,10 +113,22 @@ class RemoteOperationsNotifier(val project: Project) {
             ).notify(project)
     }
 
-    fun cannotFindRoot(root: String) {
+    fun cannotFindRoot(root: String, error: Throwable) {
         getNotificationGroup()
             .createNotification(
-                RemoteFileAccessBundle.message("notification.RemoteFileAccess.cannotFindRoot.content", root),
+                RemoteFileAccessBundle.message(
+                    "notification.RemoteFileAccess.cannotFindRoot.content",
+                    root,
+                    error.message ?: ""
+                ),
+                NotificationType.ERROR
+            ).notify(project)
+    }
+
+    fun errorWhileSavingFileToRemote(fileName: String, error: Throwable) {
+        getNotificationGroup()
+            .createNotification(
+                "Cannot upload file to remote $fileName, ${error.message}",
                 NotificationType.ERROR
             ).notify(project)
     }

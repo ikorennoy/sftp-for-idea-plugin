@@ -1,10 +1,11 @@
 package com.github.ikorennoy.remoteaccess.operations
 
+import com.github.ikorennoy.remoteaccess.Er
+import com.github.ikorennoy.remoteaccess.Ok
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VFileProperty
 import net.schmizz.sshj.sftp.FileMode
 import net.schmizz.sshj.sftp.RemoteResourceInfo
-import java.io.InputStream
 import java.io.OutputStream
 
 class RemoteFileInformation(
@@ -12,31 +13,23 @@ class RemoteFileInformation(
     private val project: Project,
 ) {
 
-    private val myParent: RemoteFileInformation? by lazy { RemoteOperations.getInstance(project).getParent(this) }
-    private val myChildren: Array<RemoteFileInformation> by lazy { RemoteOperations.getInstance(project).getChildren(this) }
-    private val isDir: Boolean by lazy {
-        if (remoteFile.attributes.type == FileMode.Type.SYMLINK) {
-            val originalAttrs = RemoteOperations.getInstance(project).getFileAttributes(getPath())
-            originalAttrs?.type == FileMode.Type.DIRECTORY
-        } else {
-            remoteFile.attributes.type == FileMode.Type.DIRECTORY
-        }
-    }
+    private val myParent: RemoteFileInformation? by lazy { getParentInternal() }
+    private val myChildren: Array<RemoteFileInformation> by lazy { getChildrenInternal() }
+    private val isDir: Boolean by lazy { isDirInternal() }
 
     fun getName(): String = remoteFile.name
 
-    fun getPath(): String {
-        return remoteFile.path
-    }
+    fun getPath(): String = remoteFile.path
 
-    fun isWritable(): Boolean {
-        return true
-    }
+    fun isDirectory(): Boolean = isDir
 
-    fun isDirectory(): Boolean {
-        return isDir
-    }
+    fun getChildren(): Array<RemoteFileInformation> = myChildren
 
+    fun getParent(): RemoteFileInformation? = myParent
+
+    fun getLength(): Long = remoteFile.attributes.size
+
+    fun getPresentableName(): String = remoteFile.name
 
     fun `is`(property: VFileProperty): Boolean {
         return when (property) {
@@ -67,64 +60,31 @@ class RemoteFileInformation(
         return remoteFile.hashCode()
     }
 
-    fun getChildren(): Array<RemoteFileInformation> {
-        return myChildren
+    private fun isDirInternal(): Boolean {
+        return if (remoteFile.attributes.type == FileMode.Type.SYMLINK) {
+            val originalAttrs = RemoteOperations.getInstance(project).getFileAttributes(getPath())
+            originalAttrs?.type == FileMode.Type.DIRECTORY
+        } else {
+            remoteFile.attributes.type == FileMode.Type.DIRECTORY
+        }
     }
 
-    fun getParent(): RemoteFileInformation? {
-        return myParent
-    }
-
-    fun getLength(): Long {
-        return remoteFile.attributes.size
-    }
-
-    fun getInputStream(): InputStream? {
-        return RemoteOperations.getInstance(project).fileInputStream(this.getPath())
-    }
-
-    fun isValid(): Boolean {
-        return true
-    }
-
-    fun getPresentableName(): String {
-        return remoteFile.name
-    }
-
-    fun delete() {
-        RemoteOperations.getInstance(project).remove(this)
-    }
-
-    fun createChildDirectory(newDirectoryName: String): RemoteFileInformation? {
-        return RemoteOperations.getInstance(project).createChildDirectory(this, newDirectoryName)
-    }
-
-    fun createChildData(newFileName: String): RemoteFileInformation? {
-        return RemoteOperations.getInstance(project).createChildFile(this, newFileName)
-    }
-
-    fun prepareRemoteTempFile(): RemoteFileInformation? {
-        return calculateNameForTempFile()
-    }
-
-    fun getOutputStream(): OutputStream? {
-        return RemoteOperations.getInstance(project).fileOutputStream(this)
-    }
-
-    private fun calculateNameForTempFile(): RemoteFileInformation? {
-        val client = RemoteOperations.getInstance(project)
-        var attempt = 0
-        var name = "/tmp/${getName()}.tmp"
-        while (true) {
-            if (attempt == 5) {
-                return null
+    private fun getChildrenInternal(): Array<RemoteFileInformation> {
+        return when (val res = RemoteOperations.getInstance(project).getChildren(this)) {
+            is Ok -> res.value
+            is Er -> {
+                RemoteOperationsNotifier.getInstance(project).cannotLoadChildren(res.error)
+                emptyArray()
             }
-            val result = client.createAndOpenFile(name)
-            if (result != null) {
-                return result
+        }
+    }
+
+    private fun getParentInternal(): RemoteFileInformation? {
+        return when (val res = RemoteOperations.getInstance(project).getParent(this)) {
+            is Ok -> res.value
+            is Er -> {
+                null
             }
-            name = "/tmp/${getName()}-${attempt}.tmp"
-            attempt++
         }
     }
 }
