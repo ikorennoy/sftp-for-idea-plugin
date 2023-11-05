@@ -5,4 +5,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "remote-file-viewer"
+rootProject.name = "remote-file-access"

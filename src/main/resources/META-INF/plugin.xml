@@ -17,23 +17,23 @@
     <resource-bundle>messages.RemoteFileViewer</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.ikorennoy.remotefileviewer.ui.FileViewerWindowsFactory" id="Remote Files"
+        <toolWindow factoryClass="com.github.ikorennoy.remote.ui.RemoteFileAccessWindowsFactory" id="Remote Files"
                     anchor="right" doNotActivateOnStart="true"/>
-        <virtualFileSystem implementationClass="com.github.ikorennoy.remotefileviewer.remoteEdit.TempVirtualFileSystem"
+        <virtualFileSystem implementationClass="com.github.ikorennoy.remote.edit.TempVirtualFileSystem"
                            key="remoteFileViewerLocalFs" physical="false"/>
 
         <!--        <editorNotificationProvider-->
-        <!--                implementation="com.github.ikorennoy.remotefileviewer.remoteEdit.ProjectionFileEditorPanelProvider"/>-->
+        <!--                implementation="com.github.ikorennoy.remote.edit.ProjectionFileEditorPanelProvider"/>-->
 
         <applicationConfigurable
                 parentId="tools"
-                instance="com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
-                id="com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
+                instance="com.github.ikorennoy.remote.settings.ui.RemoteFileAccessConfigurable"
+                id="com.github.ikorennoy.remote.settings.ui.RemoteFileAccessConfigurable"
                 displayName="SSH Configuration"
         />
 
         <editorNotificationProvider
-                implementation="com.github.ikorennoy.remotefileviewer.remoteEdit.RemoteEditEditorPanelProvider"/>
+                implementation="com.github.ikorennoy.remote.edit.RemoteEditEditorPanelProvider"/>
         <notificationGroup
                 displayType="BALLOON"
                 id="Remote Operations Notifications"/>
@@ -43,24 +43,24 @@
     <actions>
         <group id="RemoteFileSystemPopup">
             <action id="RemoteFileSystem.ShowCreate"
-                    class="com.github.ikorennoy.remotefileviewer.actions.ShowCreateAction"
+                    class="com.github.ikorennoy.remote.actions.ShowCreateAction"
                     use-shortcut-of="NewFile"/>
         </group>
         <action id="RemoteFileSystem.NewFileAction"
-                class="com.github.ikorennoy.remotefileviewer.actions.NewFileAction"/>
+                class="com.github.ikorennoy.remote.actions.NewFileAction"/>
         <action id="RemoteFileSystem.NewDirectoryAction"
-                class="com.github.ikorennoy.remotefileviewer.actions.NewDirectoryAction"/>
+                class="com.github.ikorennoy.remote.actions.NewDirectoryAction"/>
         <action id="RemoteFileSystem.Delete"
-                class="com.github.ikorennoy.remotefileviewer.actions.DeleteAction"
+                class="com.github.ikorennoy.remote.actions.DeleteAction"
                 use-shortcut-of="$Delete"/>
         <action id="RemoteFileSystem.ShowSshConfiguration"
-                class="com.github.ikorennoy.remotefileviewer.actions.ShowSettingsAction"/>
+                class="com.github.ikorennoy.remote.actions.ShowSettingsAction"/>
         <action id="RemoteFileSystem.UpdateTree"
-                class="com.github.ikorennoy.remotefileviewer.actions.UpdateTreeAction"
+                class="com.github.ikorennoy.remote.actions.UpdateTreeAction"
                 use-shortcut-of="Refresh"/>
         <action id="RemoteFileSystem.Disconnect"
-                class="com.github.ikorennoy.remotefileviewer.actions.DisconnectAction"/>
+                class="com.github.ikorennoy.remote.actions.DisconnectAction"/>
         <action id="RemoteFileSystem.SelectOpenedFile"
-                class="com.github.ikorennoy.remotefileviewer.actions.SelectOpenedFileAction"/>
+                class="com.github.ikorennoy.remote.actions.SelectOpenedFileAction"/>
     </actions>
 </idea-plugin>
