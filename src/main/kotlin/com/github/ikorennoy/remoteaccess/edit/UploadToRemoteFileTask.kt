@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 class UploadToRemoteFileTask(
     private val project: Project,
     private val localTempVirtualFile: TempVirtualFile
-): Task.Backgroundable(project, "Uploading file") {
+): Task.Backgroundable(project, "Uploading file", true) {
 
     override fun run(indicator: ProgressIndicator) {
         val remoteFile = localTempVirtualFile.remoteFile
@@ -19,7 +19,7 @@ class UploadToRemoteFileTask(
             val (tmpFileOutStream, tmpFileName) = remoteFile.openTempFile()
             if (tmpFileOutStream != null) {
                 val size = localTempVirtualFile.length.toDouble()
-                val buffer = ByteArray(1)
+                val buffer = ByteArray(4096)
                 tmpFileOutStream.use { remoteFileOs ->
                     localTempVirtualFile.inputStream.use { localFileIs ->
                         var writtenTotal = 0.0
