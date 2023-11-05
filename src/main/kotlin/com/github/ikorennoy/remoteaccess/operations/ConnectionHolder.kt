@@ -4,6 +4,7 @@ import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
 import java.io.IOException
@@ -78,7 +79,8 @@ internal class ConnectionHolder : Disposable {
             ssh.close()
             sftpClient = null
             client = null
-        } catch (_: IOException) {
+        } catch (ex: IOException) {
+            thisLogger().error("Error while disconnecting", ex)
         } finally {
             lock.unlock()
         }
@@ -86,11 +88,6 @@ internal class ConnectionHolder : Disposable {
 
     override fun dispose() {
         disconnect()
-    }
-
-    private fun sshClientIsOk(): Boolean {
-        val clientVal = client ?: return false
-        return clientVal.isConnected && clientVal.isAuthenticated
     }
 
     private fun tryConnect(host: String, port: Int, username: String, password: CharArray): Exception? {
@@ -105,6 +102,7 @@ internal class ConnectionHolder : Disposable {
             thisClient.authPassword(username, password)
             this@ConnectionHolder.client = thisClient
         } catch (ex: IOException) {
+            thisLogger().error("Error while connecting", ex)
             failReason = ex
             try {
                 thisClient.close()
