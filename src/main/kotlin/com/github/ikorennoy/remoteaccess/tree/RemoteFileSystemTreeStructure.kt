@@ -2,6 +2,7 @@ package com.github.ikorennoy.remoteaccess.tree
 
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
+import com.github.ikorennoy.remoteaccess.operations.RemoteOperationsNotifier
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
@@ -14,13 +15,12 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.tree.LeafState
 import com.intellij.util.PlatformIcons
 import javax.swing.Icon
-import javax.swing.tree.DefaultMutableTreeNode
 
 class RemoteFileSystemTreeStructure(
     private val project: Project,
 ) : AbstractTreeStructure() {
 
-    private val dummyRoot = DummyNode(project)
+    private val dummyRoot = DummyNode()
 
     override fun getRootElement(): Any {
         val ops = RemoteOperations.getInstance(project)
@@ -28,7 +28,13 @@ class RemoteFileSystemTreeStructure(
             dummyRoot
         } else {
             val conf = service<RemoteFileAccessSettingsState>()
-            ops.findFileByPath(conf.root) ?: IllegalStateException("root path can't be null")
+            val newRoot = ops.findFileByPath(conf.root)
+            if (newRoot == null) {
+                RemoteOperationsNotifier.getInstance(project).cannotFindRoot(conf.root)
+                dummyRoot
+            } else {
+                newRoot
+            }
         }
     }
 

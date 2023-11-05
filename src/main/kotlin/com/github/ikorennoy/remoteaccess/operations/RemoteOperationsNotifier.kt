@@ -113,6 +113,14 @@ class RemoteOperationsNotifier(val project: Project) {
             ).notify(project)
     }
 
+    fun cannotFindRoot(root: String) {
+        getNotificationGroup()
+            .createNotification(
+                RemoteFileAccessBundle.message("notification.RemoteFileAccess.cannotFindRoot.content", root),
+                NotificationType.ERROR
+            ).notify(project)
+    }
+
     private fun getNotificationGroup(): NotificationGroup {
         return NotificationGroupManager.getInstance()
             .getNotificationGroup("Remote Operations Notifications")
