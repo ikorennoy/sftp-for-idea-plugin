@@ -21,7 +21,7 @@ import kotlin.math.min
 @Service(Service.Level.PROJECT)
 class RemoteOperations(private val project: Project) {
 
-    private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
+    private val writeOperationOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.EXCL)
 
     private val connectionHolder: ConnectionHolder
         get() = ConnectionHolder.getInstance()
@@ -212,7 +212,6 @@ class RemoteOperations(private val project: Project) {
         return try {
             RemoteFileOutputStream(sftpClient.open(filePath, writeOperationOpenFlags))
         } catch (ex: SFTPException) {
-            notifier.cannotOpenFile(filePath, ex)
             null
         }
     }

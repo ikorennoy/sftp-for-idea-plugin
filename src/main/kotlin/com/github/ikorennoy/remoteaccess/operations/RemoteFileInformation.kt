@@ -104,25 +104,27 @@ class RemoteFileInformation(
     }
 
     fun openTempFile(): Pair<OutputStream?, String> {
-        val client = RemoteOperations.getInstance(project)
-        val tmpName = getTmpName()
-        return client.fileOutputStream(tmpName) to tmpName
+        return calculateNameAndOpenTmpFile()
     }
 
     fun size(): Long {
         return remoteFile.attributes.size
     }
 
-    private fun getTmpName(): String {
+    private fun calculateNameAndOpenTmpFile(): Pair<OutputStream?, String> {
         val client = RemoteOperations.getInstance(project)
-        var i = 0
+        var attempt = 0
         var name = "/tmp/${getName()}.tmp"
         while (true) {
-            if (!client.exists(name)) {
-                return name
+            if (attempt == 5) {
+                return null to ""
             }
-            name = "/tmp/${getName()}-${i}.tmp"
-            i++
+            val result = client.fileOutputStream(name)
+            if (result != null) {
+                return result to name
+            }
+            name = "/tmp/${getName()}-${attempt}.tmp"
+            attempt++
         }
     }
 }

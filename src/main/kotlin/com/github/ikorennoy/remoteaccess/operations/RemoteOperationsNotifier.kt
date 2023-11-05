@@ -63,6 +63,14 @@ class RemoteOperationsNotifier(val project: Project) {
             ).notify(project)
     }
 
+    fun cannotSaveFile(filePath: String) {
+        getNotificationGroup()
+            .createNotification(
+                "Cannot save file: $filePath",
+                NotificationType.ERROR
+            ).notify(project)
+    }
+
     fun cannotRename(fromPath: String, toPath: String, ex: IOException) {
         getNotificationGroup()
             .createNotification(

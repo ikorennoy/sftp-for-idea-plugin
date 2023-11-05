@@ -33,6 +33,8 @@ class UploadToRemoteFileTask(
                         }
                     }
                 }
+            } else {
+                RemoteOperationsNotifier.getInstance(project).cannotSaveFile(remoteFile.getPath())
             }
 
             // because most sftp implementations don't support atomic rename
