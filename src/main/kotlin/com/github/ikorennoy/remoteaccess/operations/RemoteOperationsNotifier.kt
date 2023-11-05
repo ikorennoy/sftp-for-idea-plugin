@@ -7,7 +7,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import java.io.IOException
 
 @Service(Service.Level.PROJECT)
 class RemoteOperationsNotifier(val project: Project) {
@@ -84,27 +83,6 @@ class RemoteOperationsNotifier(val project: Project) {
             ).notify(project)
     }
 
-    fun cannotSaveFile(filePath: String) {
-        getNotificationGroup()
-            .createNotification(
-                RemoteFileAccessBundle.message("notification.RemoteFileAccess.cannotSaveFile.content", filePath),
-                NotificationType.ERROR
-            ).notify(project)
-    }
-
-    fun cannotRename(fromPath: String, toPath: String, ex: IOException) {
-        getNotificationGroup()
-            .createNotification(
-                RemoteFileAccessBundle.message(
-                    "notification.RemoteFileAccess.cannotRename.content",
-                    fromPath,
-                    toPath,
-                    ex.message ?: ""
-                ),
-                NotificationType.ERROR
-            ).notify(project)
-    }
-
     fun disconnect(reasonName: String, message: String) {
         getNotificationGroup()
             .createNotification(
@@ -128,7 +106,12 @@ class RemoteOperationsNotifier(val project: Project) {
     fun errorWhileSavingFileToRemote(fileName: String, error: Throwable) {
         getNotificationGroup()
             .createNotification(
-                "Cannot upload file to remote $fileName, ${error.message}",
+                RemoteFileAccessBundle.message("notification.RemoteFileAccess.fileUploaded.title"),
+                RemoteFileAccessBundle.message(
+                    "notification.RemoteFileAccess.cannotUpload.content",
+                    fileName,
+                    error.message ?: ""
+                ),
                 NotificationType.ERROR
             ).notify(project)
     }

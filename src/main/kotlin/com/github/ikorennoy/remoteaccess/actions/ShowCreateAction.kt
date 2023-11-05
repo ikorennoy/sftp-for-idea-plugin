@@ -17,7 +17,7 @@ class ShowCreateAction : DumbAwareAction(
         val group = DefaultActionGroup(newFile, newFolder)
         JBPopupFactory.getInstance()
             .createActionGroupPopup(
-                "New", group, e.dataContext,
+                RemoteFileAccessBundle.message("action.RemoteFileAccess.showCreate.title"), group, e.dataContext,
                 false, true, false, null, 30, null
             )
             .showInBestPositionFor(e.dataContext)

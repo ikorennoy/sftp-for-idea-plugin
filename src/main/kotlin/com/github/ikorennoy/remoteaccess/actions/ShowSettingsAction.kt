@@ -13,6 +13,7 @@ class ShowSettingsAction : DumbAwareAction(
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
+        @Suppress("DialogTitleCapitalization")
         ShowSettingsUtil.getInstance().showSettingsDialog(
             project,
             "com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"

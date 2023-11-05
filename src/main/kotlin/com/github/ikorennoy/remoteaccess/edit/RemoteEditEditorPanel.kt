@@ -26,7 +26,6 @@ class RemoteEditEditorPanel(
     init {
         myLinksPanel.layout = FlowLayout()
         val saveAction = UploadAction()
-        // todo get rid of it if it's possible
         saveAction.registerCustomShortcutSet(
             ActionManager.getInstance().getAction("SaveAll").shortcutSet,
             editor.component
