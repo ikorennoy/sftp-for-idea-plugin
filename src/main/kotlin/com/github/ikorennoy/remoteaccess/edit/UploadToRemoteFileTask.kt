@@ -2,6 +2,7 @@ package com.github.ikorennoy.remoteaccess.edit
 
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperationsNotifier
+import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -10,7 +11,11 @@ import com.intellij.openapi.project.Project
 class UploadToRemoteFileTask(
     private val project: Project,
     private val localTempVirtualFile: TempVirtualFile
-): Task.Backgroundable(project, "Uploading file", true) {
+) : Task.Backgroundable(
+    project,
+    RemoteFileAccessBundle.message("task.RemoteFileAccess.uploadFileToRemote.backgroundable.name"),
+    true
+) {
 
     override fun run(indicator: ProgressIndicator) {
         val remoteFile = localTempVirtualFile.remoteFile

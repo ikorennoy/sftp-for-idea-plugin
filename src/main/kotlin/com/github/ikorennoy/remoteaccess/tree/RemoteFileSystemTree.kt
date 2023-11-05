@@ -99,7 +99,7 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
 
                 }
             }
-        }, "Delete", null)
+        }, UIBundle.message("delete.dialog.title"), null)
     }
 
     fun createNewFile(parentDirectory: RemoteFileInformation, newFileName: String) {

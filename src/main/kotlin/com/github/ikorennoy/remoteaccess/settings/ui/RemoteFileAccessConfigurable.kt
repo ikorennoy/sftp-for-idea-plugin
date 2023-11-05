@@ -2,6 +2,7 @@ package com.github.ikorennoy.remoteaccess.settings.ui
 
 import com.github.ikorennoy.remoteaccess.notifyRebuildTree
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
+import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
@@ -21,8 +22,6 @@ class RemoteFileAccessConfigurable(private val project: Project) : Configurable 
     }
 
     override fun apply() {
-        // todo draw a tree (check if init and connected and draw)
-        // according to guidelines on ok and conf change I should perform an action and draw a tree
         settingsComponent.saveState()
         val remoteOperations = RemoteOperations.getInstance(project)
         remoteOperations.initWithModalDialogue(project)
@@ -34,6 +33,6 @@ class RemoteFileAccessConfigurable(private val project: Project) : Configurable 
     }
 
     override fun getDisplayName(): String {
-        return "SSH Configuration"
+        return RemoteFileAccessBundle.message("settings.RemoteFileAccess.configurable.displayName")
     }
 }

@@ -48,25 +48,25 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
 
         panel = panel {
             row {
-                label(RemoteFileAccessBundle.message("connection.configuration.dialog.host"))
+                label(RemoteFileAccessBundle.message("settings.RemoteFileAccess.label.host"))
                     .widthGroup("CredentialsLabel")
                 cell(hostField)
 
-                label(RemoteFileAccessBundle.message("connection.configuration.dialog.port"))
+                label(RemoteFileAccessBundle.message("settings.RemoteFileAccess.label.port"))
                 cell(portField)
             }
             row {
-                label(RemoteFileAccessBundle.message("connection.configuration.dialog.root"))
+                label(RemoteFileAccessBundle.message("settings.RemoteFileAccess.label.root"))
                     .widthGroup("CredentialsLabel")
                 cell(rootField)
             }
             row {
-                label(RemoteFileAccessBundle.message("connection.configuration.dialog.username"))
+                label(RemoteFileAccessBundle.message("settings.RemoteFileAccess.label.username"))
                     .widthGroup("CredentialsLabel")
                 cell(usernameField)
             }
             row {
-                label(RemoteFileAccessBundle.message("connection.configuration.dialog.password"))
+                label(RemoteFileAccessBundle.message("settings.RemoteFileAccess.label.password"))
                     .widthGroup("CredentialsLabel")
                 cell(passwordField)
             }
@@ -78,7 +78,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                 var possibleError: Exception? = null
 
 
-                button("Test Connection") {
+                button(RemoteFileAccessBundle.message("settings.RemoteFileAccess.testConnectionButton.text")) {
                     errorLink?.visible(false)
                     errorIcon?.visible(false)
                     okIcon?.visible(false)
@@ -104,7 +104,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                 loadingIcon = icon(AnimatedIcon.Default.INSTANCE).visible(false)
                 errorIcon = icon(AllIcons.CodeWithMe.CwmTerminate).visible(false)
                 okIcon = icon(AllIcons.Actions.Commit).visible(false)
-                errorLink = link("Details") {
+                errorLink = link(RemoteFileAccessBundle.message("settings.RemoteFileAccess.errorDetails.link.text")) {
                     val thisErrorLink = errorLink ?: return@link
                     showErrorDetailsBalloon(possibleError, thisErrorLink.component)
                 }.visible(false)

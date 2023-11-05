@@ -15,7 +15,7 @@ class DownloadAndOpenFileTask(
     private val tree: RemoteFileSystemTree,
 ) : Task.Modal(
     project,
-    RemoteFileAccessBundle.message("task.RemoteFileAccess.downloadFile.text"),
+    RemoteFileAccessBundle.message("command.RemoteFileAccess.downloadAndOpenFile.name"),
     true
 ) {
 

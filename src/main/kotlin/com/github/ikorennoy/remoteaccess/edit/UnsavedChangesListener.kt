@@ -1,5 +1,6 @@
 package com.github.ikorennoy.remoteaccess.edit
 
+import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -7,17 +8,17 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 
-class UnsavedChangesListener: FileEditorManagerListener.Before {
+class UnsavedChangesListener : FileEditorManagerListener.Before {
 
     override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
         if (file is TempVirtualFile) {
             val documentManager = FileDocumentManager.getInstance()
             if (documentManager.isFileModified(file)) {
                 val res = Messages.showOkCancelDialog(
-                    "Do you want to save the changes you made to ${file.name}?",
-                    "Save Changes",
-                    "Save Changes",
-                    "Cancel",
+                    RemoteFileAccessBundle.message("dialog.RemoteFileAccess.beforeFileClosed.message", file.name),
+                    RemoteFileAccessBundle.message("dialog.RemoteFileAccess.beforeFileClosed.title"),
+                    RemoteFileAccessBundle.message("dialog.RemoteFileAccess.beforeFileClosed.okText"),
+                    RemoteFileAccessBundle.message("dialog.RemoteFileAccess.beforeFileClosed.cancelText"),
                     Messages.getQuestionIcon()
                 )
                 if (res == Messages.OK) {

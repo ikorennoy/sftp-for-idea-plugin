@@ -2,6 +2,7 @@ package com.github.ikorennoy.remoteaccess
 
 import com.github.ikorennoy.remoteaccess.operations.ConnectionListener
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
+import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -20,6 +21,7 @@ fun prepareConfiguration(project: Project): Boolean {
 
     if (configuration.isNotValid()) {
         // show full configuration dialogue
+        @Suppress("DialogTitleCapitalization")
         ShowSettingsUtil.getInstance().showSettingsDialog(
             project,
             "com.github.ikorennoy.remotefileviewer.settings.ui.RemoteFilePluginConfigurable"
@@ -29,8 +31,13 @@ fun prepareConfiguration(project: Project): Boolean {
         if (configuration.password.isEmpty()) {
             // show password prompt dialogue
             val password = Messages.showPasswordDialog(
-                "Enter a password:",
-                "Connecting to: ${configuration.username}@${configuration.host}:${configuration.port}",
+                RemoteFileAccessBundle.message("dialog.RemoteFileAccess.enterPassword.message"),
+                RemoteFileAccessBundle.message(
+                    "dialog.RemoteFileAccess.enterPassword.title",
+                    configuration.username,
+                    configuration.host,
+                    configuration.port
+                )
             )
 
             if (password != null) {
