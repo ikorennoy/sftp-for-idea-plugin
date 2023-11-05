@@ -10,16 +10,21 @@ import java.io.IOException
 @Service(Service.Level.PROJECT)
 class RemoteOperationsNotifier(val project: Project) {
 
-    fun fileUploaded() {
+    fun fileUploaded(fileName: String) {
         getNotificationGroup()
-            .createNotification("File successfully uploaded", NotificationType.INFORMATION)
-            .notify(project)
+            .createNotification(
+                "Upload",
+                "File $fileName successfully uploaded",
+                NotificationType.INFORMATION
+            ).notify(project)
     }
 
     fun cannotLoadChildren(error: Throwable) {
         getNotificationGroup()
-            .createNotification("Error while reading directory: ${error.message}", NotificationType.ERROR)
-            .notify(project)
+            .createNotification(
+                "Error while reading directory: ${error.message}",
+                NotificationType.ERROR
+            ).notify(project)
     }
 
     fun cannotDelete(file: RemoteFileInformation, error: IOException, entity: String) {
@@ -69,5 +74,4 @@ class RemoteOperationsNotifier(val project: Project) {
         return NotificationGroupManager.getInstance()
             .getNotificationGroup("Remote Operations Notifications")
     }
-
 }

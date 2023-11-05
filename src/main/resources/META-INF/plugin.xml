@@ -53,9 +53,6 @@
         <action id="RemoteFileSystem.Delete"
                 class="com.github.ikorennoy.remotefileviewer.actions.DeleteAction"
                 use-shortcut-of="$Delete"/>
-        <action id="RemoteFileSystem.UploadCurrentFileProjection"
-                class="com.github.ikorennoy.remotefileviewer.actions.UploadCurrentEditedFileAction"
-                use-shortcut-of="SaveAll"/>
         <action id="RemoteFileSystem.ShowSshConfiguration"
                 class="com.github.ikorennoy.remotefileviewer.actions.ShowSettingsAction"/>
         <action id="RemoteFileSystem.UpdateTree"
@@ -63,5 +60,7 @@
                 use-shortcut-of="Refresh"/>
         <action id="RemoteFileSystem.Disconnect"
                 class="com.github.ikorennoy.remotefileviewer.actions.DisconnectAction"/>
+        <action id="RemoteFileSystem.SelectOpenedFile"
+                class="com.github.ikorennoy.remotefileviewer.actions.SelectOpenedFile"/>
     </actions>
 </idea-plugin>

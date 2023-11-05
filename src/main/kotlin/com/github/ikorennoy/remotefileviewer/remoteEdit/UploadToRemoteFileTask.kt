@@ -44,7 +44,7 @@ class UploadToRemoteFileTask(
             ops.rename(tmpFileName, remoteFile.getPath())
 
             val notifications = project.service<RemoteOperationsNotifier>()
-            notifications.fileUploaded()
+            notifications.fileUploaded(remoteFile.getName())
         }
     }
 }

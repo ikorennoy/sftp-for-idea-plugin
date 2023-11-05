@@ -121,6 +121,10 @@ class RemoteFileSystemTree(val project: Project) : Disposable {
     override fun dispose() {
     }
 
+    fun select(file: RemoteFileInformation) {
+        treeModel.select(file, tree) {}
+    }
+
     private fun updateAndSelect(file: RemoteFileInformation) {
         treeModel.invalidateAsync().thenRun {
             treeModel.select(file, tree) {}

@@ -2,6 +2,7 @@ package com.github.ikorennoy.remotefileviewer.remoteEdit
 
 import com.github.ikorennoy.remotefileviewer.remote.RemoteFileInformation
 import com.intellij.CommonBundle
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -15,6 +16,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.awt.FlowLayout
@@ -43,10 +45,7 @@ class RemoteEditEditorPanel(
     }
 
 
-    private class UploadAction : DumbAwareAction() {
-        init {
-            ActionUtil.copyFrom(this, "RemoteFileSystem.UploadCurrentFileProjection")
-        }
+    private class UploadAction : DumbAwareAction({ "Upload Current Remote File" }, AllIcons.Actions.MenuSaveall) {
 
         override fun actionPerformed(e: AnActionEvent) {
             val project = e.project ?: return

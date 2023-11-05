@@ -1,8 +1,11 @@
 package com.github.ikorennoy.remotefileviewer.ui
 
 import com.github.ikorennoy.remotefileviewer.tree.RemoteFileSystemTree
+import com.intellij.ide.CommonActionsManager
+import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.Constraints
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -18,7 +21,7 @@ import javax.swing.JPanel
 //  fix a case when configuration is corrupted (like wrong host and etc), but only password prompt is shown, after firs unsuccessful attempt
 //  we should show full configuration page
 class RemoteFileSystemPanel(
-    tree: RemoteFileSystemTree,
+    private val tree: RemoteFileSystemTree,
 ) : SimpleToolWindowPanel(true, true) {
 
     init {
@@ -29,9 +32,15 @@ class RemoteFileSystemPanel(
 
     private fun createToolbarPanel(): JPanel {
         val toolbarGroup = DefaultActionGroup()
-        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.ShowSshConfiguration"))
         toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.UpdateTree"))
         toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.Disconnect"))
+        toolbarGroup.addSeparator()
+
+        toolbarGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(DefaultTreeExpander(tree.tree), this))
+        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.SelectOpenedFile"))
+
+        toolbarGroup.addSeparator()
+        toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileSystem.ShowSshConfiguration"))
 
         val actionToolbar = ActionManager.getInstance().createActionToolbar("FVToolbar", toolbarGroup, true)
         actionToolbar.targetComponent = this

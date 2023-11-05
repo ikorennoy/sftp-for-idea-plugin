@@ -56,9 +56,6 @@ class RemoteFileTreeStructure(
         if (element is DummyNode) {
             return element.getNodeDescriptor(project, parentDescriptor)
         }
-        if (element is ErrorNode) {
-            return element.getDescriptor(project, parentDescriptor)
-        }
 
         if (element !is RemoteFileInformation) throw IllegalArgumentException("element is not file")
         val icon = getIcon(element)
