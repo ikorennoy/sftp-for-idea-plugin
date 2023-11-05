@@ -49,6 +49,7 @@ class TempVirtualFileSystem : VirtualFileSystem() {
 
     public override fun deleteFile(requestor: Any?, file: VirtualFile) {
         if (file is TempVirtualFile) {
+            downloadedFiles.remove(file.remoteFile.getPath())
             FileUtil.delete(file.localTempFile)
         }
     }

@@ -7,7 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 
-class TemporaryFilesEditorManagerListener: FileEditorManagerListener.Before {
+class UnsavedChangesListener: FileEditorManagerListener.Before {
 
     override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
         if (file is TempVirtualFile) {

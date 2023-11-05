@@ -3,7 +3,6 @@ package com.github.ikorennoy.remoteaccess.tree
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.ide.util.treeView.ValidateableNode
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformIcons
 
