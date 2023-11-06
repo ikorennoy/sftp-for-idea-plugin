@@ -6,6 +6,7 @@ import com.github.ikorennoy.remoteaccess.edit.EditRemoteFileTask
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperationsNotifier
+import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -97,10 +98,10 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
         }, UIBundle.message("file.chooser.create.new.folder.command.name"), null)
     }
 
-    fun deleteFile(fileToDelete: RemoteFileInformation) {
+    fun deleteFile(toDelete: RemoteFileInformation) {
         CommandProcessor.getInstance().executeCommand(project, {
             ProcessIOExecutorService.INSTANCE.execute {
-                when (val res = RemoteOperations.getInstance(project).remove(fileToDelete)) {
+                when (val res = RemoteOperations.getInstance(project).remove(toDelete)) {
                     is Ok -> {
                         ApplicationManager.getApplication().invokeLater {
                             update()
@@ -108,7 +109,12 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
                     }
 
                     is Er -> {
-                        RemoteOperationsNotifier.getInstance(project).cannotDelete(fileToDelete, res.error, "file")
+                        val entity = if (toDelete.isDirectory()) {
+                            RemoteFileAccessBundle.message("action.RemoteFileAccess.delete.folder.entity")
+                        } else {
+                            RemoteFileAccessBundle.message("action.RemoteFileAccess.delete.file.entity")
+                        }
+                        RemoteOperationsNotifier.getInstance(project).cannotDelete(toDelete, res.error, entity)
                     }
                 }
             }
