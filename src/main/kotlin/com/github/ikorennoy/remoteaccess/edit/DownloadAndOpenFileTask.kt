@@ -37,9 +37,9 @@ class DownloadAndOpenFileTask(
         val toOpen = if (possibleLocalTempFile != null) {
             OpenFileDescriptor(project, possibleLocalTempFile)
         } else {
-            val operations = RemoteOperations.getInstance(project)
+            val remoteOperations = RemoteOperations.getInstance(project)
 
-            when (val result = operations.fileInputStream(remoteFileToEdit)) {
+            when (val result = remoteOperations.fileInputStream(remoteFileToEdit)) {
                 is Ok -> {
                     val remoteFileInputStream = result.value
                     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)

@@ -25,14 +25,14 @@ class UploadToRemoteFileTask(
 
     override fun run(indicator: ProgressIndicator) {
         val remoteOriginalFile = localTempVirtualFile.remoteFile
-        val ops = RemoteOperations.getInstance(project)
+        val remoteOperations = RemoteOperations.getInstance(project)
         val notifier = RemoteOperationsNotifier.getInstance(project)
         // open a temp file and upload new content into it
-        when (val prepareRemoteTempRes = ops.prepareTempFile(remoteOriginalFile)) {
+        when (val prepareRemoteTempRes = remoteOperations.prepareTempFile(remoteOriginalFile)) {
             is Ok -> {
                 val newRemoteTempFile = prepareRemoteTempRes.value
                 remoteTempFile = newRemoteTempFile
-                when (val openOutStreamRes = ops.fileOutputStream(newRemoteTempFile)) {
+                when (val openOutStreamRes = remoteOperations.fileOutputStream(newRemoteTempFile)) {
                     is Ok -> {
                         val remoteTempFileOutStream = openOutStreamRes.value
                         val size = localTempVirtualFile.length.toDouble()
@@ -56,31 +56,31 @@ class UploadToRemoteFileTask(
                         // we have to remove the original file and then do rename
                         // rm original file
                         indicator.checkCanceled()
-                        when (val removeResult = ops.remove(remoteOriginalFile)) {
+                        when (val removeResult = remoteOperations.remove(remoteOriginalFile)) {
                             is Ok -> {
                                 // move a file
-                                when (val renameResult = ops.rename(newRemoteTempFile, remoteOriginalFile)) {
+                                when (val renameResult = remoteOperations.rename(newRemoteTempFile, remoteOriginalFile)) {
                                     is Ok -> notifier.fileUploaded(remoteOriginalFile.getName())
                                     is Er -> {
                                         notifier.cannotSaveFileToRemote(
                                             remoteOriginalFile.getName(),
                                             renameResult.error
                                         )
-                                        ops.remove(newRemoteTempFile)
+                                        remoteOperations.remove(newRemoteTempFile)
                                     }
                                 }
                             }
 
                             is Er -> {
                                 notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), removeResult.error)
-                                ops.remove(newRemoteTempFile)
+                                remoteOperations.remove(newRemoteTempFile)
                             }
                         }
                     }
 
                     is Er -> {
                         notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), openOutStreamRes.error)
-                        ops.remove(newRemoteTempFile)
+                        remoteOperations.remove(newRemoteTempFile)
                     }
                 }
             }
@@ -92,9 +92,9 @@ class UploadToRemoteFileTask(
     override fun onCancel() {
         if (remoteTempFile != null) {
             val remoteTempFile = remoteTempFile ?: return
-            val ops = RemoteOperations.getInstance(project)
+            val remoteOperations = RemoteOperations.getInstance(project)
             ProcessIOExecutorService.INSTANCE.execute {
-                ops.remove(remoteTempFile)
+                remoteOperations.remove(remoteTempFile)
             }
         }
     }

@@ -24,12 +24,12 @@ class RemoteFileSystemTreeStructure(
     private val dummyRoot = DummyNode()
 
     override fun getRootElement(): Any {
-        val ops = RemoteOperations.getInstance(project)
-        return if (!ops.isInitializedAndConnected()) {
+        val remoteOperations = RemoteOperations.getInstance(project)
+        return if (!remoteOperations.isInitializedAndConnected()) {
             dummyRoot
         } else {
             val conf = RemoteFileAccessSettingsState.getInstance(project)
-            when (val res = ops.findFileByPath(conf.root)) {
+            when (val res = remoteOperations.findFileByPath(conf.root)) {
                 is Ok -> res.value
                 is Er -> {
                     RemoteOperationsNotifier.getInstance(project).cannotFindRoot(conf.root, res.error)

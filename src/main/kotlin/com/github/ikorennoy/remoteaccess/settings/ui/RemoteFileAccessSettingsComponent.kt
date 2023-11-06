@@ -81,10 +81,10 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                         saveState()
                     }
 
-                    val clientService = RemoteOperations.getInstance(project)
+                    val remoteOperations = RemoteOperations.getInstance(project)
                     // try to connect
                     ProgressManager.getInstance().submitIOTask(EmptyProgressIndicator()) {
-                        clientService.initSilently()
+                        remoteOperations.initSilently()
                     }.handleOnEdt(ModalityState.defaultModalityState()) { possibleConnectionError, _ ->
                         loadingIcon?.visible(false)
                         if (possibleConnectionError == null) {
@@ -108,31 +108,31 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
     }
 
     fun saveState() {
-        val state = RemoteFileAccessSettingsState.getInstance(project)
-        state.host = hostField.text.trim()
-        state.port = portField.text.toInt()
-        state.root = rootField.text.trim()
-        state.username = usernameField.text.trim()
-        state.password = passwordField.password
+        val conf = RemoteFileAccessSettingsState.getInstance(project)
+        conf.host = hostField.text.trim()
+        conf.port = portField.text.toInt()
+        conf.root = rootField.text.trim()
+        conf.username = usernameField.text.trim()
+        conf.password = passwordField.password
     }
 
     fun reset() {
-        val state = RemoteFileAccessSettingsState.getInstance(project)
-        hostField.text = state.host
-        portField.text = state.port.toString()
-        usernameField.text = state.username
-        rootField.text = state.root
-        passwordField.setPasswordIsStored(state.password.isNotEmpty())
+        val conf = RemoteFileAccessSettingsState.getInstance(project)
+        hostField.text = conf.host
+        portField.text = conf.port.toString()
+        usernameField.text = conf.username
+        rootField.text = conf.root
+        passwordField.setPasswordIsStored(conf.password.isNotEmpty())
     }
 
     fun isModified(): Boolean {
-        val state = RemoteFileAccessSettingsState.getInstance(project)
+        val conf = RemoteFileAccessSettingsState.getInstance(project)
         return connectionTested ||
-                state.host != hostField.text ||
-                state.port.toString() != portField.text ||
-                state.root != rootField.text ||
-                state.username != usernameField.text ||
-                !state.password.contentEquals(passwordField.password)
+                conf.host != hostField.text ||
+                conf.port.toString() != portField.text ||
+                conf.root != rootField.text ||
+                conf.username != usernameField.text ||
+                !conf.password.contentEquals(passwordField.password)
     }
 
     fun getPreferredFocusedComponent(): JComponent {

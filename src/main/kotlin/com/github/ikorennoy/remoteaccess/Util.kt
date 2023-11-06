@@ -16,31 +16,31 @@ fun notifyRebuildTree() {
 
 fun prepareConfiguration(project: Project): Boolean {
     // first try to connect on window open
-    val configuration = RemoteFileAccessSettingsState.getInstance(project)
+    val conf = RemoteFileAccessSettingsState.getInstance(project)
     var tryConnect = true
 
-    if (configuration.isNotValid()) {
+    if (conf.isNotValid()) {
         // show full configuration dialogue
         ShowSettingsUtil.getInstance().showSettingsDialog(
             project,
             RemoteFileAccessConfigurable::class.java
         )
-        tryConnect = !configuration.isNotValid() // user cancelled settings dialog
+        tryConnect = !conf.isNotValid() // user cancelled settings dialog
     } else {
-        if (configuration.password.isEmpty()) {
+        if (conf.password.isEmpty()) {
             // show password prompt dialogue
             val password = Messages.showPasswordDialog(
                 RemoteFileAccessBundle.message("dialog.RemoteFileAccess.enterPassword.message"),
                 RemoteFileAccessBundle.message(
                     "dialog.RemoteFileAccess.enterPassword.title",
-                    configuration.username,
-                    configuration.host,
-                    configuration.port
+                    conf.username,
+                    conf.host,
+                    conf.port
                 )
             )
 
             if (password != null) {
-                configuration.password = password.toCharArray()
+                conf.password = password.toCharArray()
             } else {
                 // it means user cancelled password enter dialog
                 tryConnect = false

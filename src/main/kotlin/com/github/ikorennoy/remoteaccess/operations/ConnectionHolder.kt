@@ -42,10 +42,10 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
                 return null
             }
 
-            val configuration = RemoteFileAccessSettingsState.getInstance(project)
+            val conf = RemoteFileAccessSettingsState.getInstance(project)
 
             val failReason =
-                tryConnect(configuration.host, configuration.port, configuration.username, configuration.password)
+                tryConnect(conf.host, conf.port, conf.username, conf.password)
             val localClient = client
             return if (localClient != null) {
                 val disconnectNotifier = DisconnectNotifier(project)

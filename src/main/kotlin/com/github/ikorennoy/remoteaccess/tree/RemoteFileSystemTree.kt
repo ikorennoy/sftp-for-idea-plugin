@@ -81,8 +81,8 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
     fun createNewDirectory(parentDirectory: RemoteFileInformation, newDirectoryName: String) {
         CommandProcessor.getInstance().executeCommand(project, {
             ProcessIOExecutorService.INSTANCE.execute {
-                val operations = RemoteOperations.getInstance(project)
-                when (val result = operations.createChildDirectory(parentDirectory, newDirectoryName)) {
+                val remoteOperations = RemoteOperations.getInstance(project)
+                when (val result = remoteOperations.createChildDirectory(parentDirectory, newDirectoryName)) {
                     is Ok -> {
                         ApplicationManager.getApplication().invokeLater {
                             updateAndSelect(result.value)
@@ -125,8 +125,8 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
         CommandProcessor.getInstance().executeCommand(
             project, {
                 ProcessIOExecutorService.INSTANCE.execute {
-                    val operations = RemoteOperations.getInstance(project)
-                    when (val result = operations.createChildFile(parentDirectory, newFileName)) {
+                    val remoteOperations = RemoteOperations.getInstance(project)
+                    when (val result = remoteOperations.createChildFile(parentDirectory, newFileName)) {
                         is Ok -> {
                             ApplicationManager.getApplication().invokeLater {
                                 updateAndSelect(result.value)
