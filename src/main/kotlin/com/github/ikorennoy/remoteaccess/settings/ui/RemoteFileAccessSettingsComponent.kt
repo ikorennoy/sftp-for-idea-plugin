@@ -23,6 +23,7 @@ import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.COLUMNS_TINY
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -34,6 +35,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
     private val passwordField = JBPasswordField().also { it.columns = COLUMNS_MEDIUM }
     private val portField: JBTextField = JBTextField(COLUMNS_TINY)
     private val rootField: JBTextField = JBTextField(COLUMNS_MEDIUM)
+    private var testConnectionButton: JButton? = null
 
     private var connectionTested = false
 
@@ -70,7 +72,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                 var loadingIcon: Cell<JLabel>? = null
                 var errorLink: Cell<ActionLink>? = null
                 var possibleError: Exception? = null
-                button(RemoteFileAccessBundle.message("settings.RemoteFileAccess.testConnectionButton.text")) {
+                testConnectionButton = button(RemoteFileAccessBundle.message("settings.RemoteFileAccess.testConnectionButton.text")) {
                     errorLink?.visible(false)
                     errorIcon?.visible(false)
                     okIcon?.visible(false)
@@ -95,7 +97,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                             errorLink?.visible(true)
                         }
                     }
-                }
+                }.component
                 loadingIcon = icon(AnimatedIcon.Default.INSTANCE).visible(false)
                 errorIcon = icon(AllIcons.General.BalloonError).visible(false)
                 okIcon = icon(AllIcons.Actions.Commit).visible(false)
@@ -107,6 +109,26 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
         }
     }
 
+    fun reset() {
+        val conf = RemoteFileAccessSettingsState.getInstance(project)
+        val ops = RemoteOperations.getInstance(project)
+
+        hostField.text = conf.host
+        portField.text = conf.port.toString()
+        usernameField.text = conf.username
+        rootField.text = conf.root
+        passwordField.setPasswordIsStored(conf.password.isNotEmpty())
+
+        if (ops.isInitializedAndConnected()) {
+            hostField.isEnabled = false
+            portField.isEnabled = false
+            usernameField.isEnabled = false
+            rootField.isEnabled = false
+            passwordField.isEnabled = false
+            testConnectionButton?.isEnabled = false
+        }
+    }
+
     fun saveState() {
         val conf = RemoteFileAccessSettingsState.getInstance(project)
         conf.host = hostField.text.trim()
@@ -114,15 +136,6 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
         conf.root = rootField.text.trim()
         conf.username = usernameField.text.trim()
         conf.password = passwordField.password
-    }
-
-    fun reset() {
-        val conf = RemoteFileAccessSettingsState.getInstance(project)
-        hostField.text = conf.host
-        portField.text = conf.port.toString()
-        usernameField.text = conf.username
-        rootField.text = conf.root
-        passwordField.setPasswordIsStored(conf.password.isNotEmpty())
     }
 
     fun isModified(): Boolean {
