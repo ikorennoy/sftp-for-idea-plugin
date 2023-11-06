@@ -4,15 +4,13 @@ import com.github.ikorennoy.remoteaccess.Er
 import com.github.ikorennoy.remoteaccess.Ok
 import com.github.ikorennoy.remoteaccess.Outcome
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
+import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import net.schmizz.sshj.sftp.*
 import java.awt.EventQueue
 import java.io.IOException
@@ -41,38 +39,11 @@ class RemoteOperations(private val project: Project) {
     }
 
     fun initWithModalDialogue() {
-        val configuration = RemoteFileAccessSettingsState.getInstance()
-        val host = configuration.host
-        val port = configuration.port
-        val username = configuration.username
-        CommandProcessor.getInstance()
-            .executeCommand(project, {
-                var failReason: Exception? = null
-                object : Task.Modal(
-                    project,
-                    "Connecting to: ${username}@${host}:${port}",
-                    false
-                ) {
-                    override fun run(indicator: ProgressIndicator) {
-                        indicator.isIndeterminate = true
-                        failReason = connectionHolder.connect()
-                    }
-
-                    override fun onFinished() {
-                        reportError()
-                    }
-
-                    private fun reportError() {
-                        if (failReason != null) {
-                            Messages.showMessageDialog(
-                                "Cannot not connect to ${username}@${host}:${port}\n ${failReason?.message}",
-                                "Error",
-                                Messages.getErrorIcon()
-                            )
-                        }
-                    }
-                }.queue()
-            }, "Connecting...", null)
+        val initWithModalDialogTask = InitWithModalDialogTask(project)
+        CommandProcessor.getInstance().executeCommand(project, {
+                initWithModalDialogTask.queue()
+            }, RemoteFileAccessBundle.message("task.RemoteFileAccess.initWithModalDialogue.name"), null
+        )
     }
 
     fun isInitializedAndConnected(): Boolean {
