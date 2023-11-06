@@ -21,8 +21,7 @@ class SelectOpenedFileAction : DumbAwareAction(
 
     override fun update(e: AnActionEvent) {
         val project = e.project ?: return
-        val ops = RemoteOperations.getInstance(project)
-        e.presentation.isEnabled = ops.isInitializedAndConnected()
+        e.presentation.isEnabled = RemoteOperations.getInstance(project).isInitializedAndConnected()
     }
 
     override fun actionPerformed(e: AnActionEvent) {
