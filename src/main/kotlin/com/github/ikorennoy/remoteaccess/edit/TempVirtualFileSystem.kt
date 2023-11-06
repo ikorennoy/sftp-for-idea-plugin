@@ -1,8 +1,6 @@
 package com.github.ikorennoy.remoteaccess.edit
 
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
@@ -31,8 +29,15 @@ class TempVirtualFileSystem : VirtualFileSystem() {
         return downloadedFiles[path]
     }
 
-    override fun refresh(asynchronous: Boolean) {
-        throw UnsupportedOperationException("refresh is not supported")
+    public override fun deleteFile(requestor: Any?, file: VirtualFile) {
+        if (file is TempVirtualFile) {
+            downloadedFiles.remove(file.remoteFile.getPath())
+            FileUtil.delete(file.localTempFile)
+        }
+    }
+
+    override fun isReadOnly(): Boolean {
+        return false
     }
 
     override fun refreshAndFindFileByPath(path: String): VirtualFile? {
@@ -47,11 +52,8 @@ class TempVirtualFileSystem : VirtualFileSystem() {
 
     }
 
-    public override fun deleteFile(requestor: Any?, file: VirtualFile) {
-        if (file is TempVirtualFile) {
-            downloadedFiles.remove(file.remoteFile.getPath())
-            FileUtil.delete(file.localTempFile)
-        }
+    override fun refresh(asynchronous: Boolean) {
+        throw UnsupportedOperationException("refresh is not supported")
     }
 
     override fun moveFile(requestor: Any?, file: VirtualFile, newParent: VirtualFile) {
@@ -74,11 +76,7 @@ class TempVirtualFileSystem : VirtualFileSystem() {
         throw UnsupportedOperationException("copyFile is not supported")
     }
 
-    override fun isReadOnly(): Boolean {
-        return false
-    }
-
-    companion object {
+    object Holder {
         fun getInstance(): TempVirtualFileSystem {
             return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as TempVirtualFileSystem
         }

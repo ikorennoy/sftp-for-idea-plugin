@@ -13,8 +13,7 @@
         <toolWindow factoryClass="com.github.ikorennoy.remoteaccess.ui.RemoteFileAccessWindowsFactory" id="Remote Files"
                     anchor="right" doNotActivateOnStart="true"/>
         <virtualFileSystem implementationClass="com.github.ikorennoy.remoteaccess.edit.TempVirtualFileSystem"
-                           key="remoteFileViewerLocalFs" physical="false"/>
-
+                           key="remoteFileViewerLocalFs" physical="true"/>
         <projectConfigurable
                 parentId="tools"
                 instance="com.github.ikorennoy.remoteaccess.settings.ui.RemoteFileAccessConfigurable"

@@ -2,7 +2,6 @@ package com.github.ikorennoy.remoteaccess.edit
 
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
-import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.BinaryLightVirtualFile
@@ -47,7 +46,7 @@ class TempVirtualFile(
     }
 
     override fun getPath(): String {
-        val conf = service<RemoteFileAccessSettingsState>()
+        val conf = RemoteFileAccessSettingsState.getInstance()
         return "sftp://${conf.username}@${conf.host}${remoteFile.getPath()}"
     }
 

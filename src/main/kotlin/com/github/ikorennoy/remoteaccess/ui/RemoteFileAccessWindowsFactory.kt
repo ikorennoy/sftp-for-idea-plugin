@@ -1,9 +1,9 @@
 package com.github.ikorennoy.remoteaccess.ui
 
 import com.github.ikorennoy.remoteaccess.edit.CleanupTempFsListener
+import com.github.ikorennoy.remoteaccess.edit.UnsavedChangesListener
 import com.github.ikorennoy.remoteaccess.operations.ConnectionListener
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
-import com.github.ikorennoy.remoteaccess.edit.UnsavedChangesListener
 import com.github.ikorennoy.remoteaccess.prepareConfiguration
 import com.github.ikorennoy.remoteaccess.tree.RemoteFileSystemTree
 import com.intellij.openapi.application.ApplicationManager

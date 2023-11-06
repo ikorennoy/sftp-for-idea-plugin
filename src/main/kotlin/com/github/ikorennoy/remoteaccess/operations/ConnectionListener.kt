@@ -1,7 +1,7 @@
 package com.github.ikorennoy.remoteaccess.operations
 
 import com.intellij.util.messages.Topic
-import java.util.EventListener
+import java.util.*
 
 interface ConnectionListener : EventListener {
 

@@ -2,8 +2,8 @@ package com.github.ikorennoy.remoteaccess.tree
 
 import com.github.ikorennoy.remoteaccess.Er
 import com.github.ikorennoy.remoteaccess.Ok
-import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.edit.EditRemoteFileTask
+import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperationsNotifier
 import com.intellij.execution.process.ProcessIOExecutorService

@@ -23,7 +23,7 @@ class DownloadAndOpenFileTask(
 ) {
 
     override fun run(indicator: ProgressIndicator) {
-        val tempFs = TempVirtualFileSystem.getInstance()
+        val tempFs = TempVirtualFileSystem.Holder.getInstance()
         val remoteFileToEdit = tree.getSelectedFile() ?: return
         val remoteFileSize = remoteFileToEdit.getLength().toDouble()
 

@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -65,8 +64,7 @@ class RemoteEditEditorPanel(
                         if (document != null) {
                             documentManager.saveDocument(document)
                         }
-                        val syncService = service<RemoteEditService>()
-                        syncService.uploadFileToRemote(project, file)
+                        RemoteEditService.getInstance(project).uploadFileToRemote(file)
                     }
                 }
             }

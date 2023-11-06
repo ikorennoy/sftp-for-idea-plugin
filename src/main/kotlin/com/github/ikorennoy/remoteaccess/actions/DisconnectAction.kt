@@ -6,7 +6,6 @@ import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 
 class DisconnectAction : DumbAwareAction(

@@ -8,7 +8,6 @@ import com.github.ikorennoy.remoteaccess.operations.RemoteOperationsNotifier
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VFileProperty
@@ -29,7 +28,7 @@ class RemoteFileSystemTreeStructure(
         return if (!ops.isInitializedAndConnected()) {
             dummyRoot
         } else {
-            val conf = service<RemoteFileAccessSettingsState>()
+            val conf = RemoteFileAccessSettingsState.getInstance()
             when (val res = ops.findFileByPath(conf.root)) {
                 is Ok -> res.value
                 is Er -> {

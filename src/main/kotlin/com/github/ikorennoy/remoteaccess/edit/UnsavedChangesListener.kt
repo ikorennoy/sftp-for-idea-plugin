@@ -1,7 +1,6 @@
 package com.github.ikorennoy.remoteaccess.edit
 
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -21,13 +20,15 @@ class UnsavedChangesListener : FileEditorManagerListener.Before {
                     RemoteFileAccessBundle.message("dialog.RemoteFileAccess.beforeFileClosed.cancelText"),
                     Messages.getQuestionIcon()
                 )
+                // regardless of the user response, just save the cached document,
+                // otherwise the platform will try to save it even after
+                // the CleanupTempFsListener.fileClosed() event, and we will get a weird error
+                val document = documentManager.getCachedDocument(file)
+                if (document != null) {
+                    documentManager.saveDocument(document)
+                }
                 if (res == Messages.OK) {
-                    val syncService = service<RemoteEditService>()
-                    val document = documentManager.getCachedDocument(file)
-                    if (document != null) {
-                        documentManager.saveDocument(document)
-                    }
-                    syncService.uploadFileToRemote(source.project, file)
+                    RemoteEditService.getInstance(source.project).uploadFileToRemote(file)
                 }
             }
         }

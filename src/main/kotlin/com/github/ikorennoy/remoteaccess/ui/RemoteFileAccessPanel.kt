@@ -39,7 +39,8 @@ class RemoteFileAccessPanel(
         toolbarGroup.addSeparator()
         toolbarGroup.add(ActionManager.getInstance().getAction("RemoteFileAccess.ShowSshConfiguration"))
 
-        val actionToolbar = ActionManager.getInstance().createActionToolbar("RemoteFileAccessToolbar", toolbarGroup, true)
+        val actionToolbar =
+            ActionManager.getInstance().createActionToolbar("RemoteFileAccessToolbar", toolbarGroup, true)
         actionToolbar.targetComponent = this
         return JBUI.Panels.simplePanel(actionToolbar.component)
     }

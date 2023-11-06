@@ -32,9 +32,6 @@ class RemoteOperations(private val project: Project) {
     private val sftpClient: SFTPClient
         get() = connectionHolder.getSftpClient()
 
-    private val notifier: RemoteOperationsNotifier
-        get() = RemoteOperationsNotifier.getInstance(project)
-
     /**
      * Ensures that the client is connected and authenticated
      */
@@ -44,7 +41,7 @@ class RemoteOperations(private val project: Project) {
     }
 
     fun initWithModalDialogue() {
-        val configuration = service<RemoteFileAccessSettingsState>()
+        val configuration = RemoteFileAccessSettingsState.getInstance()
         val host = configuration.host
         val port = configuration.port
         val username = configuration.username
@@ -82,7 +79,7 @@ class RemoteOperations(private val project: Project) {
         return connectionHolder.isInitializedAndConnected()
     }
 
-    fun getChildren(remoteFile: RemoteFileInformation): com.github.ikorennoy.remoteaccess.Outcome<Array<RemoteFileInformation>> {
+    fun getChildren(remoteFile: RemoteFileInformation): Outcome<Array<RemoteFileInformation>> {
         assertNotEdt()
         return try {
             Ok(sftpClient.ls(remoteFile.getPath())

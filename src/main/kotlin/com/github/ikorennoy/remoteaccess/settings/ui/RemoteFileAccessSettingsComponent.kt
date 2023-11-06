@@ -7,7 +7,6 @@ import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -29,13 +28,13 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class RemoteFileAccessSettingsComponent(private val project: Project) {
-    private val state = service<RemoteFileAccessSettingsState>()
 
     private val hostField = ExtendableTextField(COLUMNS_MEDIUM)
     private val usernameField = JBTextField(COLUMNS_MEDIUM)
     private val passwordField = JBPasswordField().also { it.columns = COLUMNS_MEDIUM }
     private val portField: JBTextField = JBTextField(COLUMNS_TINY)
     private val rootField: JBTextField = JBTextField(COLUMNS_MEDIUM)
+
     private var connectionTested = false
 
     val panel: JPanel
@@ -109,6 +108,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
     }
 
     fun saveState() {
+        val state = RemoteFileAccessSettingsState.getInstance()
         state.host = hostField.text.trim()
         state.port = portField.text.toInt()
         state.root = rootField.text.trim()
@@ -117,6 +117,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
     }
 
     fun reset() {
+        val state = RemoteFileAccessSettingsState.getInstance()
         hostField.text = state.host
         portField.text = state.port.toString()
         usernameField.text = state.username
@@ -125,6 +126,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
     }
 
     fun isModified(): Boolean {
+        val state = RemoteFileAccessSettingsState.getInstance()
         return connectionTested ||
                 state.host != hostField.text ||
                 state.port.toString() != portField.text ||

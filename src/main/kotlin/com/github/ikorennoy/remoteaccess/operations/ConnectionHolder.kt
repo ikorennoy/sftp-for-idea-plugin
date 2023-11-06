@@ -4,7 +4,6 @@ import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
@@ -43,20 +42,20 @@ internal class ConnectionHolder : Disposable {
                 return null
             }
 
-            val configuration = service<RemoteFileAccessSettingsState>()
+            val configuration = RemoteFileAccessSettingsState.getInstance()
 
             val failReason =
                 tryConnect(configuration.host, configuration.port, configuration.username, configuration.password)
             val clientVal = client
-            return if (clientVal == null) {
-                // initialization is completely failed, just return false, user is notified by tryConnect
-                failReason
-            } else {
+            return if (clientVal != null) {
                 val disconnectNotifier = DisconnectNotifier(project)
                 clientVal.transport.disconnectListener = disconnectNotifier
                 val newSftpClient = clientVal.newSFTPClient()
                 sftpClient = newSftpClient
                 null
+            } else {
+                // initialization is completely failed, just return false, user is notified by tryConnect
+                failReason
             }
         } finally {
             lock.unlock()
@@ -94,19 +93,19 @@ internal class ConnectionHolder : Disposable {
 
     private fun tryConnect(host: String, port: Int, username: String, password: CharArray): Exception? {
         var failReason: Exception? = null
-        val thisClient = SSHClient()
+        val newClient = SSHClient()
         try {
-            thisClient.connectTimeout = TIMEOUT_MILLISECONDS
-            thisClient.timeout = TIMEOUT_MILLISECONDS
-            thisClient.useCompression()
-            thisClient.loadKnownHosts()
-            thisClient.connect(host, port)
-            thisClient.authPassword(username, password)
-            this@ConnectionHolder.client = thisClient
+            newClient.connectTimeout = TIMEOUT_MILLISECONDS
+            newClient.timeout = TIMEOUT_MILLISECONDS
+            newClient.useCompression()
+            newClient.loadKnownHosts()
+            newClient.connect(host, port)
+            newClient.authPassword(username, password)
+            client = newClient
         } catch (ex: IOException) {
             failReason = ex
             try {
-                thisClient.close()
+                newClient.close()
             } catch (_: IOException) {
             }
         }
