@@ -13,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock
 // connection and blocking socket operations timeout
 internal const val TIMEOUT_MILLISECONDS = 10000
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class ConnectionHolder : Disposable {
 
     @Volatile
@@ -113,6 +113,6 @@ internal class ConnectionHolder : Disposable {
     }
 
     companion object {
-        fun getInstance(): ConnectionHolder = service()
+        fun getInstance(project: Project): ConnectionHolder = project.service()
     }
 }

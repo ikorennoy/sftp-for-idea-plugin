@@ -27,7 +27,7 @@ class RemoteOperations(private val project: Project) {
     private val openOutputStreamFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
 
     private val connectionHolder: ConnectionHolder
-        get() = ConnectionHolder.getInstance()
+        get() = ConnectionHolder.getInstance(project)
 
     private val sftpClient: SFTPClient
         get() = connectionHolder.getSftpClient()
