@@ -16,8 +16,8 @@
                            key="remoteFileViewerLocalFs" physical="true"/>
         <projectConfigurable
                 parentId="tools"
-                instance="com.github.ikorennoy.remoteaccess.settings.ui.RemoteFileAccessConfigurable"
-                id="com.github.ikorennoy.remoteaccess.settings.ui.RemoteFileAccessConfigurable"
+                instance="com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessConfigurable"
+                id="com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessConfigurable"
                 displayName="SSH Configuration"/>
 
         <editorNotificationProvider

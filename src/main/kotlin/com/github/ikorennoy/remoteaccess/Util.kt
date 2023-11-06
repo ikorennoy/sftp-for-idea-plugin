@@ -2,13 +2,12 @@ package com.github.ikorennoy.remoteaccess
 
 import com.github.ikorennoy.remoteaccess.operations.ConnectionListener
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
-import com.github.ikorennoy.remoteaccess.settings.ui.RemoteFileAccessConfigurable
+import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessConfigurable
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.messages.MessagesService
 
 fun notifyRebuildTree() {
     ApplicationManager.getApplication().messageBus.syncPublisher(ConnectionListener.TOPIC)

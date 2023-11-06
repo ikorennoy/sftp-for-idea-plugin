@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remoteaccess.actions
 
-import com.github.ikorennoy.remoteaccess.settings.ui.RemoteFileAccessConfigurable
+import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessConfigurable
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent

@@ -1,7 +1,8 @@
-package com.github.ikorennoy.remoteaccess.settings.ui
+package com.github.ikorennoy.remoteaccess.settings
 
 import com.github.ikorennoy.remoteaccess.notifyRebuildTree
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
+import com.github.ikorennoy.remoteaccess.settings.ui.RemoteFileAccessSettingsComponent
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
