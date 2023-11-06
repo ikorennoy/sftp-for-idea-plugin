@@ -13,9 +13,9 @@ class InitWithModalDialogTask(
     project,
     RemoteFileAccessBundle.message(
         "dialog.RemoteFileAccess.enterPassword.title",
-        RemoteFileAccessSettingsState.getInstance().username,
-        RemoteFileAccessSettingsState.getInstance().host,
-        RemoteFileAccessSettingsState.getInstance().port,
+        RemoteFileAccessSettingsState.getInstance(project).username,
+        RemoteFileAccessSettingsState.getInstance(project).host,
+        RemoteFileAccessSettingsState.getInstance(project).port,
     ),
     false
 ) {
@@ -34,7 +34,7 @@ class InitWithModalDialogTask(
     }
 
     private fun reportError() {
-        val conf = RemoteFileAccessSettingsState.getInstance()
+        val conf = RemoteFileAccessSettingsState.getInstance(project)
         if (failReason != null) {
             Messages.showMessageDialog(
                 RemoteFileAccessBundle.message(

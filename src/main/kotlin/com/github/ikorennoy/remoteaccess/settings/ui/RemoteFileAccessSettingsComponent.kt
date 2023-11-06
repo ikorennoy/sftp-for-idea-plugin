@@ -108,7 +108,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
     }
 
     fun saveState() {
-        val state = RemoteFileAccessSettingsState.getInstance()
+        val state = RemoteFileAccessSettingsState.getInstance(project)
         state.host = hostField.text.trim()
         state.port = portField.text.toInt()
         state.root = rootField.text.trim()
@@ -117,7 +117,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
     }
 
     fun reset() {
-        val state = RemoteFileAccessSettingsState.getInstance()
+        val state = RemoteFileAccessSettingsState.getInstance(project)
         hostField.text = state.host
         portField.text = state.port.toString()
         usernameField.text = state.username
@@ -126,7 +126,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
     }
 
     fun isModified(): Boolean {
-        val state = RemoteFileAccessSettingsState.getInstance()
+        val state = RemoteFileAccessSettingsState.getInstance(project)
         return connectionTested ||
                 state.host != hostField.text ||
                 state.port.toString() != portField.text ||

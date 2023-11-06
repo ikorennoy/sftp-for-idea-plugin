@@ -1,9 +1,10 @@
 package com.github.ikorennoy.remoteaccess.settings
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.Transient
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(
     name = "com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState",
     storages = [Storage("RemoteFileAccessPlugin.xml", roamingType = RoamingType.DISABLED)]
@@ -46,7 +47,7 @@ class RemoteFileAccessSettingsState :
     }
 
     companion object {
-        fun getInstance(): RemoteFileAccessSettingsState = service()
+        fun getInstance(project: Project): RemoteFileAccessSettingsState = project.service()
     }
 
     class ConfigurationState : BaseState() {

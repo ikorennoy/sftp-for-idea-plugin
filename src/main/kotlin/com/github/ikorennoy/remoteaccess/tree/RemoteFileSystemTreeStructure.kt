@@ -28,7 +28,7 @@ class RemoteFileSystemTreeStructure(
         return if (!ops.isInitializedAndConnected()) {
             dummyRoot
         } else {
-            val conf = RemoteFileAccessSettingsState.getInstance()
+            val conf = RemoteFileAccessSettingsState.getInstance(project)
             when (val res = ops.findFileByPath(conf.root)) {
                 is Ok -> res.value
                 is Er -> {

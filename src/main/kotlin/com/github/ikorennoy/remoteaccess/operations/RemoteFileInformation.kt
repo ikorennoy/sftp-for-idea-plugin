@@ -9,7 +9,7 @@ import net.schmizz.sshj.sftp.RemoteResourceInfo
 
 class RemoteFileInformation(
     private val remoteFile: RemoteResourceInfo,
-    private val project: Project,
+    val project: Project,
 ) {
 
     private val myParent: RemoteFileInformation? by lazy { getParentInternal() }

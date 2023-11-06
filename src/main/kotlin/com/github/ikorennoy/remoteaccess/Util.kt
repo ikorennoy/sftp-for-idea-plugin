@@ -16,7 +16,7 @@ fun notifyRebuildTree() {
 
 fun prepareConfiguration(project: Project): Boolean {
     // first try to connect on window open
-    val configuration = RemoteFileAccessSettingsState.getInstance()
+    val configuration = RemoteFileAccessSettingsState.getInstance(project)
     var tryConnect = true
 
     if (configuration.isNotValid()) {
