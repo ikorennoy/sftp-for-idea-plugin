@@ -82,16 +82,16 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
         CommandProcessor.getInstance().executeCommand(project, {
             ProcessIOExecutorService.INSTANCE.execute {
                 val remoteOperations = RemoteOperations.getInstance(project)
-                when (val result = remoteOperations.createChildDirectory(parentDirectory, newDirectoryName)) {
+                when (val res = remoteOperations.createChildDirectory(parentDirectory, newDirectoryName)) {
                     is Ok -> {
                         ApplicationManager.getApplication().invokeLater {
-                            updateAndSelect(result.value)
+                            updateAndSelect(res.value)
                         }
                     }
 
                     is Er -> {
                         RemoteOperationsNotifier.getInstance(project)
-                            .cannotCreateChildDirectory(newDirectoryName, result.error)
+                            .cannotCreateChildDirectory(newDirectoryName, res.error)
                     }
                 }
             }
@@ -126,16 +126,16 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
             project, {
                 ProcessIOExecutorService.INSTANCE.execute {
                     val remoteOperations = RemoteOperations.getInstance(project)
-                    when (val result = remoteOperations.createChildFile(parentDirectory, newFileName)) {
+                    when (val res = remoteOperations.createChildFile(parentDirectory, newFileName)) {
                         is Ok -> {
                             ApplicationManager.getApplication().invokeLater {
-                                updateAndSelect(result.value)
+                                updateAndSelect(res.value)
                             }
                         }
 
                         is Er -> {
                             RemoteOperationsNotifier.getInstance(project)
-                                .cannotCreateChildFile(newFileName, result.error)
+                                .cannotCreateChildFile(newFileName, res.error)
                         }
                     }
                 }

@@ -39,9 +39,9 @@ class DownloadAndOpenFileTask(
         } else {
             val remoteOperations = RemoteOperations.getInstance(project)
 
-            when (val result = remoteOperations.fileInputStream(remoteFileToEdit)) {
+            when (val res = remoteOperations.fileInputStream(remoteFileToEdit)) {
                 is Ok -> {
-                    val remoteFileInputStream = result.value
+                    val remoteFileInputStream = res.value
                     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
                     val newLocalTempFile = FileUtil.createTempFile(remoteFileToEdit.getName(), ".tmp", false)
                     this.localTempFile = newLocalTempFile
@@ -66,7 +66,7 @@ class DownloadAndOpenFileTask(
 
                 is Er -> {
                     RemoteOperationsNotifier.getInstance(project)
-                        .cannotOpenFile(remoteFileToEdit.getPath(), result.error)
+                        .cannotOpenFile(remoteFileToEdit.getPath(), res.error)
                     null
                 }
             }

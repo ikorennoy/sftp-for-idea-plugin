@@ -3,7 +3,6 @@ package com.github.ikorennoy.remoteaccess.operations
 import com.github.ikorennoy.remoteaccess.Er
 import com.github.ikorennoy.remoteaccess.Ok
 import com.github.ikorennoy.remoteaccess.Outcome
-import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
@@ -192,9 +191,9 @@ class RemoteOperations(private val project: Project) {
         var attempt = 0
         var name = "/tmp/${forFile.getName()}.tmp"
         while (true) {
-            val result = createAndOpenFile(name)
-            when (result) {
-                is Ok -> return result
+            val res = createAndOpenFile(name)
+            when (res) {
+                is Ok -> return res
                 is Er -> {
                     attempt++
                     name = "/tmp/${forFile.getName()}-${attempt}.tmp"
@@ -202,7 +201,7 @@ class RemoteOperations(private val project: Project) {
             }
             // try 5 times
             if (attempt == 4) {
-                return result
+                return res
             }
         }
     }

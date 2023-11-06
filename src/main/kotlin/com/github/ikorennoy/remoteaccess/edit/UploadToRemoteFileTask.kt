@@ -27,6 +27,7 @@ class UploadToRemoteFileTask(
         val remoteOriginalFile = localTempVirtualFile.remoteFile
         val remoteOperations = RemoteOperations.getInstance(project)
         val notifier = RemoteOperationsNotifier.getInstance(project)
+        var needToRemoteRemoteTempFile = false
         // open a temp file and upload new content into it
         when (val prepareRemoteTempRes = remoteOperations.prepareTempFile(remoteOriginalFile)) {
             is Ok -> {
@@ -56,35 +57,39 @@ class UploadToRemoteFileTask(
                         // we have to remove the original file and then do rename
                         // rm original file
                         indicator.checkCanceled()
-                        when (val removeResult = remoteOperations.remove(remoteOriginalFile)) {
+                        when (val removeRes = remoteOperations.remove(remoteOriginalFile)) {
                             is Ok -> {
                                 // move a file
-                                when (val renameResult = remoteOperations.rename(newRemoteTempFile, remoteOriginalFile)) {
+                                when (val renameRes = remoteOperations.rename(newRemoteTempFile, remoteOriginalFile)) {
                                     is Ok -> notifier.fileUploaded(remoteOriginalFile.getName())
                                     is Er -> {
                                         notifier.cannotSaveFileToRemote(
                                             remoteOriginalFile.getName(),
-                                            renameResult.error
+                                            renameRes.error
                                         )
-                                        remoteOperations.remove(newRemoteTempFile)
+                                        needToRemoteRemoteTempFile = true
                                     }
                                 }
                             }
 
                             is Er -> {
-                                notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), removeResult.error)
-                                remoteOperations.remove(newRemoteTempFile)
+                                notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), removeRes.error)
+                                needToRemoteRemoteTempFile = true
                             }
                         }
                     }
 
                     is Er -> {
                         notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), openOutStreamRes.error)
+                        needToRemoteRemoteTempFile = true
+                    }
+                }
+                if (needToRemoteRemoteTempFile) {
+                    ProcessIOExecutorService.INSTANCE.execute {
                         remoteOperations.remove(newRemoteTempFile)
                     }
                 }
             }
-
             is Er -> notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), prepareRemoteTempRes.error)
         }
     }
