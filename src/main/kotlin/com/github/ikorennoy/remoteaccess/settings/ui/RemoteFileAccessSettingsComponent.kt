@@ -1,5 +1,6 @@
 package com.github.ikorennoy.remoteaccess.settings.ui
 
+import com.github.ikorennoy.remoteaccess.notifyRebuildTree
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
@@ -36,6 +37,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
     private val portField: JBTextField = JBTextField(COLUMNS_TINY)
     private val rootField: JBTextField = JBTextField(COLUMNS_MEDIUM)
     private var testConnectionButton: JButton? = null
+    private var disconnectLink: ActionLink? = null
 
     private var connectionTested = false
 
@@ -72,6 +74,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                 var loadingIcon: Cell<JLabel>? = null
                 var errorLink: Cell<ActionLink>? = null
                 var possibleError: Exception? = null
+
                 testConnectionButton = button(RemoteFileAccessBundle.message("settings.RemoteFileAccess.testConnectionButton.text")) {
                     errorLink?.visible(false)
                     errorIcon?.visible(false)
@@ -98,6 +101,10 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                         }
                     }
                 }.component
+                disconnectLink = link("Disconnect") {
+                    disconnect()
+                }.component
+
                 loadingIcon = icon(AnimatedIcon.Default.INSTANCE).visible(false)
                 errorIcon = icon(AllIcons.General.BalloonError).visible(false)
                 okIcon = icon(AllIcons.Actions.Commit).visible(false)
@@ -126,6 +133,9 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
             passwordField.setPasswordIsStored(true)
             passwordField.isEnabled = false
             testConnectionButton?.isEnabled = false
+            disconnectLink?.isEnabled = true
+        } else {
+            disconnectLink?.isEnabled = false
         }
     }
 
@@ -157,6 +167,22 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
             usernameField
         } else {
             passwordField
+        }
+    }
+
+    private fun disconnect() {
+        ProgressManager.getInstance().submitIOTask(EmptyProgressIndicator()) {
+            RemoteOperations.getInstance(project).close()
+        }.handleOnEdt(ModalityState.defaultModalityState()) { _,_ ->
+            hostField.isEnabled = true
+            portField.isEnabled = true
+            usernameField.isEnabled = true
+            rootField.isEnabled = true
+            passwordField.setPasswordIsStored(false)
+            passwordField.isEnabled = true
+            testConnectionButton?.isEnabled = true
+            disconnectLink?.isEnabled = false
+            notifyRebuildTree()
         }
     }
 
