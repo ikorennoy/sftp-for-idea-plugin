@@ -20,8 +20,8 @@ import kotlin.math.min
 @Service(Service.Level.PROJECT)
 class RemoteOperations(private val project: Project) {
 
-    private val createAndOpenFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.EXCL)
-    private val openOutputStreamFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
+    private val createAndOpenIfNotExistFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.EXCL)
+    private val openForWriteAndTruncateFlags = setOf(OpenMode.READ, OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC)
 
     private val connectionHolder: ConnectionHolder
         get() = ConnectionHolder.getInstance(project)
@@ -39,7 +39,8 @@ class RemoteOperations(private val project: Project) {
 
     fun initWithModalDialogue() {
         val initWithModalDialogTask = InitWithModalDialogTask(project)
-        CommandProcessor.getInstance().executeCommand(project, {
+        CommandProcessor.getInstance().executeCommand(
+            project, {
                 initWithModalDialogTask.queue()
             }, RemoteFileAccessBundle.message("task.RemoteFileAccess.initWithModalDialogue.name"), null
         )
@@ -166,7 +167,7 @@ class RemoteOperations(private val project: Project) {
     fun fileOutputStream(filePath: RemoteFileInformation): Outcome<OutputStream> {
         assertNotEdt()
         return try {
-            Ok(RemoteFileOutputStream(sftpClient.open(filePath.getPath(), openOutputStreamFlags)))
+            Ok(RemoteFileOutputStream(sftpClient.open(filePath.getPath(), openForWriteAndTruncateFlags)))
         } catch (ex: IOException) {
             Er(ex)
         }
@@ -175,7 +176,7 @@ class RemoteOperations(private val project: Project) {
     fun createAndOpenFile(filePath: String): Outcome<RemoteFileInformation> {
         assertNotEdt()
         return try {
-            val newFile = sftpClient.open(filePath, createAndOpenFlags)
+            val newFile = sftpClient.open(filePath, createAndOpenIfNotExistFlags)
             val result = RemoteFileInformation(
                 RemoteResourceInfo(getPathComponents(newFile.path), newFile.fetchAttributes()),
                 project
