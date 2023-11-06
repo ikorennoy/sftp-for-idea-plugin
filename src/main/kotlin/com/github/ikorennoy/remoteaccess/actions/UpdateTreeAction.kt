@@ -16,9 +16,12 @@ class UpdateTreeAction : DumbAwareAction(
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val remoteOperations = RemoteOperations.getInstance(project)
-        val tryConnect = prepareConfiguration(project)
-        if (tryConnect) {
-            remoteOperations.initWithModalDialogue()
+        // if we're not connected ask for password and reconnect
+        if (!remoteOperations.isInitializedAndConnected()) {
+            val tryConnect = prepareConfiguration(project)
+            if (tryConnect) {
+                remoteOperations.initWithModalDialogue()
+            }
         }
         notifyRebuildTree()
     }

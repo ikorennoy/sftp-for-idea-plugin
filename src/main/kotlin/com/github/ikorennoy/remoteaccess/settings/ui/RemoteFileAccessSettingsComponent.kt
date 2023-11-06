@@ -117,13 +117,13 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
         portField.text = conf.port.toString()
         usernameField.text = conf.username
         rootField.text = conf.root
-        passwordField.setPasswordIsStored(conf.password.isNotEmpty())
 
         if (ops.isInitializedAndConnected()) {
             hostField.isEnabled = false
             portField.isEnabled = false
             usernameField.isEnabled = false
             rootField.isEnabled = false
+            passwordField.setPasswordIsStored(true)
             passwordField.isEnabled = false
             testConnectionButton?.isEnabled = false
         }
@@ -145,7 +145,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                 conf.port.toString() != portField.text ||
                 conf.root != rootField.text ||
                 conf.username != usernameField.text ||
-                !conf.password.contentEquals(passwordField.password)
+                passwordField.password.isNotEmpty()
     }
 
     fun getPreferredFocusedComponent(): JComponent {

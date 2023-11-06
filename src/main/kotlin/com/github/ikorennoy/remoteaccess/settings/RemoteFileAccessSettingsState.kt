@@ -37,7 +37,7 @@ class RemoteFileAccessSettingsState :
         }
 
     var password: CharArray
-        get() = state.password.clone()
+        get() = state.password
         set(value) {
             state.password = value
         }

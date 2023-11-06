@@ -13,6 +13,7 @@ class DisconnectAction : DumbAwareAction(
     AllIcons.CodeWithMe.CwmTerminate
 ) {
 
+    // todo add warning about open files
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         ProcessIOExecutorService.INSTANCE.execute {

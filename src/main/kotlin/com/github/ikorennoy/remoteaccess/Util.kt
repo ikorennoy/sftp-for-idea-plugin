@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.messages.MessagesService
 
 fun notifyRebuildTree() {
     ApplicationManager.getApplication().messageBus.syncPublisher(ConnectionListener.TOPIC)
@@ -27,24 +28,22 @@ fun prepareConfiguration(project: Project): Boolean {
         )
         tryConnect = !conf.isNotValid() // user cancelled settings dialog
     } else {
-        if (conf.password.isEmpty()) {
-            // show password prompt dialogue
-            val password = Messages.showPasswordDialog(
-                RemoteFileAccessBundle.message("dialog.RemoteFileAccess.enterPassword.message"),
-                RemoteFileAccessBundle.message(
-                    "dialog.RemoteFileAccess.enterPassword.title",
-                    conf.username,
-                    conf.host,
-                    conf.port
-                )
+        // show password prompt dialogue
+        val password = Messages.showPasswordDialog(
+            RemoteFileAccessBundle.message("dialog.RemoteFileAccess.enterPassword.message"),
+            RemoteFileAccessBundle.message(
+                "dialog.RemoteFileAccess.enterPassword.title",
+                conf.username,
+                conf.host,
+                conf.port
             )
+        )
 
-            if (password != null) {
-                conf.password = password.toCharArray()
-            } else {
-                // it means user cancelled password enter dialog
-                tryConnect = false
-            }
+        if (password != null) {
+            conf.password = password.toCharArray()
+        } else {
+            // it means user cancelled password enter dialog
+            tryConnect = false
         }
     }
     return tryConnect
