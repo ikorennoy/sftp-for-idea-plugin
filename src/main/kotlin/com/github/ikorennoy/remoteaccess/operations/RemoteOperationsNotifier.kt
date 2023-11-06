@@ -20,12 +20,13 @@ class RemoteOperationsNotifier(val project: Project) {
             ).notify(project)
     }
 
-    fun cannotLoadChildren(error: Throwable) {
+    fun cannotLoadChildren(directoryName: String, error: Throwable) {
         getNotificationGroup()
             .createNotification(
                 RemoteFileAccessBundle.message(
                     "notification.RemoteFileAccess.cannotLoadChildren.content",
-                    error.message ?: ""
+                    directoryName,
+                    error.message ?: RemoteFileAccessBundle.unknownReason()
                 ),
                 NotificationType.ERROR
             ).notify(project)
@@ -39,7 +40,7 @@ class RemoteOperationsNotifier(val project: Project) {
                     "notification.RemoteFileAccess.cannotDelete.content",
                     entity,
                     file.getPath(),
-                    error.message ?: ""
+                    error.message ?: RemoteFileAccessBundle.unknownReason()
                 ),
                 NotificationType.ERROR
             ).notify(project)
@@ -52,7 +53,7 @@ class RemoteOperationsNotifier(val project: Project) {
                 RemoteFileAccessBundle.message(
                     "notification.RemoteFileAccess.cannotCreateChildFile.content",
                     newFile,
-                    error.message ?: ""
+                    error.message ?: RemoteFileAccessBundle.unknownReason()
                 ),
                 NotificationType.ERROR
             ).notify(project)
@@ -65,7 +66,7 @@ class RemoteOperationsNotifier(val project: Project) {
                 RemoteFileAccessBundle.message(
                     "notification.RemoteFileAccess.cannotCreateChildDirectory.content",
                     newDir,
-                    ex.message ?: ""
+                    ex.message ?: RemoteFileAccessBundle.unknownReason()
                 ),
                 NotificationType.ERROR
             ).notify(project)
@@ -77,7 +78,7 @@ class RemoteOperationsNotifier(val project: Project) {
                 RemoteFileAccessBundle.message(
                     "notification.RemoteFileAccess.cannotOpenFile.title.content",
                     filePath,
-                    ex.message ?: ""
+                    ex.message ?: RemoteFileAccessBundle.unknownReason()
                 ),
                 NotificationType.ERROR
             ).notify(project)
@@ -97,20 +98,20 @@ class RemoteOperationsNotifier(val project: Project) {
                 RemoteFileAccessBundle.message(
                     "notification.RemoteFileAccess.cannotFindRoot.content",
                     root,
-                    error.message ?: ""
+                    error.message ?: RemoteFileAccessBundle.unknownReason()
                 ),
                 NotificationType.ERROR
             ).notify(project)
     }
 
-    fun errorWhileSavingFileToRemote(fileName: String, error: Throwable) {
+    fun cannotSaveFileToRemote(fileName: String, error: Throwable) {
         getNotificationGroup()
             .createNotification(
                 RemoteFileAccessBundle.message("notification.RemoteFileAccess.fileUploaded.title"),
                 RemoteFileAccessBundle.message(
                     "notification.RemoteFileAccess.cannotUpload.content",
                     fileName,
-                    error.message ?: ""
+                    error.message ?: RemoteFileAccessBundle.unknownReason()
                 ),
                 NotificationType.ERROR
             ).notify(project)

@@ -54,7 +54,7 @@ class UploadToRemoteFileTask(
                                 when (val renameResult = ops.rename(remoteTempFile, remoteOriginalFile)) {
                                     is Ok -> notifier.fileUploaded(remoteOriginalFile.getName())
                                     is Er -> {
-                                        notifier.errorWhileSavingFileToRemote(
+                                        notifier.cannotSaveFileToRemote(
                                             remoteOriginalFile.getName(),
                                             renameResult.error
                                         )
@@ -64,20 +64,20 @@ class UploadToRemoteFileTask(
                             }
 
                             is Er -> {
-                                notifier.errorWhileSavingFileToRemote(remoteOriginalFile.getName(), removeResult.error)
+                                notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), removeResult.error)
                                 ops.remove(remoteTempFile)
                             }
                         }
                     }
 
                     is Er -> {
-                        notifier.errorWhileSavingFileToRemote(remoteOriginalFile.getName(), openOutStreamRes.error)
+                        notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), openOutStreamRes.error)
                         ops.remove(remoteTempFile)
                     }
                 }
             }
 
-            is Er -> notifier.errorWhileSavingFileToRemote(remoteOriginalFile.getName(), prepareRemoteTempRes.error)
+            is Er -> notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), prepareRemoteTempRes.error)
         }
     }
 }

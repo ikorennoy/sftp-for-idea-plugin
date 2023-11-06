@@ -42,7 +42,7 @@ class InitWithModalDialogTask(
                     conf.username,
                     conf.host,
                     conf.port,
-                    failReason?.message ?: ""
+                    failReason?.message ?: RemoteFileAccessBundle.unknownReason()
                 ),
                 RemoteFileAccessBundle.message("dialog.RemoteFileAccess.connection.error.title"),
                 Messages.getErrorIcon()

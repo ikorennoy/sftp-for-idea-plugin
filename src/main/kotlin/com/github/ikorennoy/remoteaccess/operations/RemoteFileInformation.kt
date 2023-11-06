@@ -72,7 +72,7 @@ class RemoteFileInformation(
         return when (val res = RemoteOperations.getInstance(project).getChildren(this)) {
             is Ok -> res.value
             is Er -> {
-                RemoteOperationsNotifier.getInstance(project).cannotLoadChildren(res.error)
+                RemoteOperationsNotifier.getInstance(project).cannotLoadChildren(this.getName(), res.error)
                 emptyArray()
             }
         }
