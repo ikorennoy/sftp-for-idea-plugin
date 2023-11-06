@@ -36,12 +36,12 @@ class TempVirtualFileSystem : VirtualFileSystem() {
         }
     }
 
-    override fun isReadOnly(): Boolean {
-        return false
+    override fun refreshAndFindFileByPath(path: String): VirtualFile? {
+        return findFileByPath(path)
     }
 
-    override fun refreshAndFindFileByPath(path: String): VirtualFile? {
-        return null
+    override fun isReadOnly(): Boolean {
+        return false
     }
 
     override fun addVirtualFileListener(listener: VirtualFileListener) {
@@ -53,7 +53,6 @@ class TempVirtualFileSystem : VirtualFileSystem() {
     }
 
     override fun refresh(asynchronous: Boolean) {
-        throw UnsupportedOperationException("refresh is not supported")
     }
 
     override fun moveFile(requestor: Any?, file: VirtualFile, newParent: VirtualFile) {
