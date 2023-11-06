@@ -37,7 +37,7 @@ class RemoteOperations(private val project: Project) {
      */
     fun initSilently(): Exception? {
         assertNotEdt()
-        return connectionHolder.connect(project)
+        return connectionHolder.connect()
     }
 
     fun initWithModalDialogue() {
@@ -55,7 +55,7 @@ class RemoteOperations(private val project: Project) {
                 ) {
                     override fun run(indicator: ProgressIndicator) {
                         indicator.isIndeterminate = true
-                        failReason = connectionHolder.connect(project)
+                        failReason = connectionHolder.connect()
                     }
 
                     override fun onFinished() {

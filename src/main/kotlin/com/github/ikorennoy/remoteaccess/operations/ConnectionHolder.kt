@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock
 internal const val TIMEOUT_MILLISECONDS = 10000
 
 @Service(Service.Level.PROJECT)
-internal class ConnectionHolder : Disposable {
+internal class ConnectionHolder(private val project: Project) : Disposable {
 
     @Volatile
     private var sftpClient: SFTPClient? = null
@@ -29,16 +29,16 @@ internal class ConnectionHolder : Disposable {
         return localClient.isConnected && localClient.isAuthenticated
     }
 
-    fun connect(project: Project): Exception? {
-        var localClient = sftpClient
+    fun connect(): Exception? {
+        var prevSftpClient = sftpClient
 
-        if (localClient != null) {
+        if (prevSftpClient != null) {
             return null
         }
         try {
             lock.lock()
-            localClient = sftpClient
-            if (localClient != null) {
+            prevSftpClient = sftpClient
+            if (prevSftpClient != null) {
                 return null
             }
 
@@ -46,15 +46,15 @@ internal class ConnectionHolder : Disposable {
 
             val failReason =
                 tryConnect(configuration.host, configuration.port, configuration.username, configuration.password)
-            val clientVal = client
-            return if (clientVal != null) {
+            val localClient = client
+            return if (localClient != null) {
                 val disconnectNotifier = DisconnectNotifier(project)
-                clientVal.transport.disconnectListener = disconnectNotifier
-                val newSftpClient = clientVal.newSFTPClient()
+                localClient.transport.disconnectListener = disconnectNotifier
+                val newSftpClient = localClient.newSFTPClient()
                 sftpClient = newSftpClient
                 null
             } else {
-                // initialization is completely failed, just return false, user is notified by tryConnect
+                // initialization is completely failed, just return false
                 failReason
             }
         } finally {
