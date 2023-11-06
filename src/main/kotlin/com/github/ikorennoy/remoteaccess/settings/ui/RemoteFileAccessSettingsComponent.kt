@@ -36,16 +36,11 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
     private val passwordField = JBPasswordField().also { it.columns = COLUMNS_MEDIUM }
     private val portField: JBTextField = JBTextField(COLUMNS_TINY)
     private val rootField: JBTextField = JBTextField(COLUMNS_MEDIUM)
+    private var connectionTested = false
 
     val panel: JPanel
 
     init {
-        hostField.text = state.host
-        portField.text = state.port.toString()
-        usernameField.text = state.username
-        rootField.text = state.root
-        passwordField.setPasswordIsStored(state.password.isNotEmpty())
-
         panel = panel {
             row {
                 label(RemoteFileAccessBundle.message("settings.RemoteFileAccess.label.host"))
@@ -81,8 +76,11 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                     errorIcon?.visible(false)
                     okIcon?.visible(false)
                     loadingIcon?.visible(true)
+                    connectionTested = true
 
-                    saveState()
+                    if (isModified()) {
+                        saveState()
+                    }
 
                     val clientService = RemoteOperations.getInstance(project)
                     // try to connect
@@ -118,8 +116,17 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
         state.password = passwordField.password
     }
 
+    fun reset() {
+        hostField.text = state.host
+        portField.text = state.port.toString()
+        usernameField.text = state.username
+        rootField.text = state.root
+        passwordField.setPasswordIsStored(state.password.isNotEmpty())
+    }
+
     fun isModified(): Boolean {
-        return state.host != hostField.text ||
+        return connectionTested ||
+                state.host != hostField.text ||
                 state.port.toString() != portField.text ||
                 state.root != rootField.text ||
                 state.username != usernameField.text ||
