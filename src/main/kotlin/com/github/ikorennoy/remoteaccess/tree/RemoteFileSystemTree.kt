@@ -51,16 +51,16 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
         PopupHandler.installPopupMenu(tree, createActionGroup(), "RemoteFileSystemTreePopup")
         tree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
 
-        val editAction = EditRemoteFileTask(project, this)
+        val editTask = EditRemoteFileTask(project, this)
 
         tree.registerKeyboardAction(
-            { performAction(editAction, true) },
+            { performAction(editTask, true) },
             KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
             JComponent.WHEN_FOCUSED
         )
         object : DoubleClickListener() {
             override fun onDoubleClick(event: MouseEvent): Boolean {
-                performAction(editAction, false)
+                performAction(editTask, false)
                 return true
             }
         }.installOn(tree)

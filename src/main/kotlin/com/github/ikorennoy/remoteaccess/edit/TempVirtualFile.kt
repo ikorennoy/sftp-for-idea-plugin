@@ -12,7 +12,7 @@ import java.io.OutputStream
 
 class TempVirtualFile(
     private val name: String,
-    private val fileSystem: TempVirtualFileSystem,
+    private val tempFs: TempVirtualFileSystem,
     val remoteFile: RemoteFileInformation,
     val localTempFile: File
 ) : VirtualFile() {
@@ -21,7 +21,7 @@ class TempVirtualFile(
 
     private val parent: VirtualFile = object : BinaryLightVirtualFile("") {
         override fun getFileSystem(): VirtualFileSystem {
-            return this@TempVirtualFile.fileSystem
+            return this@TempVirtualFile.tempFs
         }
 
         override fun isWritable(): Boolean {
@@ -42,7 +42,7 @@ class TempVirtualFile(
     }
 
     override fun getFileSystem(): VirtualFileSystem {
-        return fileSystem
+        return tempFs
     }
 
     override fun getPath(): String {
@@ -95,7 +95,7 @@ class TempVirtualFile(
     }
 
     override fun delete(requestor: Any?) {
-        fileSystem.deleteFile(requestor, this)
+        tempFs.deleteFile(requestor, this)
     }
 
     override fun getInputStream(): InputStream {

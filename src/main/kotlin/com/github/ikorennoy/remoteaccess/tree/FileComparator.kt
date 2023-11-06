@@ -28,7 +28,7 @@ internal class FileComparator : Comparator<NodeDescriptor<*>> {
                 1
             }
         }
-        throw IllegalArgumentException("not supported NodeDescriptor: ${nodeDescriptor::class.java}")
+        throw IllegalArgumentException("Not supported NodeDescriptor: ${nodeDescriptor::class.java}")
     }
 
     companion object {

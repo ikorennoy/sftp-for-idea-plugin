@@ -11,16 +11,16 @@ import com.intellij.openapi.project.Project
 class RemoteEditService(private val project: Project) {
 
     fun downloadAndOpenFile(tree: RemoteFileSystemTree) {
-        val downloadAndOpen = DownloadAndOpenFileTask(project, tree)
+        val downloadAndOpenTask = DownloadAndOpenFileTask(project, tree)
         CommandProcessor.getInstance().executeCommand(project, {
-            downloadAndOpen.queue()
+            downloadAndOpenTask.queue()
         }, RemoteFileAccessBundle.message("command.RemoteFileAccess.downloadAndOpenFile.name"), null)
     }
 
     fun uploadFileToRemote(localTempFile: TempVirtualFile) {
-        val upload = UploadToRemoteFileTask(project, localTempFile)
+        val uploadTask = UploadToRemoteFileTask(project, localTempFile)
         CommandProcessor.getInstance().executeCommand(project, {
-            upload.queue()
+            uploadTask.queue()
         }, RemoteFileAccessBundle.message("command.RemoteFileAccess.uploadFileToRemote.name"), null)
     }
 
