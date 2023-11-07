@@ -28,14 +28,14 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
     private val lock = ReentrantLock()
 
     fun isInitializedAndConnected(): Boolean {
-        return checkClientsInitializedAndConnected(sshClient, sftpClient)
+        return isInitializedAndConnectedInternal(sshClient, sftpClient)
     }
 
     fun connect(): Exception? {
         var prevSshClient = sshClient
         var prevSftpClient = sftpClient
 
-        if (checkClientsInitializedAndConnected(prevSshClient, prevSftpClient)) {
+        if (isInitializedAndConnectedInternal(prevSshClient, prevSftpClient)) {
             return null
         }
         try {
@@ -43,7 +43,7 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
             prevSftpClient = sftpClient
             prevSshClient = sshClient
 
-            if (checkClientsInitializedAndConnected(prevSshClient, prevSftpClient)) {
+            if (isInitializedAndConnectedInternal(prevSshClient, prevSftpClient)) {
                 return null
             }
             val conf = RemoteFileAccessSettingsState.getInstance(project)
@@ -114,7 +114,7 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
         throw IOException("Connection is not initialized")
     }
 
-    private fun checkClientsInitializedAndConnected(sshClient: SSHClient?, sftpClient: SFTPClient?): Boolean {
+    private fun isInitializedAndConnectedInternal(sshClient: SSHClient?, sftpClient: SFTPClient?): Boolean {
         return sshClient != null && sshClient.isConnected && sshClient.isAuthenticated && sftpClient != null
     }
 
