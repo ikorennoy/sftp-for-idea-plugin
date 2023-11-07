@@ -38,19 +38,21 @@ class DownloadAndOpenFileTask(
             OpenFileDescriptor(project, possibleLocalTempFile)
         } else {
             val remoteOperations = RemoteOperations.getInstance(project)
-
+            indicator.checkCanceled()
             when (val res = remoteOperations.fileInputStream(remoteFileToEdit)) {
                 is Ok -> {
                     val remoteFileInputStream = res.value
                     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+
+                    indicator.checkCanceled()
                     val newLocalTempFile = FileUtil.createTempFile(remoteFileToEdit.getName(), ".tmp", false)
                     this.localTempFile = newLocalTempFile
 
                     newLocalTempFile.outputStream().use { localFileOutputStream ->
                         remoteFileInputStream.use { remoteFileInputStream ->
+                            indicator.text = remoteFileToEdit.getPath()
                             var read = remoteFileInputStream.read(buffer)
                             var readTotal = read
-                            indicator.text = remoteFileToEdit.getPath()
                             while (read != -1) {
                                 indicator.checkCanceled()
                                 localFileOutputStream.write(buffer, 0, read)
@@ -73,6 +75,9 @@ class DownloadAndOpenFileTask(
         }
 
         if (toOpen != null) {
+            // to check if file is writable we need to make one more request to the server
+            // we have to do it here because otherwise it will be done on EDT during file opening
+            toOpen.file.isWritable
             ApplicationManager.getApplication().invokeLater {
                 toOpen.navigate(true)
             }

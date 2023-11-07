@@ -1,6 +1,9 @@
 package com.github.ikorennoy.remoteaccess.edit
 
+import com.github.ikorennoy.remoteaccess.Er
+import com.github.ikorennoy.remoteaccess.Ok
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
+import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
@@ -18,6 +21,7 @@ class TempVirtualFile(
 ) : VirtualFile() {
 
     private val modificationTimestamp: Long = LocalTimeCounter.currentTime()
+    private val isFileWritable by lazy { isWritableInternal() }
 
     private val parent: VirtualFile = object : BinaryLightVirtualFile("") {
         override fun getFileSystem(): VirtualFileSystem {
@@ -51,7 +55,7 @@ class TempVirtualFile(
     }
 
     override fun isWritable(): Boolean {
-        return true
+        return isFileWritable
     }
 
     override fun isDirectory(): Boolean {
@@ -100,5 +104,16 @@ class TempVirtualFile(
 
     override fun getInputStream(): InputStream {
         return localTempFile.inputStream()
+    }
+
+    private fun isWritableInternal(): Boolean {
+        val ops = RemoteOperations.getInstance(remoteFile.project)
+        return when (val isFileWritable = ops.isFileWritable(remoteFile)) {
+            is Ok -> isFileWritable.value
+            is Er -> {
+                // to be on a safe side just return false
+                false
+            }
+        }
     }
 }

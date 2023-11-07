@@ -207,6 +207,25 @@ class RemoteOperations(private val project: Project) {
         }
     }
 
+    /**
+     * We need to make sure that we have write and execute permissions for dir
+     * And write permission for file. To check it we run:
+     * test -w PARENT_DIR -a -x PARENT_DIR -a -w TARGET_FILE
+     */
+    fun isFileWritable(file: RemoteFileInformation): Outcome<Boolean> {
+        assertNotEdt()
+        return try {
+            val parent = file.getParent() ?: return Ok(false)
+            val session = connectionHolder.getSessionClient()
+            val commandResult =
+                session.exec("test -w ${parent.getPath()} -a -x ${parent.getPath()} -a -w ${file.getPath()}")
+            commandResult.close()
+            Ok(commandResult.exitStatus == 0)
+        } catch (ex: IOException) {
+            Er(ex)
+        }
+    }
+
     fun getFileAttributes(file: String): FileAttributes? {
         assertNotEdt()
         return try {

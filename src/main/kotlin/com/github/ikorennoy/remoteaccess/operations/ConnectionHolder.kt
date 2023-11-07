@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import net.schmizz.sshj.SSHClient
+import net.schmizz.sshj.connection.channel.direct.Session
 import net.schmizz.sshj.sftp.SFTPClient
 import java.io.IOException
 import java.util.concurrent.locks.ReentrantLock
@@ -60,6 +61,20 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
         } finally {
             lock.unlock()
         }
+    }
+
+    fun getSessionClient(): Session {
+        return getSshClient().startSession()
+    }
+
+    fun getSshClient(): SSHClient {
+        val res = client
+
+        if (res != null) {
+            return res
+        }
+
+        throw IOException("Connection is not initialized")
     }
 
     fun getSftpClient(): SFTPClient {

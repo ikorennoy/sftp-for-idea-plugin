@@ -5,6 +5,7 @@ import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -45,6 +46,21 @@ class RemoteEditEditorPanel(
         RemoteFileAccessBundle.messagePointer("action.RemoteFileAccess.upload.text"),
         AllIcons.Actions.MenuSaveall
     ) {
+
+        override fun getActionUpdateThread(): ActionUpdateThread {
+            return ActionUpdateThread.BGT
+        }
+
+        override fun update(e: AnActionEvent) {
+            val project = e.project ?: return
+            FileDocumentManager.getInstance()
+            val files = FileEditorManager.getInstance(project).selectedFiles
+            for (file in files) {
+                if (file is TempVirtualFile) {
+                    e.presentation.isEnabled = file.isWritable
+                }
+            }
+        }
 
         override fun actionPerformed(e: AnActionEvent) {
             val project = e.project ?: return
