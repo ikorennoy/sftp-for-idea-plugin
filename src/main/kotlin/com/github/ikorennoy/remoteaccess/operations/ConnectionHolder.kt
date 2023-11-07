@@ -55,7 +55,7 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
                 sftpClient = newSftpClient
                 null
             } else {
-                // initialization is completely failed, just return false
+                // initialization is completely failed, just return the error
                 failReason
             }
         } finally {

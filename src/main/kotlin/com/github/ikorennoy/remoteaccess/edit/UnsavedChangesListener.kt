@@ -20,7 +20,7 @@ class UnsavedChangesListener : FileEditorManagerListener.Before {
                     RemoteFileAccessBundle.message("dialog.RemoteFileAccess.beforeFileClosed.cancelText"),
                     Messages.getQuestionIcon()
                 )
-                // regardless of the user response, just save the cached document,
+                // regardless of a user response, just save a cached document,
                 // otherwise the platform will try to save it even after
                 // the CleanupTempFsListener.fileClosed() event, and we will get a weird error
                 val document = documentManager.getCachedDocument(file)
