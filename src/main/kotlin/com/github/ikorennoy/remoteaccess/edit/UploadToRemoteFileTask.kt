@@ -47,17 +47,19 @@ class UploadToRemoteFileTask(
         val notifier = RemoteOperationsNotifier.getInstance(project)
         var needToRemoveRemoteTempFile = false
         // find a name for a temp file and crate it
+        indicator.checkCanceled()
         when (val prepareRemoteTempRes = remoteOperations.prepareTempFile(remoteOriginalFile)) {
             is Ok -> {
                 val newRemoteTempFile = prepareRemoteTempRes.value
                 remoteTempFile = newRemoteTempFile
                 // open new temp file for writing, and write content into it
+                indicator.checkCanceled()
                 when (val openOutStreamRes = remoteOperations.fileOutputStream(newRemoteTempFile)) {
                     is Ok -> {
                         val remoteTempFileOutStream = openOutStreamRes.value
                         val size = localTempVirtualFile.length.toDouble()
                         val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-
+                        indicator.text = remoteOriginalFile.getPresentablePath()
                         remoteTempFileOutStream.use { remoteFileOs ->
                             localTempVirtualFile.inputStream.use { localFileIs ->
                                 var writtenTotal = 0.0

@@ -2,6 +2,7 @@ package com.github.ikorennoy.remoteaccess.operations
 
 import com.github.ikorennoy.remoteaccess.Er
 import com.github.ikorennoy.remoteaccess.Ok
+import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VFileProperty
 import net.schmizz.sshj.sftp.FileMode
@@ -29,6 +30,11 @@ class RemoteFileInformation(
     fun getLength(): Long = remoteFile.attributes.size
 
     fun getPresentableName(): String = remoteFile.name
+
+    fun getPresentablePath(): String {
+        val conf = RemoteFileAccessSettingsState.getInstance(project)
+        return "sftp://${conf.username}@${conf.host}${remoteFile.path}"
+    }
 
     fun `is`(property: VFileProperty): Boolean {
         return when (property) {

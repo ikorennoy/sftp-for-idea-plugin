@@ -50,7 +50,7 @@ class DownloadAndOpenFileTask(
 
                     newLocalTempFile.outputStream().use { localFileOutputStream ->
                         remoteFileInputStream.use { remoteFileInputStream ->
-                            indicator.text = remoteFileToEdit.getPath()
+                            indicator.text = remoteFileToEdit.getPresentablePath()
                             var read = remoteFileInputStream.read(buffer)
                             var readTotal = read
                             while (read != -1) {
