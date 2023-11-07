@@ -177,7 +177,7 @@ class RemoteOperations(private val project: Project) {
     fun prepareTempFile(forFile: RemoteFileInformation): Outcome<RemoteFileInformation> {
         assertNotEdt()
         var attempt = 0
-        val parent = forFile.getParent() ?: return Er(IOException("Can't get file ${forFile.getPath()} parent"))
+        val parent = forFile.getParent() ?: return Er(IOException("Can't get a file ${forFile.getPath()} parent"))
         var tempFileAbsolutePath = prepareTempPath(parent.getPath(), forFile)
         while (true) {
             val res = createAndOpenFile(tempFileAbsolutePath)
