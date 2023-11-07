@@ -178,14 +178,14 @@ class RemoteOperations(private val project: Project) {
         assertNotEdt()
         var attempt = 0
         val parent = forFile.getParent() ?: return Er(IOException("Can't get file ${forFile.getPath()} parent"))
-        var tempFileAbsolutePath = prepareTempPath(forFile, parent)
+        var tempFileAbsolutePath = prepareTempPath(parent.getPath(), forFile)
         while (true) {
             val res = createAndOpenFile(tempFileAbsolutePath)
             when (res) {
                 is Ok -> return res
                 is Er -> {
                     attempt++
-                    tempFileAbsolutePath = prepareTempPath(forFile, parent)
+                    tempFileAbsolutePath = prepareTempPath(parent.getPath(), forFile)
                 }
             }
             // try 5 times
@@ -242,12 +242,14 @@ class RemoteOperations(private val project: Project) {
         }
     }
 
-    private fun prepareTempPath(file: RemoteFileInformation, parent: RemoteFileInformation): String {
-        return if (file.`is`(VFileProperty.HIDDEN)) {
-            "${parent.getPath()}/${file.getName()}.tmp"
+    private fun prepareTempPath(parentPath: String, file: RemoteFileInformation): String {
+        val tempFileName = if (file.`is`(VFileProperty.HIDDEN)) {
+            "${file.getName()}.tmp"
         } else {
-            "${parent.getPath()}/.${file.getName()}.tmp"
+            ".${file.getName()}.tmp"
         }
+
+        return computeNewPath(parentPath, tempFileName)
     }
 
     private fun getPathComponents(path: String): PathComponents {
@@ -259,7 +261,7 @@ class RemoteOperations(private val project: Project) {
     }
 
     private fun computeNewPath(parentPath: String, newName: String): String {
-        return if (parentPath == "/") {
+        return if (parentPath.endsWith("/")) {
             "$parentPath$newName"
         } else {
             "$parentPath/$newName"
