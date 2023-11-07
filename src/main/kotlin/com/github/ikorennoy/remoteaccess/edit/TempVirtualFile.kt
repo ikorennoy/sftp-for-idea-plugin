@@ -50,8 +50,7 @@ class TempVirtualFile(
     }
 
     override fun getPath(): String {
-        val conf = RemoteFileAccessSettingsState.getInstance(remoteFile.project)
-        return "sftp://${conf.username}@${conf.host}${remoteFile.getPath()}"
+        return remoteFile.getPresentablePath()
     }
 
     override fun isWritable(): Boolean {
