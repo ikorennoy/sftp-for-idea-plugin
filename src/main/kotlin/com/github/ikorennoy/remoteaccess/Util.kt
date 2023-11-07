@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remoteaccess
 
-import com.github.ikorennoy.remoteaccess.operations.ConnectionListener
+import com.github.ikorennoy.remoteaccess.tree.TreeStateListener
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessConfigurable
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 
 fun notifyRebuildTree() {
-    ApplicationManager.getApplication().messageBus.syncPublisher(ConnectionListener.TOPIC)
-        .connectionStatusChanged()
+    ApplicationManager.getApplication().messageBus.syncPublisher(TreeStateListener.TOPIC)
+        .updateTree()
 }
 
 fun prepareConfiguration(project: Project): Boolean {
