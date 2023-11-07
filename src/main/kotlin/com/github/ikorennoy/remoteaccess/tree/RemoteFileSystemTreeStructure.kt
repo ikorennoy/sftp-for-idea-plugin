@@ -107,4 +107,8 @@ class RemoteFileSystemTreeStructure(
     internal fun setTreeMode(treeMode: StructureTreeModel<RemoteFileSystemTreeStructure>) {
         myTreeModel = treeMode
     }
+
+    internal fun clear() {
+        dirsWithNoReadPermission.clear()
+    }
 }

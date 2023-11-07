@@ -38,11 +38,12 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
 
     private val treeModel: StructureTreeModel<RemoteFileSystemTreeStructure>
     private val asyncTreeModel: AsyncTreeModel
+    private val remoteTreeStructure: RemoteFileSystemTreeStructure
 
     val tree: JTree
 
     init {
-        val remoteTreeStructure = RemoteFileSystemTreeStructure(project)
+        remoteTreeStructure = RemoteFileSystemTreeStructure(project)
         treeModel = StructureTreeModel(remoteTreeStructure, FileComparator.getInstance(), this)
         remoteTreeStructure.setTreeMode(treeModel)
         asyncTreeModel = AsyncTreeModel(treeModel, this)
@@ -144,8 +145,13 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
         )
     }
 
-    fun update() {
+    /**
+     * Invalidate the tree and clear the state of the structure
+     * Used when there are changes in connection
+     */
+    fun invalidate() {
         treeModel.invalidateAsync()
+        remoteTreeStructure.clear()
     }
 
     override fun dispose() {
@@ -158,6 +164,13 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
 
     fun select(file: RemoteFileInformation) {
         treeModel.select(file, tree) {}
+    }
+
+    /**
+     * Rebuild the tree, used on adding new file/dir
+     */
+    private fun update() {
+        treeModel.invalidateAsync()
     }
 
     private fun updateAndSelect(file: RemoteFileInformation) {

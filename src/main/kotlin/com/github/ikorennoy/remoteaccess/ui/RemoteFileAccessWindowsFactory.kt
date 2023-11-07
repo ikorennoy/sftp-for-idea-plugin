@@ -50,7 +50,7 @@ class RemoteFileAccessWindowsFactory : ToolWindowFactory, DumbAware {
             .subscribe(ConnectionListener.TOPIC, object : ConnectionListener {
                 override fun connectionStatusChanged() {
                     ApplicationManager.getApplication().invokeLater {
-                        fsTree.update()
+                        fsTree.invalidate()
                     }
                 }
             })
