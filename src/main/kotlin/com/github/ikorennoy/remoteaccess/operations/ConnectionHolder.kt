@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.connection.channel.direct.Session
 import net.schmizz.sshj.sftp.SFTPClient
+import net.schmizz.sshj.transport.verification.OpenSSHKnownHosts
+import java.io.File
 import java.io.IOException
 import java.util.concurrent.locks.ReentrantLock
 
@@ -113,7 +115,7 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
             newClient.connectTimeout = TIMEOUT_MILLISECONDS
             newClient.timeout = TIMEOUT_MILLISECONDS
             newClient.useCompression()
-            newClient.loadKnownHosts()
+            loadKnownHosts(newClient)
             newClient.connect(host, port)
             newClient.authPassword(username, password)
             client = newClient
@@ -125,6 +127,27 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
             }
         }
         return failReason
+    }
+
+    /**
+     * Copied from [SSHClient.loadKnownHosts]
+     */
+    private fun loadKnownHosts(client: SSHClient) {
+        var loaded = false
+        val sshDir = OpenSSHKnownHosts.detectSSHDir()
+        if (sshDir != null) {
+            for (hostFile in listOf(File(sshDir, "known_hosts"), File(sshDir, "known_hosts2"))) {
+                try {
+                    if (hostFile.exists()) {
+                        client.addHostKeyVerifier(ModalDialogHostKeyVerifier(project, hostFile))
+                    }
+                    loaded = true
+                } catch (e: IOException) {
+                    // Ignore for now
+                }
+            }
+        }
+        if (!loaded) throw IOException("Could not load known_hosts")
     }
 
     companion object {
