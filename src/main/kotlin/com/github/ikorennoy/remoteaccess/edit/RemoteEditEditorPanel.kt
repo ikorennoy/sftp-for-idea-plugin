@@ -4,8 +4,10 @@ import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
@@ -13,9 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.EditorNotificationPanel
-import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
-import java.awt.Dimension
 
 class RemoteEditEditorPanel(
     editor: FileEditor
@@ -34,15 +34,6 @@ class RemoteEditEditorPanel(
             .createActionToolbar("RemoteEditorEditPanelToolbar", toolbarGroup, true) as ActionToolbarImpl
         actionToolbar.targetComponent = myLinksPanel
         myLinksPanel.add(actionToolbar)
-    }
-
-    private fun createButton(action: AnAction): ActionButton {
-        val icon = action.templatePresentation.icon
-        val width = icon.iconWidth
-        val height = icon.iconHeight
-        val button = ActionButton(action, null, "unknown", Dimension(width, height))
-        button.setIconInsets(JBUI.insets(0, 3))
-        return button
     }
 
     private class UploadAction : DumbAwareAction(
