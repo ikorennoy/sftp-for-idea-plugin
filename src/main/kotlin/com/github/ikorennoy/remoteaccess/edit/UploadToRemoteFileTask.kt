@@ -10,6 +10,7 @@ import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import java.io.IOException
 
 class UploadToRemoteFileTask(
     private val project: Project,
@@ -23,16 +24,34 @@ class UploadToRemoteFileTask(
     @Volatile
     var remoteTempFile: RemoteFileInformation? = null
 
+
+    /**
+     * This method unloads a file that the user edited and then closed the editor window or requested to be unloaded.
+     * It creates a temporary (with a .tmp suffix) hidden (name starts with . if necessary) file in the
+     * same directory as the file being edited, then loads the new content into the temporary file, deletes the
+     * original file, and performs a rename operation. <p/>
+     *
+     * Because of the SFTP specification, renaming to an existing file doesn't work, so we have to delete
+     * the original file. Also, we can't create a temporary file in a designated directory because,
+     * according to the SFTP specification, the rename operation will fail if the src and dst files
+     * are on different file systems.<p/>
+     *
+     * If something goes wrong during this operation at the deletion stage of the original file,
+     * we want to keep our temporary file in the same directory as the file being edited so that the user has
+     * a small chance of recovering the lost content.
+     *
+     */
     override fun run(indicator: ProgressIndicator) {
         val remoteOriginalFile = localTempVirtualFile.remoteFile
         val remoteOperations = RemoteOperations.getInstance(project)
         val notifier = RemoteOperationsNotifier.getInstance(project)
-        var needToRemoteRemoteTempFile = false
-        // open a temp file and upload new content into it
+        var needToRemoveRemoteTempFile = false
+        // find a name for a temp file and crate it
         when (val prepareRemoteTempRes = remoteOperations.prepareTempFile(remoteOriginalFile)) {
             is Ok -> {
                 val newRemoteTempFile = prepareRemoteTempRes.value
                 remoteTempFile = newRemoteTempFile
+                // open new temp file for writing, and write content into it
                 when (val openOutStreamRes = remoteOperations.fileOutputStream(newRemoteTempFile)) {
                     is Ok -> {
                         val remoteTempFileOutStream = openOutStreamRes.value
@@ -53,48 +72,79 @@ class UploadToRemoteFileTask(
                             }
                         }
 
-                        // because most sftp implementations don't support atomic rename
-                        // we have to remove the original file and then do rename
-                        // rm original file
                         indicator.checkCanceled()
+                        // remove the original file
                         when (val removeRes = remoteOperations.remove(remoteOriginalFile)) {
                             is Ok -> {
-                                // move a file
+                                // at this point we don't want to remove the tmp file
+                                // if everything goes well, it will be renamed to the original file
+                                // if something goes wrong, we want to keep a small chance for user
+                                // to restore a content
+                                needToRemoveRemoteTempFile = false
+
+                                // rename the temp file into the original file
                                 when (val renameRes = remoteOperations.rename(newRemoteTempFile, remoteOriginalFile)) {
                                     is Ok -> notifier.fileUploaded(remoteOriginalFile.getName())
+
+                                    // fail on renaming the temp file the into original file branch
                                     is Er -> {
                                         notifier.cannotSaveFileToRemote(
                                             remoteOriginalFile.getName(),
                                             renameRes.error
                                         )
-                                        needToRemoteRemoteTempFile = true
                                     }
                                 }
                             }
 
+                            // fail on removing the original file branch
                             is Er -> {
                                 notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), removeRes.error)
-                                needToRemoteRemoteTempFile = true
+                                needToRemoveRemoteTempFile = true
                             }
                         }
                     }
 
+                    // fail on opening the temp file for writing branch
                     is Er -> {
                         notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), openOutStreamRes.error)
-                        needToRemoteRemoteTempFile = true
+                        needToRemoveRemoteTempFile = true
                     }
                 }
-                if (needToRemoteRemoteTempFile) {
+                if (needToRemoveRemoteTempFile) {
                     ProcessIOExecutorService.INSTANCE.execute {
                         remoteOperations.remove(newRemoteTempFile)
                     }
                 }
             }
+
+            // fail on creating a temp file branch
             is Er -> notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), prepareRemoteTempRes.error)
         }
     }
 
+    /**
+     * We're not allowing to cancel between remove and rename, so it's safe to remove a temp file here
+     */
     override fun onCancel() {
+        removeRemoteTempFile()
+    }
+
+    /**
+     * We're processing most of the feasible exceptions from the sftp
+     * We could end up here if we got an error while we were uploading content to a temp file, so it's safe to remove it.
+     *
+     * Or we could get an error that we can't handle in a reasonable way, so probably in that case it's better
+     * to keep the temp file
+     */
+    override fun onThrowable(error: Throwable) {
+        if (error is IOException) {
+            removeRemoteTempFile()
+        }
+        super.onThrowable(error)
+    }
+
+
+    private fun removeRemoteTempFile() {
         if (remoteTempFile != null) {
             val remoteTempFile = remoteTempFile ?: return
             val remoteOperations = RemoteOperations.getInstance(project)

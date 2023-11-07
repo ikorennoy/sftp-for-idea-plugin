@@ -10,6 +10,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VFileProperty
 import net.schmizz.sshj.sftp.*
 import java.awt.EventQueue
 import java.io.IOException
@@ -173,31 +174,18 @@ class RemoteOperations(private val project: Project) {
         }
     }
 
-    fun createAndOpenFile(filePath: String): Outcome<RemoteFileInformation> {
-        assertNotEdt()
-        return try {
-            val newFile = sftpClient.open(filePath, createAndOpenIfNotExistFlags)
-            val result = RemoteFileInformation(
-                RemoteResourceInfo(getPathComponents(newFile.path), newFile.fetchAttributes()),
-                project
-            )
-            newFile.close()
-            Ok(result)
-        } catch (ex: IOException) {
-            Er(ex)
-        }
-    }
-
     fun prepareTempFile(forFile: RemoteFileInformation): Outcome<RemoteFileInformation> {
+        assertNotEdt()
         var attempt = 0
-        var name = "/tmp/${forFile.getName()}.tmp"
+        val parent = forFile.getParent() ?: return Er(IOException("Can't get file ${forFile.getPath()} parent"))
+        var tempFileAbsolutePath = prepareTempPath(forFile, parent)
         while (true) {
-            val res = createAndOpenFile(name)
+            val res = createAndOpenFile(tempFileAbsolutePath)
             when (res) {
                 is Ok -> return res
                 is Er -> {
                     attempt++
-                    name = "/tmp/${forFile.getName()}-${attempt}.tmp"
+                    tempFileAbsolutePath = prepareTempPath(forFile, parent)
                 }
             }
             // try 5 times
@@ -240,8 +228,29 @@ class RemoteOperations(private val project: Project) {
         connectionHolder.disconnect()
     }
 
+    private fun createAndOpenFile(filePath: String): Outcome<RemoteFileInformation> {
+        return try {
+            val newFile = sftpClient.open(filePath, createAndOpenIfNotExistFlags)
+            val result = RemoteFileInformation(
+                RemoteResourceInfo(getPathComponents(newFile.path), newFile.fetchAttributes()),
+                project
+            )
+            newFile.close()
+            Ok(result)
+        } catch (ex: IOException) {
+            Er(ex)
+        }
+    }
+
+    private fun prepareTempPath(file: RemoteFileInformation, parent: RemoteFileInformation): String {
+        return if (file.`is`(VFileProperty.HIDDEN)) {
+            "${parent.getPath()}/${file.getName()}.tmp"
+        } else {
+            "${parent.getPath()}/.${file.getName()}.tmp"
+        }
+    }
+
     private fun getPathComponents(path: String): PathComponents {
-        assertNotEdt()
         return try {
             sftpClient.sftpEngine.pathHelper.getComponents(path)
         } catch (ex: IOException) {
