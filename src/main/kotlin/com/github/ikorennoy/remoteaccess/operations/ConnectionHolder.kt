@@ -23,42 +23,48 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
     private var sftpClient: SFTPClient? = null
 
     @Volatile
-    private var client: SSHClient? = null
+    private var sshClient: SSHClient? = null
 
     private val lock = ReentrantLock()
 
     fun isInitializedAndConnected(): Boolean {
-        val localClient = client ?: return false
-        return localClient.isConnected && localClient.isAuthenticated
+        return checkClientsInitializedAndConnected(sshClient, sftpClient)
     }
 
     fun connect(): Exception? {
+        var prevSshClient = sshClient
         var prevSftpClient = sftpClient
 
-        if (prevSftpClient != null) {
+        if (checkClientsInitializedAndConnected(prevSshClient, prevSftpClient)) {
             return null
         }
         try {
             lock.lock()
             prevSftpClient = sftpClient
-            if (prevSftpClient != null) {
+            prevSshClient = sshClient
+
+            if (checkClientsInitializedAndConnected(prevSshClient, prevSftpClient)) {
                 return null
             }
-
             val conf = RemoteFileAccessSettingsState.getInstance(project)
 
+            sshClient = null
+            sftpClient = null
             val failReason =
                 tryConnect(conf.host, conf.port, conf.username, conf.password)
-            val localClient = client
-            return if (localClient != null) {
-                val disconnectNotifier = DisconnectNotifier(project)
-                localClient.transport.disconnectListener = disconnectNotifier
-                val newSftpClient = localClient.newSFTPClient()
-                sftpClient = newSftpClient
-                null
-            } else {
-                // initialization is completely failed, just return the error
+            return if (failReason != null) {
                 failReason
+            } else {
+                val localClient = sshClient
+                if (localClient != null) {
+                    val disconnectNotifier = DisconnectNotifier(project)
+                    localClient.transport.disconnectListener = disconnectNotifier
+                    val newSftpClient = localClient.newSFTPClient()
+                    sftpClient = newSftpClient
+                    null
+                } else {
+                    IOException("Fail reason is null, but client is null as well")
+                }
             }
         } finally {
             lock.unlock()
@@ -67,16 +73,6 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
 
     fun getSessionClient(): Session {
         return getSshClient().startSession()
-    }
-
-    fun getSshClient(): SSHClient {
-        val res = client
-
-        if (res != null) {
-            return res
-        }
-
-        throw IOException("Connection is not initialized")
     }
 
     fun getSftpClient(): SFTPClient {
@@ -93,11 +89,11 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
         try {
             lock.lock()
             val sft = sftpClient ?: return
-            val ssh = client ?: throw IllegalStateException("Sfp client is not null, but ssh is null")
+            val ssh = sshClient ?: throw IllegalStateException("Sfp client is not null, but ssh is null")
             sft.close()
             ssh.close()
             sftpClient = null
-            client = null
+            sshClient = null
         } catch (_: IOException) {
         } finally {
             lock.unlock()
@@ -106,6 +102,20 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
 
     override fun dispose() {
         disconnect()
+    }
+
+    private fun getSshClient(): SSHClient {
+        val res = sshClient
+
+        if (res != null) {
+            return res
+        }
+
+        throw IOException("Connection is not initialized")
+    }
+
+    private fun checkClientsInitializedAndConnected(sshClient: SSHClient?, sftpClient: SFTPClient?): Boolean {
+        return sshClient != null && sshClient.isConnected && sshClient.isAuthenticated && sftpClient != null
     }
 
     private fun tryConnect(host: String, port: Int, username: String, password: CharArray): Exception? {
@@ -118,9 +128,11 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
             loadKnownHosts(newClient)
             newClient.connect(host, port)
             newClient.authPassword(username, password)
-            client = newClient
+            sshClient = newClient
         } catch (ex: IOException) {
             failReason = ex
+            sshClient = null
+            sftpClient = null
             try {
                 newClient.close()
             } catch (_: IOException) {

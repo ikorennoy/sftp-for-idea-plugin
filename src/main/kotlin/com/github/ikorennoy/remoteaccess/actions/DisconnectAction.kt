@@ -23,7 +23,6 @@ class DisconnectAction : DumbAwareAction(
         e.presentation.isEnabled = RemoteOperations.getInstance(project).isInitializedAndConnected()
     }
 
-    // todo add warning about open files
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         ProcessIOExecutorService.INSTANCE.execute {
