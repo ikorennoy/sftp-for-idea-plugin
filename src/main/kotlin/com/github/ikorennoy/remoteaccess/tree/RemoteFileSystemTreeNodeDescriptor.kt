@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
-import com.intellij.ui.IconManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.util.PlatformIcons
 import javax.swing.Icon
@@ -51,7 +50,7 @@ class RemoteFileSystemTreeNodeDescriptor(
         }
 
         val icon = if (element.isDirectory()) {
-            IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
+            PlatformIcons.FOLDER_ICON
         } else {
             FileTypeRegistry.getInstance().getFileTypeByFileName(element.getName()).icon
         }
