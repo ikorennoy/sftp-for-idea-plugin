@@ -12,17 +12,18 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.EditorNotificationPanel
 import java.awt.BorderLayout
 
 class RemoteEditEditorPanel(
-    editor: FileEditor
+    editor: FileEditor,
 ) : EditorNotificationPanel(editor, getToolbarBackground(), null, Status.Info) {
 
     init {
-        val saveAction = UploadAction()
+        val saveAction = UploadAction(editor)
         saveAction.registerCustomShortcutSet(
             ActionManager.getInstance().getAction("SaveAll").shortcutSet,
             editor.component
@@ -36,7 +37,7 @@ class RemoteEditEditorPanel(
         myLinksPanel.add(actionToolbar)
     }
 
-    private class UploadAction : DumbAwareAction(
+    private class UploadAction(private val editor: FileEditor) : DumbAwareAction(
         RemoteFileAccessBundle.messagePointer("action.RemoteFileAccess.upload.text"),
         AllIcons.Actions.MenuSaveall
     ) {
@@ -46,12 +47,16 @@ class RemoteEditEditorPanel(
         }
 
         override fun update(e: AnActionEvent) {
-            val project = e.project ?: return
-            FileDocumentManager.getInstance()
-            val files = FileEditorManager.getInstance(project).selectedFiles
-            for (file in files) {
-                if (file is TempVirtualFile) {
-                    e.presentation.isEnabled = file.isWritable
+            if (editor is LargeFileEditorProvider.LargeTextFileEditor) {
+                e.presentation.isEnabled = false
+            } else {
+                val project = e.project ?: return
+                FileDocumentManager.getInstance()
+                val files = FileEditorManager.getInstance(project).selectedFiles
+                for (file in files) {
+                    if (file is TempVirtualFile) {
+                        e.presentation.isEnabled = file.isWritable
+                    }
                 }
             }
         }
