@@ -67,7 +67,6 @@ class RemoteFileInformation(
         return when (val res = RemoteOperations.getInstance(project).resolveOriginalFileAttributes(getPath())) {
             is Ok -> res.value
             is Er -> {
-                RemoteOperationsNotifier.getInstance(project).cannotResolveOriginalFileAttributes(getPath(), res.error)
                 null
             }
         }

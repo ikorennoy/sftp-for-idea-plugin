@@ -32,18 +32,6 @@ class RemoteOperationsNotifier(val project: Project) {
             ).notify(project)
     }
 
-    fun cannotResolveOriginalFileAttributes(filePath: String, error: Throwable) {
-        getNotificationGroup()
-            .createNotification(
-                RemoteFileAccessBundle.message(
-                    "notification.RemoteFileAccess.cannotResolveOriginalFileAttributes.text",
-                    filePath,
-                    error.message ?: RemoteFileAccessBundle.unknownReason()
-                ),
-                NotificationType.ERROR
-            ).notify(project)
-    }
-
     fun cannotDelete(file: RemoteFileInformation, error: Throwable, entity: String) {
         getNotificationGroup()
             .createNotification(
