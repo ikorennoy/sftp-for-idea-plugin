@@ -101,7 +101,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                         }
                     }
                 }.component
-                disconnectLink = link("Disconnect") {
+                disconnectLink = link(RemoteFileAccessBundle.message("settings.RemoteFileAccess.disconnectLink.text")) {
                     disconnect()
                 }.component
 
