@@ -8,20 +8,20 @@ import com.github.ikorennoy.remoteaccess.operations.RemoteOperationsNotifier
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VFileProperty
-import com.intellij.ui.IconManager
-import com.intellij.ui.LayeredIcon
 import com.intellij.ui.tree.LeafState
-import com.intellij.util.PlatformIcons
-import javax.swing.Icon
+import com.intellij.ui.tree.StructureTreeModel
+import java.util.concurrent.ConcurrentHashMap
 
 class RemoteFileSystemTreeStructure(
     private val project: Project,
 ) : AbstractTreeStructure() {
 
     private val dummyRoot = DummyNode()
+    private val dirsWithNoReadPermission = ConcurrentHashMap<RemoteFileInformation, Unit>()
+
+    @Volatile
+    lateinit var myTreeModel: StructureTreeModel<RemoteFileSystemTreeStructure>
 
     override fun getRootElement(): Any {
         val remoteOperations = RemoteOperations.getInstance(project)
@@ -41,7 +41,16 @@ class RemoteFileSystemTreeStructure(
 
     override fun getChildElements(element: Any): Array<RemoteFileInformation> {
         return if (element is RemoteFileInformation) {
-            element.getChildren()
+            return when (val res = element.getChildren().value) {
+                is Ok -> res.value
+                is Er -> {
+                    if (dirsWithNoReadPermission.put(element, Unit) == null) {
+                        RemoteOperationsNotifier.getInstance(project).cannotLoadChildren(element.getName(), res.error)
+                        myTreeModel.invalidateAsync(element, false)
+                    }
+                    emptyArray()
+                }
+            }
         } else {
             emptyArray()
         }
@@ -61,9 +70,7 @@ class RemoteFileSystemTreeStructure(
         }
 
         if (element !is RemoteFileInformation) throw IllegalArgumentException("element is not file")
-        val icon = getIcon(element)
-        val name = element.getPresentableName()
-        return RemoteFileSystemTreeNodeDescriptor(project, parentDescriptor, element, icon, name)
+        return RemoteFileSystemTreeNodeDescriptor(project, parentDescriptor, element, dirsWithNoReadPermission)
     }
 
     override fun commit() {
@@ -97,20 +104,7 @@ class RemoteFileSystemTreeStructure(
         }
     }
 
-    private fun getIcon(file: RemoteFileInformation): Icon {
-        val icon = if (file.isDirectory()) {
-            IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
-        } else {
-            FileTypeRegistry.getInstance().getFileTypeByFileName(file.getName()).icon
-        }
-        return dressIcon(file, icon)
-    }
-
-    private fun dressIcon(file: RemoteFileInformation, baseIcon: Icon): Icon {
-        return if (file.isSymlink()) {
-            LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON)
-        } else {
-            baseIcon
-        }
+    internal fun setTreeMode(treeMode: StructureTreeModel<RemoteFileSystemTreeStructure>) {
+        myTreeModel = treeMode
     }
 }

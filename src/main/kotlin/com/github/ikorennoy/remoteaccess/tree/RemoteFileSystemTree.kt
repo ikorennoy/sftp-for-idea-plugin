@@ -44,6 +44,7 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
     init {
         val remoteTreeStructure = RemoteFileSystemTreeStructure(project)
         treeModel = StructureTreeModel(remoteTreeStructure, FileComparator.getInstance(), this)
+        remoteTreeStructure.setTreeMode(treeModel)
         asyncTreeModel = AsyncTreeModel(treeModel, this)
         tree = Tree(asyncTreeModel)
         TreeSpeedSearch(tree)

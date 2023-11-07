@@ -2,6 +2,7 @@ package com.github.ikorennoy.remoteaccess.operations
 
 import com.github.ikorennoy.remoteaccess.Er
 import com.github.ikorennoy.remoteaccess.Ok
+import com.github.ikorennoy.remoteaccess.Outcome
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.intellij.openapi.project.Project
 import net.schmizz.sshj.sftp.FileAttributes
@@ -15,7 +16,7 @@ class RemoteFileInformation(
 
     // all these operations can require a request to a server
     private val myParent: RemoteFileInformation? by lazy { getParentInternal() }
-    private val myChildren: Array<RemoteFileInformation> by lazy { getChildrenInternal() }
+    private val myChildren: Lazy<Outcome<Array<RemoteFileInformation>>> = lazy { getChildrenInternal() }
     private val isDir: Boolean by lazy { isDirInternal() }
     private val special: Boolean by lazy { isSpecialInternal() }
     private val myLength: Long by lazy { getLengthInternal() }
@@ -28,7 +29,7 @@ class RemoteFileInformation(
 
     fun isDirectory(): Boolean = isDir
 
-    fun getChildren(): Array<RemoteFileInformation> = myChildren
+    fun getChildren(): Lazy<Outcome<Array<RemoteFileInformation>>> = myChildren
 
     fun getParent(): RemoteFileInformation? = myParent
 
@@ -72,14 +73,8 @@ class RemoteFileInformation(
         }
     }
 
-    private fun getChildrenInternal(): Array<RemoteFileInformation> {
-        return when (val res = RemoteOperations.getInstance(project).getChildren(this)) {
-            is Ok -> res.value
-            is Er -> {
-                RemoteOperationsNotifier.getInstance(project).cannotLoadChildren(this.getName(), res.error)
-                emptyArray()
-            }
-        }
+    private fun getChildrenInternal(): Outcome<Array<RemoteFileInformation>> {
+        return RemoteOperations.getInstance(project).getChildren(this)
     }
 
     private fun getParentInternal(): RemoteFileInformation? {
