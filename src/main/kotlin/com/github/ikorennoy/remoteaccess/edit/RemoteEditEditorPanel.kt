@@ -4,11 +4,9 @@ import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -16,21 +14,26 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.ui.JBUI
+import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.FlowLayout
 
 class RemoteEditEditorPanel(
     editor: FileEditor
 ) : EditorNotificationPanel(editor, getToolbarBackground(), null, Status.Info) {
 
     init {
-        myLinksPanel.layout = FlowLayout()
         val saveAction = UploadAction()
         saveAction.registerCustomShortcutSet(
             ActionManager.getInstance().getAction("SaveAll").shortcutSet,
             editor.component
         )
-        myLinksPanel.add(createButton(UploadAction()))
+        myLinksPanel.layout = BorderLayout()
+        val toolbarGroup = DefaultActionGroup()
+        toolbarGroup.add(saveAction)
+        val actionToolbar: ActionToolbarImpl = ActionManager.getInstance()
+            .createActionToolbar("RemoteEditorEditPanelToolbar", toolbarGroup, true) as ActionToolbarImpl
+        actionToolbar.targetComponent = myLinksPanel
+        myLinksPanel.add(actionToolbar)
     }
 
     private fun createButton(action: AnAction): ActionButton {
