@@ -10,7 +10,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VFileProperty
 import net.schmizz.sshj.sftp.*
 import java.awt.EventQueue
 import java.io.IOException
@@ -214,12 +213,12 @@ class RemoteOperations(private val project: Project) {
         }
     }
 
-    fun getFileAttributes(file: String): FileAttributes? {
+    fun resolveOriginalFileAttributes(symlinkPath: String): Outcome<FileAttributes> {
         assertNotEdt()
         return try {
-            sftpClient.stat(file)
+            Ok(sftpClient.stat(symlinkPath))
         } catch (ex: IOException) {
-            return null
+            Er(ex)
         }
     }
 
@@ -243,7 +242,7 @@ class RemoteOperations(private val project: Project) {
     }
 
     private fun prepareTempPath(parentPath: String, file: RemoteFileInformation): String {
-        val tempFileName = if (file.`is`(VFileProperty.HIDDEN)) {
+        val tempFileName = if (file.isHidden()) {
             "${file.getName()}.tmp"
         } else {
             ".${file.getName()}.tmp"

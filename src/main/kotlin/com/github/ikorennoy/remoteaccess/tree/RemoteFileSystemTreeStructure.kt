@@ -107,7 +107,7 @@ class RemoteFileSystemTreeStructure(
     }
 
     private fun dressIcon(file: RemoteFileInformation, baseIcon: Icon): Icon {
-        return if (file.`is`(VFileProperty.SYMLINK)) {
+        return if (file.isSymlink()) {
             LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON)
         } else {
             baseIcon

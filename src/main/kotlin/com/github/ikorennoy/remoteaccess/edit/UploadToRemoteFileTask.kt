@@ -60,6 +60,8 @@ class UploadToRemoteFileTask(
                         val size = localTempVirtualFile.length.toDouble()
                         val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
                         indicator.text = remoteOriginalFile.getPresentablePath()
+                        indicator.fraction = 0.0
+                        indicator.isIndeterminate = false
                         remoteTempFileOutStream.use { remoteFileOs ->
                             localTempVirtualFile.inputStream.use { localFileIs ->
                                 var writtenTotal = 0.0

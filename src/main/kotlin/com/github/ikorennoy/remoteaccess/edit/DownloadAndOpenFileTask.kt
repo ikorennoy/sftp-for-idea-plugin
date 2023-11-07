@@ -12,7 +12,9 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.ui.UIBundle
 import java.io.File
 
 class DownloadAndOpenFileTask(
@@ -31,45 +33,58 @@ class DownloadAndOpenFileTask(
         val tempFs = TempVirtualFileSystem.Holder.getInstance()
         val remoteFileToEdit = tree.getSelectedFile() ?: return
         val remoteFileSize = remoteFileToEdit.getLength().toDouble()
+        val remoteOperations = RemoteOperations.getInstance(project)
 
         val possibleLocalTempFile = tempFs.findFileByPath(remoteFileToEdit.getPath())
 
         val toOpen = if (possibleLocalTempFile != null) {
             OpenFileDescriptor(project, possibleLocalTempFile)
         } else {
-            val remoteOperations = RemoteOperations.getInstance(project)
-            indicator.checkCanceled()
-            when (val res = remoteOperations.fileInputStream(remoteFileToEdit)) {
-                is Ok -> {
-                    val remoteFileInputStream = res.value
-                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+            if (remoteFileToEdit.isSpecial()) {
+                ApplicationManager.getApplication().invokeLater {
+                    Messages.showErrorDialog(
+                        project,
+                        RemoteFileAccessBundle.message("dialog.RemoteFileAccess.cannotOpenSpecialFile.message"),
+                        UIBundle.message("error.dialog.title"),
+                    )
+                }
+                null
+            } else {
+                indicator.checkCanceled()
+                when (val res = remoteOperations.fileInputStream(remoteFileToEdit)) {
+                    is Ok -> {
+                        val remoteFileInputStream = res.value
+                        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
 
-                    indicator.checkCanceled()
-                    val newLocalTempFile = FileUtil.createTempFile(remoteFileToEdit.getName(), ".tmp", false)
-                    this.localTempFile = newLocalTempFile
+                        indicator.checkCanceled()
+                        val newLocalTempFile = FileUtil.createTempFile(remoteFileToEdit.getName(), ".tmp", false)
+                        this.localTempFile = newLocalTempFile
 
-                    newLocalTempFile.outputStream().use { localFileOutputStream ->
-                        remoteFileInputStream.use { remoteFileInputStream ->
-                            indicator.text = remoteFileToEdit.getPresentablePath()
-                            var read = remoteFileInputStream.read(buffer)
-                            var readTotal = read
-                            while (read != -1) {
-                                indicator.checkCanceled()
-                                localFileOutputStream.write(buffer, 0, read)
-                                indicator.fraction = readTotal / remoteFileSize
-                                read = remoteFileInputStream.read(buffer)
-                                readTotal += read
+                        newLocalTempFile.outputStream().use { localFileOutputStream ->
+                            remoteFileInputStream.use { remoteFileInputStream ->
+                                indicator.fraction = 0.0
+                                indicator.text = remoteFileToEdit.getPresentablePath()
+                                indicator.isIndeterminate = false
+                                var read = remoteFileInputStream.read(buffer)
+                                var readTotal = read
+                                while (read != -1) {
+                                    indicator.checkCanceled()
+                                    localFileOutputStream.write(buffer, 0, read)
+                                    indicator.fraction = readTotal / remoteFileSize
+                                    read = remoteFileInputStream.read(buffer)
+                                    readTotal += read
+                                }
                             }
                         }
+                        val localTempVirtualFile = tempFs.wrapIntoTempFile(remoteFileToEdit, newLocalTempFile)
+                        OpenFileDescriptor(project, localTempVirtualFile)
                     }
-                    val localTempVirtualFile = tempFs.wrapIntoTempFile(remoteFileToEdit, newLocalTempFile)
-                    OpenFileDescriptor(project, localTempVirtualFile)
-                }
 
-                is Er -> {
-                    RemoteOperationsNotifier.getInstance(project)
-                        .cannotOpenFile(remoteFileToEdit.getPath(), res.error)
-                    null
+                    is Er -> {
+                        RemoteOperationsNotifier.getInstance(project)
+                            .cannotOpenFile(remoteFileToEdit.getPath(), res.error)
+                        null
+                    }
                 }
             }
         }

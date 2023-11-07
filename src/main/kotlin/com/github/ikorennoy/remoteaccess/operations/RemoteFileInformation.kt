@@ -4,7 +4,7 @@ import com.github.ikorennoy.remoteaccess.Er
 import com.github.ikorennoy.remoteaccess.Ok
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VFileProperty
+import net.schmizz.sshj.sftp.FileAttributes
 import net.schmizz.sshj.sftp.FileMode
 import net.schmizz.sshj.sftp.RemoteResourceInfo
 
@@ -13,9 +13,14 @@ class RemoteFileInformation(
     val project: Project,
 ) {
 
+    // all these operations can require a request to a server
     private val myParent: RemoteFileInformation? by lazy { getParentInternal() }
     private val myChildren: Array<RemoteFileInformation> by lazy { getChildrenInternal() }
     private val isDir: Boolean by lazy { isDirInternal() }
+    private val special: Boolean by lazy { isSpecialInternal() }
+    private val myLength: Long by lazy { getLengthInternal() }
+    // for symlinks
+    private val originalFileAttr: FileAttributes? by lazy { resolveSymlinkAttributes() }
 
     fun getName(): String = remoteFile.name
 
@@ -27,29 +32,21 @@ class RemoteFileInformation(
 
     fun getParent(): RemoteFileInformation? = myParent
 
-    fun getLength(): Long = remoteFile.attributes.size
+    fun getLength(): Long = myLength
 
     fun getPresentableName(): String = remoteFile.name
+
+    fun isHidden(): Boolean = remoteFile.name.startsWith(".")
+
+    fun isSymlink(): Boolean = remoteFile.attributes.type == FileMode.Type.SYMLINK
 
     fun getPresentablePath(): String {
         val conf = RemoteFileAccessSettingsState.getInstance(project)
         return "sftp://${conf.username}@${conf.host}${remoteFile.path}"
     }
 
-    fun `is`(property: VFileProperty): Boolean {
-        return when (property) {
-            VFileProperty.HIDDEN -> remoteFile.name.startsWith(".")
-            VFileProperty.SPECIAL -> isSpecial()
-            VFileProperty.SYMLINK -> remoteFile.attributes.type == FileMode.Type.SYMLINK
-        }
-    }
-
-    private fun isSpecial(): Boolean {
-        val type = remoteFile.attributes.mode.type
-        return type == FileMode.Type.BLOCK_SPECIAL ||
-                type == FileMode.Type.CHAR_SPECIAL ||
-                type == FileMode.Type.FIFO_SPECIAL ||
-                type == FileMode.Type.SOCKET_SPECIAL
+    fun isSpecial(): Boolean {
+        return special
     }
 
     override fun equals(other: Any?): Boolean {
@@ -65,12 +62,13 @@ class RemoteFileInformation(
         return remoteFile.hashCode()
     }
 
-    private fun isDirInternal(): Boolean {
-        return if (remoteFile.attributes.type == FileMode.Type.SYMLINK) {
-            val originalAttrs = RemoteOperations.getInstance(project).getFileAttributes(getPath())
-            originalAttrs?.type == FileMode.Type.DIRECTORY
-        } else {
-            remoteFile.attributes.type == FileMode.Type.DIRECTORY
+    private fun resolveSymlinkAttributes(): FileAttributes? {
+        return when (val res = RemoteOperations.getInstance(project).resolveOriginalFileAttributes(getPath())) {
+            is Ok -> res.value
+            is Er -> {
+                RemoteOperationsNotifier.getInstance(project).cannotResolveOriginalFileAttributes(getPath(), res.error)
+                null
+            }
         }
     }
 
@@ -91,5 +89,41 @@ class RemoteFileInformation(
                 null
             }
         }
+    }
+
+    private fun isDirInternal(): Boolean {
+        return if (remoteFile.attributes.type == FileMode.Type.SYMLINK) {
+            originalFileAttr?.type == FileMode.Type.DIRECTORY
+        } else {
+            remoteFile.attributes.type == FileMode.Type.DIRECTORY
+        }
+    }
+
+    private fun getLengthInternal(): Long {
+        return if (!isSymlink()) {
+            remoteFile.attributes.size
+        } else {
+            originalFileAttr?.size ?: remoteFile.attributes.size
+        }
+    }
+
+    private fun isSpecialInternal(): Boolean {
+        // first just check if it's apparently special
+        return if (checkSpecial(remoteFile.attributes.type)) {
+            true
+        } else if (isSymlink()) {
+            // then check if it's a symlink we need to resolve
+            val originalAttrs = originalFileAttr ?: return true
+            checkSpecial(originalAttrs.type)
+        } else {
+            false
+        }
+    }
+
+    private fun checkSpecial(type: FileMode.Type): Boolean {
+        return type == FileMode.Type.BLOCK_SPECIAL ||
+                type == FileMode.Type.CHAR_SPECIAL ||
+                type == FileMode.Type.FIFO_SPECIAL ||
+                type == FileMode.Type.SOCKET_SPECIAL
     }
 }
