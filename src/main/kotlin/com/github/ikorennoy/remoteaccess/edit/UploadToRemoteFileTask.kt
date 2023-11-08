@@ -15,7 +15,7 @@ import java.io.IOException
 class UploadToRemoteFileTask(
     private val project: Project,
     private val localTempVirtualFile: TempVirtualFile
-) : Task.Backgroundable(
+) : Task.Modal(
     project,
     RemoteFileAccessBundle.message("task.RemoteFileAccess.uploadFileToRemote.backgroundable.name"),
     true
