@@ -32,35 +32,31 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
     }
 
     fun connect(): Exception? {
-        var prevSshClient = sshClient
-        var prevSftpClient = sftpClient
+        val prevSsh1 = sshClient
+        val prevSftp1 = sftpClient
 
-        if (isInitializedAndConnectedInternal(prevSshClient, prevSftpClient)) {
+        if (isInitializedAndConnectedInternal(prevSsh1, prevSftp1)) {
             return null
         }
         try {
             lock.lock()
-            prevSftpClient = sftpClient
-            prevSshClient = sshClient
+            val prevSsh2 = sshClient
+            val prevSftp2 = sftpClient
 
-            if (isInitializedAndConnectedInternal(prevSshClient, prevSftpClient)) {
+            if (isInitializedAndConnectedInternal(prevSsh2, prevSftp2)) {
                 return null
             }
             val conf = RemoteFileAccessSettingsState.getInstance(project)
 
-            sshClient = null
-            sftpClient = null
             val failReason =
                 tryConnect(conf.host, conf.port, conf.username, conf.password)
             return if (failReason != null) {
                 failReason
             } else {
-                val localClient = sshClient
-                if (localClient != null) {
+                val newSshClient = sshClient
+                if (newSshClient != null) {
                     val disconnectNotifier = DisconnectNotifier(project)
-                    localClient.transport.disconnectListener = disconnectNotifier
-                    val newSftpClient = localClient.newSFTPClient()
-                    sftpClient = newSftpClient
+                    newSshClient.transport.disconnectListener = disconnectNotifier
                     null
                 } else {
                     IOException("Fail reason is null, but client is null as well")
@@ -69,20 +65,6 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
         } finally {
             lock.unlock()
         }
-    }
-
-    fun getSessionClient(): Session {
-        return getSshClient().startSession()
-    }
-
-    fun getSftpClient(): SFTPClient {
-        val res = sftpClient
-
-        if (res != null) {
-            return res
-        }
-
-        throw IOException("Connection is not initialized")
     }
 
     fun disconnect() {
@@ -100,15 +82,49 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
         }
     }
 
+    fun getSessionClient(): Session {
+        return getSshClient().startSession()
+    }
+
+    fun getSftpClient(): SFTPClient {
+        val v1 = sftpClient
+
+        if (v1 != null) {
+            return v1
+        }
+
+        try {
+            lock.lock()
+            val v2 = sftpClient
+            if (v2 != null) {
+                return v2
+            }
+        } finally {
+            lock.unlock()
+        }
+
+        throw IOException("Connection is not initialized")
+    }
+
     override fun dispose() {
         disconnect()
     }
 
     private fun getSshClient(): SSHClient {
-        val res = sshClient
+        val v1 = sshClient
 
-        if (res != null) {
-            return res
+        if (v1 != null) {
+            return v1
+        }
+
+        try {
+            lock.lock()
+            val v2 = sshClient
+            if (v2 != null) {
+                return v2
+            }
+        } finally {
+            lock.unlock()
         }
 
         throw IOException("Connection is not initialized")
@@ -120,23 +136,27 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
 
     private fun tryConnect(host: String, port: Int, username: String, password: CharArray): Exception? {
         var failReason: Exception? = null
-        val newClient = SSHClient()
+        sshClient = null
+        sftpClient = null
+        val newSshClient = SSHClient()
         try {
-            newClient.connectTimeout = TIMEOUT_MILLISECONDS
-            newClient.timeout = TIMEOUT_MILLISECONDS
-            newClient.useCompression()
-            loadKnownHosts(newClient)
-            newClient.connect(host, port)
-            newClient.authPassword(username, password)
-            sshClient = newClient
+            newSshClient.connectTimeout = TIMEOUT_MILLISECONDS
+            newSshClient.timeout = TIMEOUT_MILLISECONDS
+            newSshClient.useCompression()
+            loadKnownHosts(newSshClient)
+            newSshClient.connect(host, port)
+            newSshClient.authPassword(username, password)
+            sshClient = newSshClient
+            sftpClient = newSshClient.newSFTPClient()
         } catch (ex: IOException) {
             failReason = ex
-            sshClient = null
-            sftpClient = null
             try {
-                newClient.close()
+                sftpClient?.close()
+                newSshClient.close()
             } catch (_: IOException) {
             }
+            sshClient = null
+            sftpClient = null
         }
         return failReason
     }
