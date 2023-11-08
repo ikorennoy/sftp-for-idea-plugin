@@ -20,7 +20,6 @@ class RemoteFileSystemTreeStructure(
 
     private val dummyRoot = DummyNode()
 
-    // we use uri as key to be able to distinguish between two users on the same remote
     private val dirsWithoutReadPermission = Collections.newSetFromMap<String>(ConcurrentHashMap())
 
     @Volatile
@@ -46,9 +45,9 @@ class RemoteFileSystemTreeStructure(
         return if (element is RemoteFileInformation) {
             when (val res = element.getChildren().value) {
                 is Ok -> {
-                    // if we managed to successfully get dirs children then we want to remove it and draw with
-                    // a normal icon
-                    dirsWithoutReadPermission.remove(element.getPresentableName())
+                    if (dirsWithoutReadPermission.remove(element.getPresentablePath())) {
+                        myTreeModel.invalidateAsync(element, false)
+                    }
                     res.value
                 }
 
