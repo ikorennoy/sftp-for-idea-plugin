@@ -2,7 +2,7 @@ package com.github.ikorennoy.remoteaccess.ui
 
 import com.github.ikorennoy.remoteaccess.edit.CleanupTempFsListener
 import com.github.ikorennoy.remoteaccess.edit.UnsavedChangesListener
-import com.github.ikorennoy.remoteaccess.tree.TreeStateListener
+import com.github.ikorennoy.remoteaccess.tree.ConnectionStatusListener
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.prepareConfiguration
 import com.github.ikorennoy.remoteaccess.tree.RemoteFileSystemTree
@@ -47,8 +47,8 @@ class RemoteFileAccessWindowsFactory : ToolWindowFactory, DumbAware {
 
     private fun subscribeOnConnectionStatusUpdated(fsTree: RemoteFileSystemTree, toolWindow: ToolWindow) {
         ApplicationManager.getApplication().messageBus.connect(toolWindow.disposable)
-            .subscribe(TreeStateListener.TOPIC, object : TreeStateListener {
-                override fun updateTree() {
+            .subscribe(ConnectionStatusListener.TOPIC, object : ConnectionStatusListener {
+                override fun connectionStatusChanged() {
                     ApplicationManager.getApplication().invokeLater {
                         fsTree.invalidate()
                     }

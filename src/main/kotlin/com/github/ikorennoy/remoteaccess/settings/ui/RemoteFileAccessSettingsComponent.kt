@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remoteaccess.settings.ui
 
-import com.github.ikorennoy.remoteaccess.notifyRebuildTree
+import com.github.ikorennoy.remoteaccess.notifyConnectionStatusChanged
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
@@ -182,7 +182,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
             passwordField.isEnabled = true
             testConnectionButton?.isEnabled = true
             disconnectLink?.isEnabled = false
-            notifyRebuildTree()
+            notifyConnectionStatusChanged()
         }
     }
 

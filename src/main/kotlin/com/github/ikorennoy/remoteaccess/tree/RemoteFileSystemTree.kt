@@ -146,7 +146,7 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
     }
 
     /**
-     * Invalidate the tree and clear the state of the structure
+     * Invalidate the tree and clear the state of the tree structure
      * Used when there are changes in connection
      */
     fun invalidate() {
@@ -166,10 +166,7 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
         treeModel.select(file, tree) {}
     }
 
-    /**
-     * Rebuild the tree, used on adding new file/dir
-     */
-    private fun update() {
+    fun update() {
         treeModel.invalidateAsync()
     }
 

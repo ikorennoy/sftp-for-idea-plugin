@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remoteaccess.actions
 
-import com.github.ikorennoy.remoteaccess.notifyRebuildTree
+import com.github.ikorennoy.remoteaccess.notifyConnectionStatusChanged
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -27,7 +27,7 @@ class DisconnectAction : DumbAwareAction(
         val project = e.project ?: return
         ProcessIOExecutorService.INSTANCE.execute {
             RemoteOperations.getInstance(project).close()
-            notifyRebuildTree()
+            notifyConnectionStatusChanged()
         }
     }
 }

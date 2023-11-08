@@ -13,7 +13,7 @@ class RemoteFileSystemTreeNodeDescriptor(
     project: Project,
     parentDescriptor: NodeDescriptor<*>?,
     private val element: RemoteFileInformation,
-    private val dirsWithNoReadPermission: Map<RemoteFileInformation, Unit>,
+    private val dirsWithNoReadPermission: Set<String>,
 ) : NodeDescriptor<RemoteFileInformation>(project, parentDescriptor) {
 
     init {
@@ -45,7 +45,7 @@ class RemoteFileSystemTreeNodeDescriptor(
     }
 
     private fun computeIcon(): Icon {
-        if (dirsWithNoReadPermission.containsKey(element)) {
+        if (dirsWithNoReadPermission.contains(element.getPresentablePath())) {
             return AllIcons.General.BalloonError
         }
 
