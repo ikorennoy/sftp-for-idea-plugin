@@ -26,7 +26,7 @@ class UploadToRemoteFileTask(
 
 
     /**
-     * This method unloads a file that the user edited and then closed the editor window or requested to be unloaded.
+     * This method uploads a file that the user requested to upload.
      * It creates a temporary (with a .tmp suffix) hidden (name starts with . if necessary) file in the
      * same directory as the file being edited, then loads the new content into the temporary file, deletes the
      * original file, and performs a rename operation. <p/>
@@ -42,87 +42,95 @@ class UploadToRemoteFileTask(
      *
      */
     override fun run(indicator: ProgressIndicator) {
+        val notifier = RemoteOperationsNotifier.getInstance(project)
         val remoteOriginalFile = localTempVirtualFile.remoteFile
         val remoteOperations = RemoteOperations.getInstance(project)
-        val notifier = RemoteOperationsNotifier.getInstance(project)
-        var needToRemoveRemoteTempFile = false
-        // find a name for a temp file and crate it
-        indicator.checkCanceled()
-        when (val prepareRemoteTempRes = remoteOperations.prepareTempFile(remoteOriginalFile)) {
-            is Ok -> {
-                val newRemoteTempFile = prepareRemoteTempRes.value
-                remoteTempFile = newRemoteTempFile
-                // open new temp file for writing, and write content into it
-                indicator.checkCanceled()
-                when (val openOutStreamRes = remoteOperations.fileOutputStream(newRemoteTempFile)) {
-                    is Ok -> {
-                        val remoteTempFileOutStream = openOutStreamRes.value
-                        val size = localTempVirtualFile.length.toDouble()
-                        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                        indicator.text = remoteOriginalFile.getPresentablePath()
-                        indicator.fraction = 0.0
-                        indicator.isIndeterminate = false
-                        remoteTempFileOutStream.use { remoteFileOs ->
-                            localTempVirtualFile.inputStream.use { localFileIs ->
-                                var writtenTotal = 0.0
-                                var readFromLocal = localFileIs.read(buffer)
-                                while (readFromLocal != -1) {
-                                    indicator.checkCanceled()
-                                    remoteFileOs.write(buffer, 0, readFromLocal)
-                                    writtenTotal += readFromLocal
-                                    indicator.fraction = writtenTotal / size
-                                    readFromLocal = localFileIs.read(buffer)
-                                }
-                            }
-                        }
 
-                        indicator.checkCanceled()
-                        // remove the original file
-                        when (val removeRes = remoteOperations.remove(remoteOriginalFile)) {
-                            is Ok -> {
-                                // at this point we don't want to remove the tmp file
-                                // if everything goes well, it will be renamed to the original file
-                                // if something goes wrong, we want to keep a small chance for user
-                                // to restore a content
-                                needToRemoveRemoteTempFile = false
-
-                                // rename the temp file into the original file
-                                when (val renameRes = remoteOperations.rename(newRemoteTempFile, remoteOriginalFile)) {
-                                    is Ok -> notifier.fileUploaded(remoteOriginalFile.getName())
-
-                                    // fail on renaming the temp file the into original file branch
-                                    is Er -> {
-                                        notifier.cannotSaveFileToRemote(
-                                            remoteOriginalFile.getName(),
-                                            renameRes.error
-                                        )
+        if (!localTempVirtualFile.exists()) {
+            notifier.cannotSaveFileToRemote(
+                remoteOriginalFile.getName(),
+                IOException("Local temporary copy is missing")
+            )
+        } else {
+            var needToRemoveRemoteTempFile = false
+            // find a name for a temp file and crate it
+            indicator.checkCanceled()
+            when (val prepareRemoteTempRes = remoteOperations.prepareTempFile(remoteOriginalFile)) {
+                is Ok -> {
+                    val newRemoteTempFile = prepareRemoteTempRes.value
+                    remoteTempFile = newRemoteTempFile
+                    // open new temp file for writing, and write content into it
+                    indicator.checkCanceled()
+                    when (val openOutStreamRes = remoteOperations.fileOutputStream(newRemoteTempFile)) {
+                        is Ok -> {
+                            val remoteTempFileOutStream = openOutStreamRes.value
+                            val size = localTempVirtualFile.length.toDouble()
+                            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                            indicator.text = remoteOriginalFile.getPresentablePath()
+                            indicator.fraction = 0.0
+                            indicator.isIndeterminate = false
+                            remoteTempFileOutStream.use { remoteFileOs ->
+                                localTempVirtualFile.inputStream.use { localFileIs ->
+                                    var writtenTotal = 0.0
+                                    var readFromLocal = localFileIs.read(buffer)
+                                    while (readFromLocal != -1) {
+                                        indicator.checkCanceled()
+                                        remoteFileOs.write(buffer, 0, readFromLocal)
+                                        writtenTotal += readFromLocal
+                                        indicator.fraction = writtenTotal / size
+                                        readFromLocal = localFileIs.read(buffer)
                                     }
                                 }
                             }
 
-                            // fail on removing the original file branch
-                            is Er -> {
-                                notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), removeRes.error)
-                                needToRemoveRemoteTempFile = true
+                            indicator.checkCanceled()
+                            // remove the original file
+                            when (val removeRes = remoteOperations.remove(remoteOriginalFile)) {
+                                is Ok -> {
+                                    // at this point we don't want to remove the tmp file
+                                    // if everything goes well, it will be renamed to the original file
+                                    // if something goes wrong, we want to keep a small chance for user
+                                    // to restore a content
+                                    needToRemoveRemoteTempFile = false
+
+                                    // rename the temp file into the original file
+                                    when (val renameRes = remoteOperations.rename(newRemoteTempFile, remoteOriginalFile)) {
+                                        is Ok -> notifier.fileUploaded(remoteOriginalFile.getName())
+
+                                        // fail on renaming the temp file the into original file branch
+                                        is Er -> {
+                                            notifier.cannotSaveFileToRemote(
+                                                remoteOriginalFile.getName(),
+                                                renameRes.error
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // fail on removing the original file branch
+                                is Er -> {
+                                    notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), removeRes.error)
+                                    needToRemoveRemoteTempFile = true
+                                }
                             }
                         }
-                    }
 
-                    // fail on opening the temp file for writing branch
-                    is Er -> {
-                        notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), openOutStreamRes.error)
-                        needToRemoveRemoteTempFile = true
+                        // fail on opening the temp file for writing branch
+                        is Er -> {
+                            notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), openOutStreamRes.error)
+                            needToRemoveRemoteTempFile = true
+                        }
+                    }
+                    if (needToRemoveRemoteTempFile) {
+                        ProcessIOExecutorService.INSTANCE.execute {
+                            remoteOperations.remove(newRemoteTempFile)
+                        }
                     }
                 }
-                if (needToRemoveRemoteTempFile) {
-                    ProcessIOExecutorService.INSTANCE.execute {
-                        remoteOperations.remove(newRemoteTempFile)
-                    }
-                }
+
+                // fail on creating a temp file branch
+                is Er -> notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), prepareRemoteTempRes.error)
             }
-
-            // fail on creating a temp file branch
-            is Er -> notifier.cannotSaveFileToRemote(remoteOriginalFile.getName(), prepareRemoteTempRes.error)
         }
     }
 

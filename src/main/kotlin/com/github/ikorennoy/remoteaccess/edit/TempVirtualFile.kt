@@ -4,7 +4,7 @@ import com.github.ikorennoy.remoteaccess.Er
 import com.github.ikorennoy.remoteaccess.Ok
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
-import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.BinaryLightVirtualFile
@@ -62,7 +62,7 @@ class TempVirtualFile(
     }
 
     override fun isValid(): Boolean {
-        return true
+        return FileUtil.exists(localTempFile.path)
     }
 
     override fun getParent(): VirtualFile {
