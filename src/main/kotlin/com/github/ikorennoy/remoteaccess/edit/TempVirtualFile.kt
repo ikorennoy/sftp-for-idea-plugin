@@ -50,7 +50,7 @@ class TempVirtualFile(
     }
 
     override fun getPath(): String {
-        return remoteFile.getPresentablePath()
+        return remoteFile.getUri()
     }
 
     override fun isWritable(): Boolean {

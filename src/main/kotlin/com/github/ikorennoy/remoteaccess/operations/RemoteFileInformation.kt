@@ -41,7 +41,7 @@ class RemoteFileInformation(
 
     fun isSymlink(): Boolean = remoteFile.attributes.type == FileMode.Type.SYMLINK
 
-    fun getPresentablePath(): String {
+    fun getUri(): String {
         val conf = RemoteFileAccessSettingsState.getInstance(project)
         return "sftp://${conf.username}@${conf.host}${remoteFile.path}"
     }

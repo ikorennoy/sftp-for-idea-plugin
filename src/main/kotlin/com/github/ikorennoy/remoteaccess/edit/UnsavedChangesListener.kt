@@ -1,6 +1,7 @@
 package com.github.ikorennoy.remoteaccess.edit
 
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -28,9 +29,19 @@ class UnsavedChangesListener : FileEditorManagerListener.Before {
                     documentManager.saveDocument(document)
                 }
                 if (res == Messages.OK) {
-                    RemoteEditService.getInstance(source.project).uploadFileToRemote(file)
+                    RemoteEditService.getInstance(source.project).uploadFileToRemote(file, true)
+                } else {
+                    deleteLocalTempFile(file)
                 }
+            } else {
+                deleteLocalTempFile(file)
             }
+        }
+    }
+
+    private fun deleteLocalTempFile(file: VirtualFile) {
+        ProcessIOExecutorService.INSTANCE.execute {
+            file.delete(this)
         }
     }
 }

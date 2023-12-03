@@ -25,6 +25,8 @@
         <notificationGroup
                 displayType="BALLOON"
                 id="Remote Operations Notifications"/>
+        <fileDocumentSynchronizationVetoer
+                implementation="com.github.ikorennoy.remoteaccess.edit.LocalTempFileSaveVetoer"/>
     </extensions>
 
     <actions>

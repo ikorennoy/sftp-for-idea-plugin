@@ -45,7 +45,7 @@ class RemoteFileSystemTreeNodeDescriptor(
     }
 
     private fun computeIcon(): Icon {
-        if (dirsWithNoReadPermission.contains(element.getPresentablePath())) {
+        if (dirsWithNoReadPermission.contains(element.getUri())) {
             return AllIcons.General.BalloonError
         }
 

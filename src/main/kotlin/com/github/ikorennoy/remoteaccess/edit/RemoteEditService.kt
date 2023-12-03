@@ -17,8 +17,8 @@ class RemoteEditService(private val project: Project) {
         }, RemoteFileAccessBundle.message("command.RemoteFileAccess.downloadAndOpenFile.name"), null)
     }
 
-    fun uploadFileToRemote(localTempFile: TempVirtualFile) {
-        val uploadTask = UploadToRemoteFileTask(project, localTempFile)
+    fun uploadFileToRemote(localTempFile: TempVirtualFile, localTempFileCanBeRemoved: Boolean = false) {
+        val uploadTask = UploadToRemoteFileTask(project, localTempFile, localTempFileCanBeRemoved)
         CommandProcessor.getInstance().executeCommand(project, {
             uploadTask.queue()
         }, RemoteFileAccessBundle.message("command.RemoteFileAccess.uploadFileToRemote.name"), null)

@@ -63,7 +63,7 @@ class DownloadAndOpenFileTask(
                         newLocalTempFile.outputStream().use { localFileOutputStream ->
                             remoteFileInputStream.use { remoteFileInputStream ->
                                 indicator.fraction = 0.0
-                                indicator.text = remoteFileToEdit.getPresentablePath()
+                                indicator.text = remoteFileToEdit.getUri()
                                 indicator.isIndeterminate = false
                                 var read = remoteFileInputStream.read(buffer)
                                 var readTotal = read
@@ -103,6 +103,7 @@ class DownloadAndOpenFileTask(
         removeTempFile()
     }
 
+    // todo add notification
     override fun onThrowable(error: Throwable) {
         removeTempFile()
     }

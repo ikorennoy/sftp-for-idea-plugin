@@ -1,6 +1,5 @@
 package com.github.ikorennoy.remoteaccess.ui
 
-import com.github.ikorennoy.remoteaccess.edit.CleanupTempFsListener
 import com.github.ikorennoy.remoteaccess.edit.UnsavedChangesListener
 import com.github.ikorennoy.remoteaccess.tree.ConnectionStatusListener
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
@@ -38,11 +37,8 @@ class RemoteFileAccessWindowsFactory : ToolWindowFactory, DumbAware {
 
     private fun subscribeOnEditorManagerEvents(project: Project, toolWindow: ToolWindow) {
         val unsavedChangesListener = UnsavedChangesListener()
-        val cleanupTempFsListener = CleanupTempFsListener()
         project.messageBus.connect(toolWindow.disposable)
             .subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, unsavedChangesListener)
-        project.messageBus.connect(toolWindow.disposable)
-            .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, cleanupTempFsListener)
     }
 
     private fun subscribeOnConnectionStatusUpdated(fsTree: RemoteFileSystemTree, toolWindow: ToolWindow) {

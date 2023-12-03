@@ -14,8 +14,9 @@ import java.io.IOException
 
 class UploadToRemoteFileTask(
     private val project: Project,
-    private val localTempVirtualFile: TempVirtualFile
-) : Task.Modal(
+    private val localTempVirtualFile: TempVirtualFile,
+    private val localTempFileCanBeRemoved: Boolean,
+) : Task.Backgroundable(
     project,
     RemoteFileAccessBundle.message("task.RemoteFileAccess.uploadFileToRemote.backgroundable.name"),
     true
@@ -32,7 +33,7 @@ class UploadToRemoteFileTask(
      * original file, and performs a rename operation. <p/>
      *
      * Because of the SFTP specification, renaming to an existing file doesn't work, so we have to delete
-     * the original file. Also, we can't create a temporary file in a designated directory because,
+     * the original file. Also, we can't create a temporary file in a designated directory (/tmp for example) because,
      * according to the SFTP specification, the rename operation will fail if the src and dst files
      * are on different file systems.<p/>
      *
@@ -53,7 +54,7 @@ class UploadToRemoteFileTask(
             )
         } else {
             var needToRemoveRemoteTempFile = false
-            // find a name for a temp file and crate it
+            // find a name for a remote temp file and crate it
             indicator.checkCanceled()
             when (val prepareRemoteTempRes = remoteOperations.prepareTempFile(remoteOriginalFile)) {
                 is Ok -> {
@@ -66,7 +67,7 @@ class UploadToRemoteFileTask(
                             val remoteTempFileOutStream = openOutStreamRes.value
                             val size = localTempVirtualFile.length.toDouble()
                             val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                            indicator.text = remoteOriginalFile.getPresentablePath()
+                            indicator.text = remoteOriginalFile.getUri()
                             indicator.fraction = 0.0
                             indicator.isIndeterminate = false
                             remoteTempFileOutStream.use { remoteFileOs ->
@@ -95,7 +96,13 @@ class UploadToRemoteFileTask(
 
                                     // rename the temp file into the original file
                                     when (val renameRes = remoteOperations.rename(newRemoteTempFile, remoteOriginalFile)) {
-                                        is Ok -> notifier.fileUploaded(remoteOriginalFile.getName())
+                                        is Ok -> {
+                                            notifier.fileUploaded(remoteOriginalFile.getName())
+                                            // true if called not from RemoteEditEditorPanel.UploadAction
+                                            if (localTempFileCanBeRemoved) {
+                                                localTempVirtualFile.delete(this)
+                                            }
+                                        }
 
                                         // fail on renaming the temp file the into original file branch
                                         is Er -> {

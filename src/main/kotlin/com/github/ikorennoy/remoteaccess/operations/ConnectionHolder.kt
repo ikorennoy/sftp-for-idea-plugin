@@ -72,12 +72,17 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
             lock.lock()
             val sft = sftpClient ?: return
             val ssh = sshClient ?: throw IllegalStateException("Sfp client is not null, but ssh is null")
-            sft.close()
-            ssh.close()
+            try {
+                sft.close()
+            } catch (_: IOException) {
+            }
+            try {
+                ssh.close()
+            } catch (_: IOException) {
+            }
+        } finally {
             sftpClient = null
             sshClient = null
-        } catch (_: IOException) {
-        } finally {
             lock.unlock()
         }
     }
