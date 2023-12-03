@@ -11,6 +11,8 @@ import net.schmizz.sshj.transport.verification.OpenSSHKnownHosts
 import java.io.File
 import java.security.PublicKey
 
+// todo support correct host file update
+//  successfully updated notification
 class ModalDialogHostKeyVerifier(
     private val project: Project,
     hostFile: File
