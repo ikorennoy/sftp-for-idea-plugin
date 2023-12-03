@@ -103,9 +103,11 @@ class DownloadAndOpenFileTask(
         removeTempFile()
     }
 
-    // todo add notification
     override fun onThrowable(error: Throwable) {
+        RemoteOperationsNotifier.getInstance(project)
+            .genericDownloadError(error)
         removeTempFile()
+        super.onThrowable(error)
     }
 
     private fun removeTempFile() {

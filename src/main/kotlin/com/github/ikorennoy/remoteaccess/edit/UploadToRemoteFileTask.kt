@@ -159,6 +159,8 @@ class UploadToRemoteFileTask(
         if (error is IOException) {
             removeRemoteTempFile()
         }
+        RemoteOperationsNotifier.getInstance(project)
+            .genericUploadError(error)
         super.onThrowable(error)
     }
 

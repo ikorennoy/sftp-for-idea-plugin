@@ -117,6 +117,30 @@ class RemoteOperationsNotifier(val project: Project) {
             ).notify(project)
     }
 
+    fun genericDownloadError(error: Throwable) {
+        getNotificationGroup()
+            .createNotification(
+                RemoteFileAccessBundle.message("notification.RemoteFileAccess.genericDownload.name"),
+                RemoteFileAccessBundle.message(
+                    "notification.RemoteFileAccess.genericDownload.content",
+                    error.message ?: RemoteFileAccessBundle.unknownReason()
+                ),
+                NotificationType.ERROR
+            ).notify(project)
+    }
+
+    fun genericUploadError(error: Throwable) {
+        getNotificationGroup()
+            .createNotification(
+                RemoteFileAccessBundle.message("notification.RemoteFileAccess.fileUploaded.title"),
+                RemoteFileAccessBundle.message(
+                    "notification.RemoteFileAccess.genericUpload.content",
+                    error.message ?: RemoteFileAccessBundle.unknownReason()
+                ),
+                NotificationType.ERROR
+            ).notify(project)
+    }
+
     private fun getNotificationGroup(): NotificationGroup {
         return NotificationGroupManager.getInstance()
             .getNotificationGroup("Remote Operations Notifications")
