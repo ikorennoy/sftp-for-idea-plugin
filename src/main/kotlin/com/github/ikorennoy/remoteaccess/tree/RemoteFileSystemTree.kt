@@ -33,7 +33,7 @@ import javax.swing.ToolTipManager
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
-
+// todo add show and edit attributes command
 class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposable {
 
     private val treeModel: StructureTreeModel<RemoteFileSystemTreeStructure>
