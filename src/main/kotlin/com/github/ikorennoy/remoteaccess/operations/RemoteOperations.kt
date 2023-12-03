@@ -53,7 +53,7 @@ class RemoteOperations(private val project: Project) {
     fun getChildren(remoteFile: RemoteFileInformation): Outcome<Array<RemoteFileInformation>> {
         assertNotEdt()
         return try {
-            Ok(sftpClient.ls(remoteFile.getPath())
+            Ok(sftpClient.ls(remoteFile.getPathFromRemoteRoot())
                 .map { RemoteFileInformation(it, project) }
                 .toTypedArray())
         } catch (ex: IOException) {
@@ -64,7 +64,7 @@ class RemoteOperations(private val project: Project) {
     fun getParent(remotePath: RemoteFileInformation): Outcome<RemoteFileInformation?> {
         assertNotEdt()
         return try {
-            val components = getPathComponents(remotePath.getPath())
+            val components = getPathComponents(remotePath.getPathFromRemoteRoot())
             if (components.parent == "") {
                 Ok(null)
             } else {
@@ -94,9 +94,9 @@ class RemoteOperations(private val project: Project) {
         return try {
             val client = sftpClient
             if (file.isDirectory()) {
-                client.rmdir(file.getPath())
+                client.rmdir(file.getPathFromRemoteRoot())
             } else {
-                client.rm(file.getPath())
+                client.rm(file.getPathFromRemoteRoot())
             }
             Ok(Unit)
         } catch (ex: IOException) {
@@ -107,7 +107,7 @@ class RemoteOperations(private val project: Project) {
     fun rename(fromPath: RemoteFileInformation, toPath: RemoteFileInformation): Outcome<Unit> {
         assertNotEdt()
         return try {
-            sftpClient.rename(fromPath.getPath(), toPath.getPath())
+            sftpClient.rename(fromPath.getPathFromRemoteRoot(), toPath.getPathFromRemoteRoot())
             Ok(Unit)
         } catch (ex: IOException) {
             Er(ex)
@@ -119,7 +119,7 @@ class RemoteOperations(private val project: Project) {
         val newFileFullPath: String
         return try {
             val client = sftpClient
-            val realParentPath = client.canonicalize(parent.getPath())
+            val realParentPath = client.canonicalize(parent.getPathFromRemoteRoot())
             newFileFullPath = computeNewPath(realParentPath, newFileName)
             val newFile = client.open(newFileFullPath, setOf(OpenMode.CREAT, OpenMode.TRUNC))
             val newFilePath = newFile.path
@@ -140,7 +140,7 @@ class RemoteOperations(private val project: Project) {
         val newDirPathFullPath: String
         return try {
             val client = sftpClient
-            val realParentPath = client.canonicalize(parent.getPath())
+            val realParentPath = client.canonicalize(parent.getPathFromRemoteRoot())
             newDirPathFullPath = computeNewPath(realParentPath, newDirName)
             client.mkdir(newDirPathFullPath)
             val newDirStat = client.stat(newDirPathFullPath)
@@ -158,7 +158,7 @@ class RemoteOperations(private val project: Project) {
     fun fileInputStream(filePath: RemoteFileInformation): Outcome<InputStream> {
         assertNotEdt()
         return try {
-            Ok(RemoteFileInputStream(sftpClient.open(filePath.getPath())))
+            Ok(RemoteFileInputStream(sftpClient.open(filePath.getPathFromRemoteRoot())))
         } catch (ex: IOException) {
             Er(ex)
         }
@@ -167,7 +167,7 @@ class RemoteOperations(private val project: Project) {
     fun fileOutputStream(filePath: RemoteFileInformation): Outcome<OutputStream> {
         assertNotEdt()
         return try {
-            Ok(RemoteFileOutputStream(sftpClient.open(filePath.getPath(), openForWriteAndTruncateFlags)))
+            Ok(RemoteFileOutputStream(sftpClient.open(filePath.getPathFromRemoteRoot(), openForWriteAndTruncateFlags)))
         } catch (ex: IOException) {
             Er(ex)
         }
@@ -176,15 +176,15 @@ class RemoteOperations(private val project: Project) {
     fun prepareTempFile(forFile: RemoteFileInformation): Outcome<RemoteFileInformation> {
         assertNotEdt()
         var attempt = 0
-        val parent = forFile.getParent() ?: return Er(IOException("Can't get a file ${forFile.getPath()} parent"))
-        var tempFileAbsolutePath = prepareTempPath(parent.getPath(), forFile)
+        val parent = forFile.getParent() ?: return Er(IOException("Can't get a file ${forFile.getPathFromRemoteRoot()} parent"))
+        var tempFileAbsolutePath = prepareTempPath(parent.getPathFromRemoteRoot(), forFile)
         while (true) {
             val res = createAndOpenFile(tempFileAbsolutePath)
             when (res) {
                 is Ok -> return res
                 is Er -> {
                     attempt++
-                    tempFileAbsolutePath = prepareTempPath(parent.getPath(), forFile)
+                    tempFileAbsolutePath = prepareTempPath(parent.getPathFromRemoteRoot(), forFile)
                 }
             }
             // try 5 times
@@ -205,7 +205,7 @@ class RemoteOperations(private val project: Project) {
             val parent = file.getParent() ?: return Ok(false)
             val session = connectionHolder.getSessionClient()
             val commandResult =
-                session.exec("test -w ${parent.getPath()} -a -x ${parent.getPath()} -a -w ${file.getPath()}")
+                session.exec("test -w ${parent.getPathFromRemoteRoot()} -a -x ${parent.getPathFromRemoteRoot()} -a -w ${file.getPathFromRemoteRoot()}")
             commandResult.close()
             Ok(commandResult.exitStatus == 0)
         } catch (ex: IOException) {

@@ -39,7 +39,7 @@ class RemoteOperationsNotifier(val project: Project) {
                 RemoteFileAccessBundle.message(
                     "notification.RemoteFileAccess.cannotDelete.content",
                     entity,
-                    file.getPath(),
+                    file.getPathFromRemoteRoot(),
                     error.message ?: RemoteFileAccessBundle.unknownReason()
                 ),
                 NotificationType.ERROR

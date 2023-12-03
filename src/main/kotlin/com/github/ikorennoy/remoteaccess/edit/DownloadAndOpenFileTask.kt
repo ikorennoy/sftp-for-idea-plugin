@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
-import java.io.File
 
 class DownloadAndOpenFileTask(
     project: Project,
@@ -27,7 +26,7 @@ class DownloadAndOpenFileTask(
 ) {
 
     @Volatile
-    var localTempFile: File? = null
+    var localTempVirtualFile: TempVirtualFile? = null
 
     override fun run(indicator: ProgressIndicator) {
         val tempFs = TempVirtualFileSystem.Holder.getInstance()
@@ -35,7 +34,7 @@ class DownloadAndOpenFileTask(
         val remoteFileSize = remoteFileToEdit.getLength().toDouble()
         val remoteOperations = RemoteOperations.getInstance(project)
 
-        val possibleLocalTempFile = tempFs.findFileByPath(remoteFileToEdit.getPath())
+        val possibleLocalTempFile = tempFs.findFileByPath(remoteFileToEdit.getUri())
 
         val toOpen = if (possibleLocalTempFile != null) {
             OpenFileDescriptor(project, possibleLocalTempFile)
@@ -58,7 +57,9 @@ class DownloadAndOpenFileTask(
 
                         indicator.checkCanceled()
                         val newLocalTempFile = FileUtil.createTempFile(remoteFileToEdit.getName(), ".tmp", false)
-                        this.localTempFile = newLocalTempFile
+                        val newLocalTempVirtualFile = tempFs.wrapIntoTempFile(remoteFileToEdit, newLocalTempFile)
+
+                        this.localTempVirtualFile = newLocalTempVirtualFile
 
                         newLocalTempFile.outputStream().use { localFileOutputStream ->
                             remoteFileInputStream.use { remoteFileInputStream ->
@@ -76,13 +77,13 @@ class DownloadAndOpenFileTask(
                                 }
                             }
                         }
-                        val localTempVirtualFile = tempFs.wrapIntoTempFile(remoteFileToEdit, newLocalTempFile)
-                        OpenFileDescriptor(project, localTempVirtualFile)
+
+                        OpenFileDescriptor(project, newLocalTempVirtualFile)
                     }
 
                     is Er -> {
                         RemoteOperationsNotifier.getInstance(project)
-                            .cannotOpenFile(remoteFileToEdit.getPath(), res.error)
+                            .cannotOpenFile(remoteFileToEdit.getPathFromRemoteRoot(), res.error)
                         null
                     }
                 }
@@ -111,18 +112,10 @@ class DownloadAndOpenFileTask(
     }
 
     private fun removeTempFile() {
-        if (localTempFile != null) {
-            val localTempFile = localTempFile ?: return
-            val tempFs = TempVirtualFileSystem.Holder.getInstance()
-            val localTempFileInFs = tempFs.findFileByPath(localTempFile.path)
-            if (localTempFileInFs != null) {
-                ProcessIOExecutorService.INSTANCE.execute {
-                    localTempFileInFs.delete(this)
-                }
-            } else {
-                ProcessIOExecutorService.INSTANCE.execute {
-                    FileUtil.delete(localTempFile)
-                }
+        if (localTempVirtualFile != null) {
+            val localTempFile = localTempVirtualFile ?: return
+            ProcessIOExecutorService.INSTANCE.execute {
+                localTempFile.delete(this)
             }
         }
     }

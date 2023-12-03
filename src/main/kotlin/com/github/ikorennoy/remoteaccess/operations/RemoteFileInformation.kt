@@ -25,7 +25,7 @@ class RemoteFileInformation(
 
     fun getName(): String = remoteFile.name
 
-    fun getPath(): String = remoteFile.path
+    fun getPathFromRemoteRoot(): String = remoteFile.path
 
     fun isDirectory(): Boolean = isDir
 
@@ -79,7 +79,7 @@ class RemoteFileInformation(
     }
 
     private fun resolveSymlinkAttributes(): FileAttributes? {
-        return when (val res = RemoteOperations.getInstance(project).resolveOriginalFileAttributes(getPath())) {
+        return when (val res = RemoteOperations.getInstance(project).resolveOriginalFileAttributes(getPathFromRemoteRoot())) {
             is Ok -> res.value
             is Er -> {
                 null

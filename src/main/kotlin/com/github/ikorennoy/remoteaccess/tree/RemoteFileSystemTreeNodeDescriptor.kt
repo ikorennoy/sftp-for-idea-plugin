@@ -31,7 +31,7 @@ class RemoteFileSystemTreeNodeDescriptor(
     }
 
     override fun toString(): String {
-        return element.getPath()
+        return element.getPathFromRemoteRoot()
     }
 
     private fun computeIcon(): Icon {

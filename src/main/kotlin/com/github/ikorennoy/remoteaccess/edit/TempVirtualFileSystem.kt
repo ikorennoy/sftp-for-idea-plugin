@@ -21,7 +21,7 @@ class TempVirtualFileSystem : VirtualFileSystem() {
 
     fun wrapIntoTempFile(originalFile: RemoteFileInformation, content: File): TempVirtualFile {
         val file = TempVirtualFile(originalFile.getName(), this, originalFile, content)
-        downloadedFiles[originalFile.getPath()] = file
+        downloadedFiles[originalFile.getUri()] = file
         return file
     }
 
@@ -31,7 +31,7 @@ class TempVirtualFileSystem : VirtualFileSystem() {
 
     public override fun deleteFile(requestor: Any?, file: VirtualFile) {
         if (file is TempVirtualFile) {
-            downloadedFiles.remove(file.remoteFile.getPath())
+            downloadedFiles.remove(file.remoteFile.getUri())
             FileUtil.delete(file.localTempFile)
         }
     }
