@@ -2,7 +2,9 @@ package com.github.ikorennoy.remoteaccess.tree
 
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.intellij.icons.AllIcons
+import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.NodeDescriptor
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.ui.LayeredIcon
@@ -14,34 +16,22 @@ class RemoteFileSystemTreeNodeDescriptor(
     parentDescriptor: NodeDescriptor<*>?,
     private val element: RemoteFileInformation,
     private val dirsWithNoReadPermission: Set<String>,
-) : NodeDescriptor<RemoteFileInformation>(project, parentDescriptor) {
+) : PresentableNodeDescriptor<RemoteFileInformation>(project, parentDescriptor) {
 
-    init {
-        myName = element.getPresentableName()
-        icon = computeIcon()
-    }
-
-    override fun update(): Boolean {
-        var updated = false
-
-        val newName = element.getPresentableName()
-        if (myName != newName) {
-            myName = newName
-            updated = true
+    override fun update(presentation: PresentationData) {
+        presentation.setIcon(computeIcon())
+        presentation.presentableText = element.getPresentableName()
+        if (element.isPlainFile()) {
+            presentation.tooltip = element.getPresentableLength()
         }
-
-        val newIcon = computeIcon()
-
-        if (icon != newIcon) {
-            icon = newIcon
-            updated = true
-        }
-
-        return updated
     }
 
     override fun getElement(): RemoteFileInformation {
         return element
+    }
+
+    override fun toString(): String {
+        return element.getPath()
     }
 
     private fun computeIcon(): Icon {

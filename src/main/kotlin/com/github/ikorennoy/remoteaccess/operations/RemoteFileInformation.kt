@@ -35,6 +35,17 @@ class RemoteFileInformation(
 
     fun getLength(): Long = myLength
 
+    fun getPresentableLength(): String {
+        val lenBytes = getLength()
+        return if (lenBytes < 1000) {
+            "$lenBytes bytes"
+        } else if (lenBytes > 1000 && lenBytes < 1000 * 1000) {
+            "${lenBytes / 1000} kb"
+        } else {
+            "${lenBytes / 1000 / 1000} mb"
+        }
+    }
+
     fun getPresentableName(): String = remoteFile.name
 
     fun isHidden(): Boolean = remoteFile.name.startsWith(".")
@@ -48,6 +59,10 @@ class RemoteFileInformation(
 
     fun isSpecial(): Boolean {
         return special
+    }
+
+    fun isPlainFile(): Boolean {
+        return !isDirectory() && !isSymlink() && !isHidden() && !isSpecial()
     }
 
     override fun equals(other: Any?): Boolean {
