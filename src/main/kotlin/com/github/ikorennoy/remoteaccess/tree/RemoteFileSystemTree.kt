@@ -177,15 +177,18 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
     }
 
     private fun performAction(action: Runnable, toggle: Boolean) {
-        val path = tree.selectionPath
-        if (path != null) {
-            if (asyncTreeModel.isLeaf(path.lastPathComponent)) {
+        val file = getSelectedFile()
+        if (file != null) {
+            if (file.isPlainFile()) {
                 action.run()
             } else if (toggle) {
-                if (tree.isExpanded(path)) {
-                    tree.collapsePath(path)
-                } else {
-                    tree.expandPath(path)
+                val path = tree.selectionPath
+                if (path != null) {
+                    if (tree.isExpanded(path)) {
+                        tree.collapsePath(path)
+                    } else {
+                        tree.expandPath(path)
+                    }
                 }
             }
         }
