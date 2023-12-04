@@ -15,7 +15,7 @@ class NewDirectoryAction : DumbAwareAction(
 
     override fun actionPerformed(e: AnActionEvent) {
         val fsTree = e.getData(RemoteFileSystemTree.DATA_KEY) ?: return
-        var parent = fsTree.getNewFileParent() ?: return
+        var parent = fsTree.getSelectedFile() ?: return
 
         if (!parent.isDirectory()) {
             parent = parent.getParent() ?: return

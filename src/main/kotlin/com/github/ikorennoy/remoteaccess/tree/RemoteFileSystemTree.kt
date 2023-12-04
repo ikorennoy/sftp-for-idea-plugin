@@ -33,18 +33,16 @@ import javax.swing.ToolTipManager
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
-// todo add show and edit attributes command
-// todo handle ctrl + insert better (or disable it)
+
 class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposable {
 
     private val treeModel: StructureTreeModel<RemoteFileSystemTreeStructure>
     private val asyncTreeModel: AsyncTreeModel
-    private val remoteTreeStructure: RemoteFileSystemTreeStructure
+    private val remoteTreeStructure: RemoteFileSystemTreeStructure = RemoteFileSystemTreeStructure(project)
 
     val tree: JTree
 
     init {
-        remoteTreeStructure = RemoteFileSystemTreeStructure(project)
         treeModel = StructureTreeModel(remoteTreeStructure, FileComparator.getInstance(), this)
         remoteTreeStructure.setTreeMode(treeModel)
         asyncTreeModel = AsyncTreeModel(treeModel, this)
@@ -75,10 +73,10 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
         return getTargetPath(treePath)
     }
 
-    fun getNewFileParent(): RemoteFileInformation? {
-        val selected = getSelectedFile()
-        if (selected != null) return selected
-        return null
+    fun getSelectedFileParent(): RemoteFileInformation? {
+        val treePath = tree.selectionPath ?: return null
+        val parentParent = treePath.parentPath ?: return null
+        return getTargetPath(parentParent)
     }
 
     fun createNewDirectory(parentDirectory: RemoteFileInformation, newDirectoryName: String) {
@@ -88,7 +86,7 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
                 when (val res = remoteOperations.createChildDirectory(parentDirectory, newDirectoryName)) {
                     is Ok -> {
                         ApplicationManager.getApplication().invokeLater {
-                            updateAndSelect(res.value)
+                            updateNodeAndSelect(parentDirectory, res.value)
                         }
                     }
 
@@ -107,7 +105,12 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
                 when (val res = RemoteOperations.getInstance(project).remove(toDelete)) {
                     is Ok -> {
                         ApplicationManager.getApplication().invokeLater {
-                            update()
+                            val parentPath = getSelectedFileParent()
+                            if (parentPath != null) {
+                                treeModel.invalidateAsync(parentPath, true)
+                            } else {
+                                updateFull()
+                            }
                         }
                     }
 
@@ -132,7 +135,7 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
                     when (val res = remoteOperations.createChildFile(parentDirectory, newFileName)) {
                         is Ok -> {
                             ApplicationManager.getApplication().invokeLater {
-                                updateAndSelect(res.value)
+                                updateNodeAndSelect(parentDirectory, res.value)
                             }
                         }
                         is Er -> {
@@ -166,13 +169,13 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
         treeModel.select(file, tree) {}
     }
 
-    fun update() {
+    fun updateFull() {
         treeModel.invalidateAsync()
     }
 
-    private fun updateAndSelect(file: RemoteFileInformation) {
-        treeModel.invalidateAsync().thenRun {
-            treeModel.select(file, tree) {}
+    private fun updateNodeAndSelect(nodeToUpdate: RemoteFileInformation, nodeToSelect: RemoteFileInformation) {
+        treeModel.invalidateAsync(nodeToUpdate, true).thenRun {
+            treeModel.select(nodeToSelect, tree) {}
         }
     }
 

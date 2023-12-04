@@ -43,7 +43,7 @@ class RemoteFileSystemTreeStructure(
 
     override fun getChildElements(element: Any): Array<RemoteFileInformation> {
         return if (element is RemoteFileInformation) {
-            when (val res = element.getChildren().value) {
+            when (val res = element.getChildren()) {
                 is Ok -> {
                     if (dirsWithoutReadPermission.remove(element.getUri())) {
                         rebuildNode(element)

@@ -19,6 +19,8 @@ import net.schmizz.sshj.xfer.FilePermission
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+// todo convert timestamps to human readable
+//  convert size to human readable
 class AttributesWindowDialog(
     private val project: Project,
     private val selectedFile: RemoteFileInformation,
@@ -44,7 +46,6 @@ class AttributesWindowDialog(
     private val aTime: JBLabel = JBLabel()
     private val size: JBLabel = JBLabel()
     private val type: JBLabel = JBLabel()
-
 
     init {
         initPermissionsCheckboxes()
@@ -123,7 +124,6 @@ class AttributesWindowDialog(
             }
         }
     }
-
 
     private fun initFileInformationLabels() {
         val fileAttrs = selectedFile.getAttributes()

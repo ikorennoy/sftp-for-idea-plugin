@@ -16,7 +16,6 @@ class RemoteFileInformation(
 
     // all these operations can require a request to a server
     private val myParent: RemoteFileInformation? by lazy { getParentInternal() }
-    private val myChildren: Lazy<Outcome<Array<RemoteFileInformation>>> = lazy { getChildrenInternal() }
     private val isDir: Boolean by lazy { isDirInternal() }
     private val special: Boolean by lazy { isSpecialInternal() }
     private val myLength: Long by lazy { getLengthInternal() }
@@ -28,8 +27,6 @@ class RemoteFileInformation(
     fun getPathFromRemoteRoot(): String = remoteFile.path
 
     fun isDirectory(): Boolean = isDir
-
-    fun getChildren(): Lazy<Outcome<Array<RemoteFileInformation>>> = myChildren
 
     fun getParent(): RemoteFileInformation? = myParent
 
@@ -69,6 +66,10 @@ class RemoteFileInformation(
         return remoteFile.attributes
     }
 
+    fun getChildren(): Outcome<Array<RemoteFileInformation>> {
+        return RemoteOperations.getInstance(project).getChildren(this)
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -89,10 +90,6 @@ class RemoteFileInformation(
                 null
             }
         }
-    }
-
-    private fun getChildrenInternal(): Outcome<Array<RemoteFileInformation>> {
-        return RemoteOperations.getInstance(project).getChildren(this)
     }
 
     private fun getParentInternal(): RemoteFileInformation? {
