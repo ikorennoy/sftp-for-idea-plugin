@@ -50,5 +50,7 @@
                 class="com.github.ikorennoy.remoteaccess.actions.DisconnectAction"/>
         <action id="RemoteFileAccess.SelectOpenedFile"
                 class="com.github.ikorennoy.remoteaccess.actions.SelectOpenedFileAction"/>
+        <action id="RemoteFileAccess.EditAttributes"
+                class="com.github.ikorennoy.remoteaccess.actions.EditFileAttributesAction"/>
     </actions>
 </idea-plugin>

@@ -65,6 +65,10 @@ class RemoteFileInformation(
         return !isDirectory() && !isSymlink() && !isHidden() && !isSpecial()
     }
 
+    fun getAttributes(): FileAttributes {
+        return remoteFile.attributes
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

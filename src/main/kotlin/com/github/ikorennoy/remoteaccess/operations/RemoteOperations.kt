@@ -222,6 +222,16 @@ class RemoteOperations(private val project: Project) {
         }
     }
 
+    fun updateAttributes(forFile: RemoteFileInformation, attributes: FileAttributes): Outcome<Unit> {
+        assertNotEdt()
+        return try {
+            sftpClient.setattr(forFile.getPathFromRemoteRoot(), attributes)
+            Ok(Unit)
+        } catch (ex: IOException) {
+            Er(ex)
+        }
+    }
+
     fun close() {
         assertNotEdt()
         connectionHolder.disconnect()
