@@ -30,10 +30,6 @@
     </extensions>
 
     <actions>
-
-        <action id="RemoteFileAccess.ShowCreate"
-                class="com.github.ikorennoy.remoteaccess.actions.ShowCreateAction"
-                use-shortcut-of="NewFile"/>
         <action id="RemoteFileAccess.NewFileAction"
                 class="com.github.ikorennoy.remoteaccess.actions.NewFileAction"/>
         <action id="RemoteFileAccess.NewDirectoryAction"

@@ -46,7 +46,7 @@ class RemoteFileSystemTreeStructure(
             when (val res = element.getChildren().value) {
                 is Ok -> {
                     if (dirsWithoutReadPermission.remove(element.getUri())) {
-                        myTreeModel.invalidateAsync(element, false)
+                        rebuildNode(element)
                     }
                     res.value
                 }
@@ -55,16 +55,20 @@ class RemoteFileSystemTreeStructure(
                     // if we add the element for the first time then notify user
                     if (dirsWithoutReadPermission.add(element.getUri())) {
                         RemoteOperationsNotifier.getInstance(project).cannotLoadChildren(element.getName(), res.error)
-                        val parent = element.getParent()
-                        if (parent != null) {
-                            myTreeModel.invalidateAsync(parent, true)
-                        }
+                        rebuildNode(element)
                     }
                     emptyArray()
                 }
             }
         } else {
             emptyArray()
+        }
+    }
+
+    private fun rebuildNode(element: RemoteFileInformation) {
+        val parent = element.getParent()
+        if (parent != null) {
+            myTreeModel.invalidateAsync(parent, true)
         }
     }
 

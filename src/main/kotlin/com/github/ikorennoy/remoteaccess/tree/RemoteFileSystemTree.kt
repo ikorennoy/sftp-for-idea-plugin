@@ -135,7 +135,6 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
                                 updateAndSelect(res.value)
                             }
                         }
-
                         is Er -> {
                             RemoteOperationsNotifier.getInstance(project)
                                 .cannotCreateChildFile(newFileName, res.error)
@@ -202,11 +201,13 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
     }
 
     private fun createActionGroup(): DefaultActionGroup {
-        val showCreate = ActionManager.getInstance().getAction("RemoteFileAccess.ShowCreate")
+        val createFile = ActionManager.getInstance().getAction("RemoteFileAccess.NewFileAction")
+        val createDirectory = ActionManager.getInstance().getAction("RemoteFileAccess.NewDirectoryAction")
         val delete = ActionManager.getInstance().getAction("RemoteFileAccess.Delete")
         val editAttributes = ActionManager.getInstance().getAction("RemoteFileAccess.EditAttributes")
         val group = DefaultActionGroup()
-        group.add(showCreate)
+        group.add(createFile)
+        group.add(createDirectory)
         group.add(delete)
         group.addSeparator()
         group.add(editAttributes)
