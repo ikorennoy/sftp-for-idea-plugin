@@ -24,6 +24,6 @@ class UpdateTreeAction : DumbAwareAction(
                 remoteOperations.initWithModalDialogue()
             }
         }
-        fsTree.updateFull()
+        fsTree.rebuildFullTree()
     }
 }

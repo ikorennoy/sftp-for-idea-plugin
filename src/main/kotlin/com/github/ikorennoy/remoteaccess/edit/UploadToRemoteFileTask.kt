@@ -2,6 +2,7 @@ package com.github.ikorennoy.remoteaccess.edit
 
 import com.github.ikorennoy.remoteaccess.Er
 import com.github.ikorennoy.remoteaccess.Ok
+import com.github.ikorennoy.remoteaccess.notifyUpdateNode
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperationsNotifier
@@ -101,6 +102,11 @@ class UploadToRemoteFileTask(
                                             // true if called not from RemoteEditEditorPanel.UploadAction
                                             if (localTempFileCanBeRemoved) {
                                                 localTempVirtualFile.delete(this)
+                                            }
+                                            // reload all attributes for the file
+                                            val parent = remoteOriginalFile.getParent()
+                                            if (parent != null) {
+                                                notifyUpdateNode(parent)
                                             }
                                         }
 

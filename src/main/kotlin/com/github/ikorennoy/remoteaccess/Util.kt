@@ -1,6 +1,7 @@
 package com.github.ikorennoy.remoteaccess
 
-import com.github.ikorennoy.remoteaccess.tree.ConnectionStatusListener
+import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
+import com.github.ikorennoy.remoteaccess.tree.TreeStateListener
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessConfigurable
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
@@ -10,8 +11,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 
 fun notifyConnectionStatusChanged() {
-    ApplicationManager.getApplication().messageBus.syncPublisher(ConnectionStatusListener.TOPIC)
-        .connectionStatusChanged()
+    ApplicationManager.getApplication().messageBus.syncPublisher(TreeStateListener.TOPIC)
+        .updateFullTree()
+}
+
+fun notifyUpdateNode(node: RemoteFileInformation) {
+    ApplicationManager.getApplication().messageBus.syncPublisher(TreeStateListener.TOPIC)
+        .updateTreeNode(node)
 }
 
 fun prepareConfiguration(project: Project): Boolean {

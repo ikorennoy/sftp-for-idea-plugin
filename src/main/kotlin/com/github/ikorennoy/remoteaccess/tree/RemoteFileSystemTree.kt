@@ -109,7 +109,7 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
                             if (parentPath != null) {
                                 treeModel.invalidateAsync(parentPath, true)
                             } else {
-                                updateFull()
+                                rebuildFullTree()
                             }
                         }
                     }
@@ -150,9 +150,9 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
 
     /**
      * Invalidate the tree and clear the state of the tree structure
-     * Used when there are changes in connection
+     * Used when there are changes in the connection state
      */
-    fun invalidate() {
+    fun cleanAndRebuildFullTree() {
         treeModel.invalidateAsync()
         remoteTreeStructure.clear()
     }
@@ -169,8 +169,12 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
         treeModel.select(file, tree) {}
     }
 
-    fun updateFull() {
+    fun rebuildFullTree() {
         treeModel.invalidateAsync()
+    }
+
+    fun rebuildTreeNode(parentNode: RemoteFileInformation) {
+        treeModel.invalidateAsync(parentNode, true)
     }
 
     private fun updateNodeAndSelect(nodeToUpdate: RemoteFileInformation, nodeToSelect: RemoteFileInformation) {
