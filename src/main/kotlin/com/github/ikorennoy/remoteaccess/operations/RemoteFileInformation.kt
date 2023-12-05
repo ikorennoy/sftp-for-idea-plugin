@@ -59,7 +59,7 @@ class RemoteFileInformation(
     }
 
     fun isPlainFile(): Boolean {
-        return !isDirectory() && !isSymlink() && !isHidden() && !isSpecial()
+        return !isDirectory() && !isSymlink() && !isSpecial()
     }
 
     fun getAttributes(): FileAttributes {
