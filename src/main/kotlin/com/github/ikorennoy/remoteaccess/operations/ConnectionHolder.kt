@@ -46,10 +46,8 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
             if (isInitializedAndConnectedInternal(prevSsh2, prevSftp2)) {
                 return null
             }
-            val conf = RemoteFileAccessSettingsState.getInstance(project)
 
-            val failReason =
-                tryConnect(conf.host, conf.port, conf.username, conf.password)
+            val failReason = tryConnect()
             return if (failReason != null) {
                 failReason
             } else {
@@ -139,7 +137,13 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
         return sshClient != null && sshClient.isConnected && sshClient.isAuthenticated && sftpClient != null
     }
 
-    private fun tryConnect(host: String, port: Int, username: String, password: CharArray): Exception? {
+    private fun tryConnect(): Exception? {
+        val conf = RemoteFileAccessSettingsState.getInstance(project)
+        val host = conf.host
+        val port = conf.port
+        val username = conf.username
+        val password = conf.password
+
         var failReason: Exception? = null
         sshClient = null
         sftpClient = null
@@ -150,7 +154,18 @@ internal class ConnectionHolder(private val project: Project) : Disposable {
             newSshClient.useCompression()
             loadKnownHosts(newSshClient)
             newSshClient.connect(host, port)
-            newSshClient.authPassword(username, password)
+            if (conf.authenticationType == RemoteFileAccessSettingsState.AuthenticationType.PASSWORD) {
+                newSshClient.authPassword(username, password)
+            } else {
+                val certLocation = conf.certificateLocation
+                val key = if (password.isEmpty()) {
+                    newSshClient.loadKeys(certLocation)
+                } else {
+                    newSshClient.loadKeys(certLocation, password)
+                }
+                newSshClient.authPublickey(username, key)
+            }
+
             sshClient = newSshClient
             sftpClient = newSshClient.newSFTPClient()
         } catch (ex: IOException) {

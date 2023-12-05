@@ -34,10 +34,6 @@ class RemoteFileAccessConfigurable(private val project: Project) : Configurable 
         settingsComponent?.reset()
     }
 
-    override fun getPreferredFocusedComponent(): JComponent {
-        return settingsComponent?.getPreferredFocusedComponent() ?: throw IllegalStateException()
-    }
-
     override fun getDisplayName(): String {
         return RemoteFileAccessBundle.message("settings.RemoteFileAccess.configurable.displayName")
     }

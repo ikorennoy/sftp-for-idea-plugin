@@ -36,11 +36,19 @@ class RemoteFileAccessSettingsState :
             state.username = value
         }
 
-    var password: CharArray
-        get() = state.password
+    var authenticationType: AuthenticationType
+        get() = state.authenticationType ?: AuthenticationType.PASSWORD
         set(value) {
-            state.password = value
+            state.authenticationType = value
         }
+
+    var certificateLocation: String
+        get() = state.certificateLocation ?: ""
+        set(value) {
+            state.certificateLocation = value
+        }
+
+    var password: CharArray = CharArray(0)
 
     fun isNotValid(): Boolean {
         return host.isEmpty() || username.isEmpty() || root.isEmpty()
@@ -55,8 +63,12 @@ class RemoteFileAccessSettingsState :
         var port: Int by property(22)
         var username by string()
         var root by string()
+        var authenticationType by enum<AuthenticationType>()
+        var certificateLocation by string()
+    }
 
-        @Transient
-        var password: CharArray = CharArray(0)
+    enum class AuthenticationType {
+        PASSWORD,
+        KEYPAIR,
     }
 }
