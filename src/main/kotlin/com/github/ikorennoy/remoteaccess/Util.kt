@@ -4,6 +4,7 @@ import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.tree.TreeStateListener
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessConfigurable
+import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState.*
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -33,22 +34,41 @@ fun prepareConfiguration(project: Project): Boolean {
         )
         tryConnect = !conf.isNotValid() // user cancelled settings dialog
     } else {
-        // show password prompt dialogue
-        val password = Messages.showPasswordDialog(
-            RemoteFileAccessBundle.message("dialog.RemoteFileAccess.enterPassword.message"),
-            RemoteFileAccessBundle.message(
-                "dialog.RemoteFileAccess.enterPassword.title",
-                conf.username,
-                conf.host,
-                conf.port
+        // show password or passphrase prompt dialogue
+        if (conf.authenticationType == AuthenticationType.PASSWORD) {
+            val password = Messages.showPasswordDialog(
+                RemoteFileAccessBundle.message("dialog.RemoteFileAccess.enterPassword.message"),
+                RemoteFileAccessBundle.message(
+                    "dialog.RemoteFileAccess.enterPassword.title",
+                    conf.username,
+                    conf.host,
+                    conf.port
+                )
             )
-        )
 
-        if (password != null) {
-            conf.password = password.toCharArray()
+            if (password != null) {
+                conf.password = password.toCharArray()
+            } else {
+                // it means user cancelled password enter dialog
+                tryConnect = false
+            }
         } else {
-            // it means user cancelled password enter dialog
-            tryConnect = false
+            val password = Messages.showPasswordDialog(
+                RemoteFileAccessBundle.message("dialog.RemoteFileAccess.enterPassphrase.message"),
+                RemoteFileAccessBundle.message(
+                    "dialog.RemoteFileAccess.enterPassword.title",
+                    conf.username,
+                    conf.host,
+                    conf.port
+                )
+            )
+
+            if (password != null) {
+                conf.password = password.toCharArray()
+            } else {
+                // it means user cancelled password enter dialog
+                tryConnect = false
+            }
         }
     }
     return tryConnect
