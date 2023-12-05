@@ -1,6 +1,6 @@
 package com.github.ikorennoy.remoteaccess.settings
 
-import com.github.ikorennoy.remoteaccess.notifyConnectionStatusChanged
+import com.github.ikorennoy.remoteaccess.notifyUpdateFullTree
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.github.ikorennoy.remoteaccess.settings.ui.RemoteFileAccessSettingsComponent
 import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
@@ -27,7 +27,7 @@ class RemoteFileAccessConfigurable(private val project: Project) : Configurable 
         settingsComponent?.saveState()
         val remoteOperations = RemoteOperations.getInstance(project)
         remoteOperations.initWithModalDialogue()
-        notifyConnectionStatusChanged()
+        notifyUpdateFullTree()
     }
 
     override fun reset() {

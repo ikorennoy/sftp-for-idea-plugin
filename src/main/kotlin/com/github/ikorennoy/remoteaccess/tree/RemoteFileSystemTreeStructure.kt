@@ -48,9 +48,18 @@ class RemoteFileSystemTreeStructure(
                     if (dirsWithoutReadPermission.remove(element.getUri())) {
                         rebuildNode(element)
                     }
+                    if (dirsWithoutReadPermission.isNotEmpty()) {
+                        for (child in res.value) {
+                            if (dirsWithoutReadPermission.contains(child.getUri())) {
+                                val children = child.getChildren()
+                                if (children is Ok) {
+                                    dirsWithoutReadPermission.remove(child.getUri())
+                                }
+                            }
+                        }
+                    }
                     res.value
                 }
-
                 is Er -> {
                     // if we add the element for the first time then notify user
                     if (dirsWithoutReadPermission.add(element.getUri())) {
@@ -85,7 +94,7 @@ class RemoteFileSystemTreeStructure(
             return element.getNodeDescriptor(project, parentDescriptor)
         }
 
-        if (element !is RemoteFileInformation) throw IllegalArgumentException("element is not file")
+        if (element !is RemoteFileInformation) throw IllegalArgumentException("element is not a file")
         return RemoteFileSystemTreeNodeDescriptor(project, parentDescriptor, element, dirsWithoutReadPermission)
     }
 

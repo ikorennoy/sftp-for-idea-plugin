@@ -10,7 +10,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 
-fun notifyConnectionStatusChanged() {
+fun notifyUpdateFullTree() {
     ApplicationManager.getApplication().messageBus.syncPublisher(TreeStateListener.TOPIC)
         .updateFullTree()
 }

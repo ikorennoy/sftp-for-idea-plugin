@@ -1,7 +1,8 @@
 package com.github.ikorennoy.remoteaccess.ui
 
 import com.github.ikorennoy.remoteaccess.convertBytesToHumanReadable
-import com.github.ikorennoy.remoteaccess.notifyConnectionStatusChanged
+import com.github.ikorennoy.remoteaccess.notifyUpdateFullTree
+import com.github.ikorennoy.remoteaccess.notifyUpdateNode
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
@@ -76,8 +77,16 @@ class AttributesWindowDialog(
             ProgressManager.getInstance().submitIOTask(EmptyProgressIndicator()) {
                 val remoteOperations = RemoteOperations.getInstance(project)
                 remoteOperations.updateAttributes(selectedFile, newAttributes)
+                // we need to load parent in IO thread,
+                // so we can access it in EDT thread without any IO operations
+                selectedFile.getParent()
             }.handleOnEdt(ModalityState.defaultModalityState()) { _, _ ->
-                notifyConnectionStatusChanged()
+                val parent = selectedFile.getParent()
+                if (parent != null) {
+                    notifyUpdateNode(parent)
+                } else {
+                    notifyUpdateFullTree()
+                }
             }
         }
         super.doOKAction()

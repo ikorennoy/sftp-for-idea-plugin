@@ -52,7 +52,9 @@ class RemoteFileAccessWindowsFactory : ToolWindowFactory, DumbAware {
                 }
 
                 override fun updateTreeNode(node: RemoteFileInformation) {
-                    fsTree.rebuildTreeNode(node)
+                    ApplicationManager.getApplication().invokeLater {
+                        fsTree.rebuildTreeNode(node)
+                    }
                 }
             })
     }
