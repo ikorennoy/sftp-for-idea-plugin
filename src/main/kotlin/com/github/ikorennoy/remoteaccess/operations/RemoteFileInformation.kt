@@ -3,6 +3,7 @@ package com.github.ikorennoy.remoteaccess.operations
 import com.github.ikorennoy.remoteaccess.Er
 import com.github.ikorennoy.remoteaccess.Ok
 import com.github.ikorennoy.remoteaccess.Outcome
+import com.github.ikorennoy.remoteaccess.convertBytesToHumanReadable
 import com.github.ikorennoy.remoteaccess.settings.RemoteFileAccessSettingsState
 import com.intellij.openapi.project.Project
 import net.schmizz.sshj.sftp.FileAttributes
@@ -19,6 +20,7 @@ class RemoteFileInformation(
     private val isDir: Boolean by lazy { isDirInternal() }
     private val special: Boolean by lazy { isSpecialInternal() }
     private val myLength: Long by lazy { getLengthInternal() }
+
     // for symlinks
     private val originalFileAttr: FileAttributes? by lazy { resolveSymlinkAttributes() }
 
@@ -33,14 +35,7 @@ class RemoteFileInformation(
     fun getLength(): Long = myLength
 
     fun getPresentableLength(): String {
-        val lenBytes = getLength()
-        return if (lenBytes < 1000) {
-            "$lenBytes bytes"
-        } else if (lenBytes > 1000 && lenBytes < 1000 * 1000) {
-            "${lenBytes / 1000} kb"
-        } else {
-            "${lenBytes / 1000 / 1000} mb"
-        }
+        return convertBytesToHumanReadable(getLength())
     }
 
     fun getPresentableName(): String = remoteFile.name
@@ -84,7 +79,8 @@ class RemoteFileInformation(
     }
 
     private fun resolveSymlinkAttributes(): FileAttributes? {
-        return when (val res = RemoteOperations.getInstance(project).resolveOriginalFileAttributes(getPathFromRemoteRoot())) {
+        return when (val res =
+            RemoteOperations.getInstance(project).resolveOriginalFileAttributes(getPathFromRemoteRoot())) {
             is Ok -> res.value
             is Er -> {
                 null

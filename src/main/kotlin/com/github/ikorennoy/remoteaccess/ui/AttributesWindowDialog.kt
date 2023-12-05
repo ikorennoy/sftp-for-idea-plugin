@@ -1,5 +1,6 @@
 package com.github.ikorennoy.remoteaccess.ui
 
+import com.github.ikorennoy.remoteaccess.convertBytesToHumanReadable
 import com.github.ikorennoy.remoteaccess.notifyConnectionStatusChanged
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
@@ -14,13 +15,12 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.text.DateFormatUtil
 import net.schmizz.sshj.sftp.FileAttributes
 import net.schmizz.sshj.xfer.FilePermission
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-// todo convert timestamps to human readable
-//  convert size to human readable
 class AttributesWindowDialog(
     private val project: Project,
     private val selectedFile: RemoteFileInformation,
@@ -129,9 +129,9 @@ class AttributesWindowDialog(
         val fileAttrs = selectedFile.getAttributes()
         userId.text = fileAttrs.uid.toString()
         groupId.text = fileAttrs.gid.toString()
-        mTime.text = fileAttrs.mtime.toString()
-        aTime.text = fileAttrs.atime.toString()
-        size.text = fileAttrs.size.toString()
+        mTime.text = DateFormatUtil.formatDate(fileAttrs.mtime * 1000)
+        aTime.text = DateFormatUtil.formatDate(fileAttrs.atime * 1000)
+        size.text = convertBytesToHumanReadable(fileAttrs.size)
         type.text = fileAttrs.type.name
     }
 
