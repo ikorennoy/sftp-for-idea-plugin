@@ -1,3 +1,6 @@
+
+fun properties(key: String) = project.findProperty(key).toString()
+
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.0"
@@ -30,17 +33,14 @@ tasks {
     }
 
     patchPluginXml {
+        version.set(properties("version"))
+        pluginDescription.set(file("parts/pluginDescription.html").readText())
+        changeNotes.set(file("parts/pluginChanges.html").readText())
         sinceBuild.set("223")
         untilBuild.set("233.*")
     }
 
-    signPlugin {
-        certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-        privateKey.set(System.getenv("PRIVATE_KEY"))
-        password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
-    }
-
     publishPlugin {
-        token.set(System.getenv("PUBLISH_TOKEN"))
+        token.set(System.getenv("IJ_REPO_TOKEN"))
     }
 }
