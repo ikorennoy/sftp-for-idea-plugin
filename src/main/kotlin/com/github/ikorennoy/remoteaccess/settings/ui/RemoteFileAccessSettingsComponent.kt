@@ -73,16 +73,17 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                 cell(usernameField)
             }
             row {
-                label("Authentication type:").widthGroup(CONF_WIDTH_GROUP)
+                label(RemoteFileAccessBundle.message("settings.RemoteFileAccess.authType.text"))
+                    .widthGroup(CONF_WIDTH_GROUP)
                 authenticationTypeComboBox = comboBox(listOf(PASSWORD_AUTH, KEY_PAIR_AUTH)).component
             }
             row {
-                label("Private key file:")
+                label(RemoteFileAccessBundle.message("settings.RemoteFileAccess.authType.pk.file"))
                     .widthGroup(CONF_WIDTH_GROUP)
                 certificateTextField = textFieldWithBrowseButton().columns(COLUMNS_MEDIUM).component
             }.visibleIf(comboBoxPredicate(KEY_PAIR_AUTH))
             row {
-                label("Passphrase:")
+                label(RemoteFileAccessBundle.message("settings.RemoteFileAccess.authType.pk.passphrace"))
                     .widthGroup(CONF_WIDTH_GROUP)
                 cell(passphraseField)
             }.visibleIf(comboBoxPredicate(KEY_PAIR_AUTH))

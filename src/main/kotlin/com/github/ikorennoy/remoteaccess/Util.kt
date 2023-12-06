@@ -74,12 +74,12 @@ fun prepareConfiguration(project: Project): Boolean {
     return tryConnect
 }
 
-fun convertBytesToHumanReadable(lenBytes: Long): String {
-    return if (lenBytes < 1000) {
-        "$lenBytes bytes"
-    } else if (lenBytes > 1000 && lenBytes < 1000 * 1000) {
-        "${lenBytes / 1000} kb"
+fun convertBytesToHumanReadable(bytes: Long): String {
+    return if (bytes < 1000) {
+        "$bytes bytes"
+    } else if (bytes > 1000 && bytes < 1000 * 1000) {
+        "${bytes / 1000} kb"
     } else {
-        "${lenBytes / 1000 / 1000} mb"
+        "${bytes / 1000 / 1000} mb"
     }
 }
