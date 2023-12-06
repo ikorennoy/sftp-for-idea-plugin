@@ -20,5 +20,5 @@ jobs:
       - uses:  actions/setup-java@v1
         with:
           java-version: '17'
-      - name: Run tests
+      - name: build
         run: ./gradlew buildPlugin
