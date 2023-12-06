@@ -8,7 +8,6 @@ plugins {
 }
 
 group = "com.github.ikorennoy"
-version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
