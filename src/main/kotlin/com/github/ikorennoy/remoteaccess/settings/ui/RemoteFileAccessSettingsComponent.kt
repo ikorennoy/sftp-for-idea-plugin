@@ -83,7 +83,7 @@ class RemoteFileAccessSettingsComponent(private val project: Project) {
                 certificateTextField = textFieldWithBrowseButton().columns(COLUMNS_MEDIUM).component
             }.visibleIf(comboBoxPredicate(KEY_PAIR_AUTH))
             row {
-                label(RemoteFileAccessBundle.message("settings.RemoteFileAccess.authType.pk.passphrace"))
+                label(RemoteFileAccessBundle.message("settings.RemoteFileAccess.authType.pk.passphrase"))
                     .widthGroup(CONF_WIDTH_GROUP)
                 cell(passphraseField)
             }.visibleIf(comboBoxPredicate(KEY_PAIR_AUTH))

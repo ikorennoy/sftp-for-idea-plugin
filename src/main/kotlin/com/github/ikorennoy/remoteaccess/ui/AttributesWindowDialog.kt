@@ -5,6 +5,7 @@ import com.github.ikorennoy.remoteaccess.notifyUpdateFullTree
 import com.github.ikorennoy.remoteaccess.notifyUpdateNode
 import com.github.ikorennoy.remoteaccess.operations.RemoteFileInformation
 import com.github.ikorennoy.remoteaccess.operations.RemoteOperations
+import com.github.ikorennoy.remoteaccess.template.RemoteFileAccessBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.openapi.application.ModalityState
@@ -29,17 +30,26 @@ class AttributesWindowDialog(
 
     private val panel: JPanel
 
-    private val readByOwner: JBCheckBox = JBCheckBox("Read by owner", false)
-    private val writeByOwner: JBCheckBox = JBCheckBox("Write by owner", false)
-    private val executeByOwner: JBCheckBox = JBCheckBox("Execute by owner", false)
+    private val readByOwner: JBCheckBox =
+        JBCheckBox(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.checkbox.readByOwner"), false)
+    private val writeByOwner: JBCheckBox =
+        JBCheckBox(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.checkbox.writeByOwner"), false)
+    private val executeByOwner: JBCheckBox =
+        JBCheckBox(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.checkbox.executeByOwner"), false)
 
-    private val readByGroup: JBCheckBox = JBCheckBox("Read by group", false)
-    private val writeByGroup: JBCheckBox = JBCheckBox("Write by group", false)
-    private val executeByGroup: JBCheckBox = JBCheckBox("Execute by owner", false)
+    private val readByGroup: JBCheckBox =
+        JBCheckBox(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.checkbox.readByGroup"), false)
+    private val writeByGroup: JBCheckBox =
+        JBCheckBox(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.checkbox.writeByGroup"), false)
+    private val executeByGroup: JBCheckBox =
+        JBCheckBox(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.checkbox.executeByGroup"), false)
 
-    private val readByOthers: JBCheckBox = JBCheckBox("Read by others", false)
-    private val writeByOthers: JBCheckBox = JBCheckBox("Write by others", false)
-    private val executeByOthers: JBCheckBox = JBCheckBox("Execute by others", false)
+    private val readByOthers: JBCheckBox =
+        JBCheckBox(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.checkbox.readByOthers"), false)
+    private val writeByOthers: JBCheckBox =
+        JBCheckBox(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.checkbox.writeByOthers"), false)
+    private val executeByOthers: JBCheckBox =
+        JBCheckBox(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.checkbox.executeByOthers"), false)
 
     private val userId: JBLabel = JBLabel()
     private val groupId: JBLabel = JBLabel()
@@ -52,7 +62,7 @@ class AttributesWindowDialog(
         initPermissionsCheckboxes()
         initFileInformationLabels()
         panel = initPanel()
-        title = "Edit File Attributes"
+        title = RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.name")
         init()
     }
 
@@ -94,7 +104,7 @@ class AttributesWindowDialog(
 
     private fun initPanel(): JPanel {
         return panel {
-            group("Permissions") {
+            group(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.group.permissions.name")) {
                 row {
                     cell(readByOwner)
                     cell(readByGroup)
@@ -111,23 +121,23 @@ class AttributesWindowDialog(
                     cell(executeByOthers)
                 }.layout(RowLayout.PARENT_GRID)
             }
-            group("File Information") {
+            group(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.group.fileInfo.name")) {
                 row {
-                    label("User ID: ")
+                    label(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.permissions.userId.label"))
                     cell(userId)
-                    label("Access time: ")
+                    label(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.permissions.accessTime.label"))
                     cell(aTime)
                 }.layout(RowLayout.PARENT_GRID)
                 row {
-                    label("Group ID: ")
+                    label(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.permissions.groupId.label"))
                     cell(groupId)
-                    label("Size: ")
+                    label(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.permissions.size.label"))
                     cell(size)
                 }.layout(RowLayout.PARENT_GRID)
                 row {
-                    label("Modification time: ")
+                    label(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.permissions.modificationTime.label"))
                     cell(mTime)
-                    label("File type: ")
+                    label(RemoteFileAccessBundle.message("dialog.RemoteFileAccess.attributes.permissions.fileType.label"))
                     cell(type)
                 }.layout(RowLayout.PARENT_GRID)
             }
