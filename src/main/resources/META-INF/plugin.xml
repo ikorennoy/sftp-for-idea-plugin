@@ -8,7 +8,9 @@
 
     <description><![CDATA[
     <strong>SFTP protocol support for JetBrains IDEs.</strong><br>
-    ]]></description>
+    Allows you to connect via SSH to a remote server and work with files.
+    Supports file read/write operations, creating deleting files/folders, editing permissions.
+]]></description>
 
     <resource-bundle>messages.RemoteFileAccess</resource-bundle>
 
