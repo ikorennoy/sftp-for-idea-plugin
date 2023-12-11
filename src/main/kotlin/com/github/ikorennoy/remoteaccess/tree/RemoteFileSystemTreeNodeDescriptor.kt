@@ -50,7 +50,7 @@ class RemoteFileSystemTreeNodeDescriptor(
 
     private fun dressIcon(baseIcon: Icon): Icon {
         return if (element.isSymlink()) {
-            LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON)
+            LayeredIcon.layeredIcon(arrayOf(baseIcon, PlatformIcons.SYMLINK_ICON))
         } else {
             baseIcon
         }
