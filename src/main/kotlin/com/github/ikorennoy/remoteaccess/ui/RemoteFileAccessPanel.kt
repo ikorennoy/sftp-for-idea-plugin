@@ -5,7 +5,6 @@ import com.intellij.ide.CommonActionsManager
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -22,7 +21,14 @@ class RemoteFileAccessPanel(
     init {
         toolbar = createToolbarPanel()
         setContent(ScrollPaneFactory.createScrollPane(tree.tree))
-        addDataProvider(RemoteFileSystemTreeDataProvider(tree))
+    }
+
+    override fun getData(dataId: String): Any? {
+        return if (RemoteFileSystemTree.DATA_KEY.`is`(dataId)) {
+            tree
+        } else {
+            super.getData(dataId)
+        }
     }
 
     private fun createToolbarPanel(): JPanel {
@@ -43,16 +49,6 @@ class RemoteFileAccessPanel(
             ActionManager.getInstance().createActionToolbar("RemoteFileAccessToolbar", toolbarGroup, true)
         actionToolbar.targetComponent = this
         return JBUI.Panels.simplePanel(actionToolbar.component)
-    }
-
-    private class RemoteFileSystemTreeDataProvider(private val fsTree: RemoteFileSystemTree) : DataProvider {
-        override fun getData(dataId: String): Any? {
-            return if (RemoteFileSystemTree.DATA_KEY.`is`(dataId)) {
-                fsTree
-            } else {
-                null
-            }
-        }
     }
 
     override fun dispose() {

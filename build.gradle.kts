@@ -4,7 +4,7 @@ fun properties(key: String) = project.findProperty(key).toString()
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.0"
-    id("org.jetbrains.intellij") version "1.15.0"
+    id("org.jetbrains.intellij") version "1.16.1"
 }
 
 group = "com.github.ikorennoy"
@@ -14,7 +14,7 @@ repositories {
 }
 
 intellij {
-    version.set("2022.3.3")
+    version.set("2023.3")
     type.set("IC")
 }
 
@@ -35,8 +35,6 @@ tasks {
         version.set(properties("version"))
         pluginDescription.set(file("parts/pluginDescription.html").readText())
         changeNotes.set(file("parts/pluginChanges.html").readText())
-        sinceBuild.set("223")
-        untilBuild.set("233.*")
     }
 
     publishPlugin {
