@@ -47,7 +47,7 @@ class RemoteFileSystemTree(val project: Project, parent: Disposable) : Disposabl
         remoteTreeStructure.setTreeMode(treeModel)
         asyncTreeModel = AsyncTreeModel(treeModel, this)
         tree = Tree(asyncTreeModel)
-        TreeSpeedSearch(tree)
+        TreeSpeedSearch.installOn(tree)
         TreeUtil.installActions(tree)
         PopupHandler.installPopupMenu(tree, createActionGroup(), "RemoteFileSystemTreePopup")
         tree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
